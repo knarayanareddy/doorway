@@ -35,16 +35,35 @@ test('inside the re-warning interval it degrades to quiet rather than repeating'
   assert.equal(r.format, 'quiet');
 });
 
-test('blocked storage degrades to first-exposure behaviour, never fails closed', () => {
+test('blocked storage degrades to card (not the heaviest gate), never fails closed', () => {
   const r = pick({}, DEFAULT_CONFIG, T0, { storageBlocked: true });
   assert.equal(r.state, 'DEGRADED');
-  assert.equal(r.format, 'gate');
+  assert.equal(r.format, 'card');
+  assert.equal(r.family, 'harm');
 });
 
 test('variant rotation avoids repeating what was just shown', () => {
   assert.equal(variantFor('legal', []), 'legal-01');
   assert.equal(variantFor('legal', ['legal-01']), 'legal-02');
   assert.notEqual(variantFor('legal', ['legal-01', 'legal-02']), 'legal-01');
+});
+
+test('variant rotation keeps rotating once all three variants are seen', () => {
+  // Once all three variants sit in the seen window, variantFor() must not
+  // fall back to pool[0] forever — that stops anti-habituation exactly when
+  // it matters most. With deduped seen, it rotates 01, 02, 03, 01, 02, 03 …
+  let st = { seen: [] };
+  const seq = [];
+  for (let i = 0; i < 9; i++) {
+    const v = variantFor('legal', st.seen);
+    seq.push(v);
+    st = advance(st, v);
+  }
+  assert.deepEqual(seq, [
+    'legal-01', 'legal-02', 'legal-03',
+    'legal-01', 'legal-02', 'legal-03',
+    'legal-01', 'legal-02', 'legal-03',
+  ], JSON.stringify(seq));
 });
 
 // ── Acceptance test #3, as it is actually written in README.md ──────────────

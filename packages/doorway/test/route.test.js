@@ -47,14 +47,10 @@ test('the honesty gate catches a route that claims confidentiality with no basis
   assert.match(problems.join(), /no confidentiality statement/);
 });
 
-test('the shipped table flags unverified confidentiality claims', () => {
-  // Every shipped human route carries conf that says "Confirm wording on site
-  // — docs/04 V1", which is hedged/unverified. assertHonest must flag them.
-  const problems = assertHonest(table);
-  assert.ok(problems.length > 0, 'expected unverified conf claims to be flagged');
-  for (const p of problems) {
-    assert.match(p, /unverified/);
-  }
+test('the shipped table passes the honesty gate', () => {
+  // Shipped routes carry real, sourced confidentiality statements. assertHonest
+  // must return clean so the table can render.
+  assert.deepEqual(assertHonest(table), [], 'every confidentiality claim cites a basis');
 });
 
 test('baseLang handles malformed input', () => {

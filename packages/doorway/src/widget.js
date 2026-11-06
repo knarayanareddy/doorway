@@ -18,35 +18,35 @@ const copy = {
   harm: {
     nl: [
       { h: 'Elke foto is een kind', b: 'Elke afbeelding laat misbruik van een echt kind zien, en elke keer dat ernaar wordt gezocht, is er vraag naar meer.' },
-      { h: 'Elke foto is een kind', b: 'Achter elke afbeelding staat een kind dat misbruikt is, vaak jarenlang. Toegang creëert vraag.' },
-      { h: 'Elke foto is een kind', b: 'Dit materiaal is een opname van misbruik. Het kind bestaat, het misbruik is echt, en het is nooit met instemming gebeurd.' },
+      { h: 'Een kind op elke foto', b: 'Achter elke afbeelding staat een kind dat misbruikt is, vaak jarenlang. Toegang creëert vraag.' },
+      { h: 'Dit is kindermisbruik', b: 'Dit materiaal is een opname van misbruik. Het kind bestaat, het misbruik is echt, en het is nooit met instemming gebeurd.' },
     ],
     en: [
       { h: 'Every image is a child', b: 'Each image records abuse of a real child. Every access creates demand for more.' },
-      { h: 'Every image is a child', b: 'Behind every image is a child who was abused, often over years. Access drives demand.' },
-      { h: 'Every image is a child', b: 'This material is a recording of abuse. The child exists, the abuse was real, and it never happened with consent.' },
+      { h: 'A child in every image', b: 'Behind every image is a child who was abused, often over years. Access drives demand.' },
+      { h: 'This records child abuse', b: 'This material is a recording of abuse. The child exists, the abuse was real, and it never happened with consent.' },
     ],
     de: [
       { h: 'Jedes Bild ist ein Kind', b: 'Jedes Bild dokumentiert den Missbrauch eines echten Kindes. Jeder Zugriff schafft Nachfrage.' },
-      { h: 'Jedes Bild ist ein Kind', b: 'Hinter jedem Bild steht ein missbrauchtes Kind, oft über Jahre. Zugriff treibt die Nachfrage an.' },
-      { h: 'Jedes Bild ist ein Kind', b: 'Dieses Material dokumentiert Missbrauch. Das Kind existiert, der Missbrauch war real, und es geschah nie mit Einwilligung.' },
+      { h: 'Ein Kind in jedem Bild', b: 'Hinter jedem Bild steht ein missbrauchtes Kind, oft über Jahre. Zugriff treibt die Nachfrage an.' },
+      { h: 'Dies dokumentiert Kindesmissbrauch', b: 'Dieses Material dokumentiert Missbrauch. Das Kind existiert, der Missbrauch war real, und es geschah nie mit Einwilligung.' },
     ],
   },
   control: {
     nl: [
-      { h: 'Je kunt hier stoppen', b: 'Mensen die dit gebruiken stoppen vaak met hulp. Dat kan anoniem, en je hoeft je naam niet te geven.' },
-      { h: 'Je kunt hier stoppen', b: 'Stoppen lukt vaker met iemand erbij dan alleen. De preventielijn is er voor precies dit, en je hoeft niets te bekennen.' },
-      { h: 'Je kunt hier stoppen', b: 'Veel mensen hebben deze hulp nodig, en er is hulp die werkt. Een eerste gesprek verplicht tot niets.' },
+      { h: 'Stoppen is mogelijk', b: 'Mensen die dit gebruiken stoppen vaak met hulp. Dat kan anoniem, en je hoeft je naam niet te geven.' },
+      { h: 'Er is hulp', b: 'Stoppen lukt vaker met iemand erbij dan alleen. De preventielijn is er voor precies dit, en je hoeft niets te bekennen.' },
+      { h: 'Ondersteuning bestaat', b: 'Veel mensen hebben deze hulp nodig, en er is hulp die werkt. Een eerste gesprek verplicht tot niets.' },
     ],
     en: [
-      { h: 'You can stop here', b: 'People who use this often stop, with help. It can be anonymous, and you never have to give your name.' },
-      { h: 'You can stop here', b: 'Stopping works better with someone alongside you than alone. That is what the prevention line is for, and you do not have to admit anything.' },
-      { h: 'You can stop here', b: 'Many people have needed this kind of help, and help works. A first conversation commits you to nothing.' },
+      { h: 'Stopping is possible', b: 'People who use this often stop, with help. It can be anonymous, and you never have to give your name.' },
+      { h: 'Help is available', b: 'Stopping works better with someone alongside you than alone. That is what the prevention line is for, and you do not have to admit anything.' },
+      { h: 'Support exists', b: 'Many people have needed this kind of help, and help works. A first conversation commits you to nothing.' },
     ],
     de: [
-      { h: 'Du kannst hier aufhören', b: 'Menschen, die das nutzen, hören oft mit Hilfe auf. Es kann anonym sein, und du musst deinen Namen nicht nennen.' },
-      { h: 'Du kannst hier aufhören', b: 'Aufhören gelingt leichter mit jemand an der Seite als allein. Dafür gibt es die Präventionslinie, und du musst nichts gestehen.' },
-      { h: 'Du kannst hier aufhören', b: 'Viele Menschen haben diese Hilfe nötig, und Hilfe wirkt. Ein erstes Gespräch verpflichtet zu nichts.' },
+      { h: 'Aufhören ist möglich', b: 'Menschen, die das nutzen, hören oft mit Hilfe auf. Es kann anonym sein, und du musst deinen Namen nicht nennen.' },
+      { h: 'Hilfe ist verfügbar', b: 'Aufhören gelingt leichter mit jemand an der Seite als allein. Dafür gibt es die Präventionslinie, und du musst nichts gestehen.' },
+      { h: 'Unterstützung existiert', b: 'Viele Menschen haben diese Hilfe nötig, und Hilfe wirkt. Ein erstes Gespräch verpflichtet zu nichts.' },
     ],
   },
   quiet: {
@@ -126,10 +126,10 @@ export function legalCopy(country) {
 export function footnoteFor(route, L) {
   if (!route) {
     return L === 'nl'
-      ? 'Er is hulp. Je hoeft je naam niet te geven.'
+      ? 'Er is hulp.'
       : L === 'de'
-        ? 'Es gibt Hilfe. Sie müssen Ihren Namen nicht nennen.'
-        : 'There is help. You do not have to give your name.';
+        ? 'Es gibt Hilfe.'
+        : 'There is help.';
   }
   if (route.capacity === 'selfhelp' || route.channel === 'selfhelp') {
     return L === 'nl'
@@ -140,10 +140,10 @@ export function footnoteFor(route, L) {
   }
   if (!route.conf || /verify|todo|unknown|confirm|site/i.test(route.conf)) {
     return L === 'nl'
-      ? 'Hulp, gratis en anoniem.'
+      ? 'Hulp, gratis.'
       : L === 'de'
-        ? 'Hilfe, kostenlos und anonym.'
-        : 'Help, free and anonymous.';
+        ? 'Hilfe, kostenlos.'
+        : 'Help, free.';
   }
   return L === 'nl'
     ? 'Hulp, gratis en vertrouwelijk.'
@@ -202,6 +202,10 @@ export function createDoorway({ config, routes, endpoint, lang, country, onEvent
       primary: {
         label: L === 'nl' ? 'Bekijk anonieme hulp' : 'See anonymous help',
         kind: 'primary',
+        // Navigating to the help service sends the page URL as Referer. If the
+        // page URL contains the search query, the help service learns what the
+        // person searched for. The host page should set Referrer-Policy:
+        // no-referrer to prevent this leak (see U7 in the review).
         onSelect: () => { if (route?.url) window.location.assign(route.url); },
       },
       secondary: {
@@ -265,12 +269,8 @@ export function createDoorway({ config, routes, endpoint, lang, country, onEvent
     active = handle;
     const routeId = active?.routeId ?? null;
 
-    // A habituated (quiet) exposure must not advance the counter or reset the
-    // re-warning clock — that would silence heavy users forever. Only advance
-    // when a real intervention was shown.
-    if (decision.state !== 'HABITUATED') {
-      writeState(advance(blocked ? {} : st, variant, Date.now()));
-    }
+    // runDecision() already advanced the counter (unless HABITUATED).
+    // Do not advance again here — that would double-count the exposure.
 
     const onDecision = (mapped) => {
       if (typeof onEvent === 'function') {

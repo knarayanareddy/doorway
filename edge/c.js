@@ -7,6 +7,9 @@
  */
 import { build, aggregateKey } from '../packages/core/src/counter.js';
 
+// ALLOWED_ORIGIN matches any https origin by default. For production, this
+// should be scoped to the platform's own origins (e.g. via a Workers env var).
+// Origin allow-listing is a deployment concern (see U2 in the review).
 const ALLOWED_ORIGIN = /^https?:\/\/([\w-]+\.)?(localhost|127\.0\.0\.1)(:\d+)?$|^https:\/\/[\w.-]+$/;
 
 export default {
