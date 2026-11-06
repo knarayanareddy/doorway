@@ -111,3 +111,51 @@ test('omitting country keeps the old language-only behaviour', () => {
   const r = resolve('nl-NL', table, { need: 'human' });
   assert.equal(r.route.id, 'nl-offlimits');
 });
+
+// ── Specificity outranks table position ─────────────────────────────────────
+// Second bug found on 6 Nov, one level below the first. `resolve()` walks a
+// chain and returns the FIRST entry that satisfies `need` and `servesCountry`.
+// But a service with `countries: []` "serves everyone", so a global self-help
+// page listed as `default` beat a national helpline listed as an alternative —
+// UK users were routed to a Finnish self-help site.
+//
+// Fix: among eligible candidates, one that explicitly NAMES your country wins.
+import { listsCountry } from '../../core/src/route.js';
+
+test('listsCountry distinguishes "serves everyone" from "names you"', () => {
+  assert.equal(listsCountry({ countries: ['GB'] }, 'GB'), true);
+  assert.equal(listsCountry({ countries: [] }, 'GB'), false, 'a global service does not name GB');
+  assert.equal(listsCountry({}, 'GB'), false);
+  assert.equal(listsCountry({ countries: ['GB'] }, null), false);
+});
+
+test('a named country beats a global default, whatever the table order', () => {
+  const t = {
+    byLanguage: {
+      en: {
+        default: { id: 'global-selfhelp', channel: 'selfhelp', countries: [] },
+        alternatives: [{ id: 'gb-helpline', channel: 'phone', countries: ['GB'] }],
+      },
+    },
+  };
+  const gb = resolve('en', t, { need: 'any', country: 'GB' });
+  assert.equal(gb.route.id, 'gb-helpline', 'GB user must get the GB line, not the global page');
+  const fr = resolve('en', t, { need: 'any', country: 'FR' });
+  assert.equal(fr.route.id, 'global-selfhelp', 'a country with no named service still gets the global one');
+});
+
+test('the shipped table routes GB to the UK line under need:any', () => {
+  // need:any is what the gate and card formats ask for. Testing only need:human
+  // is how this bug survived the previous round of tests.
+  assert.equal(resolve('en-GB', table, { need: 'any', country: 'GB' }).route.id, 'uk-stopitnow');
+  assert.equal(resolve('en-GB', table, { need: 'human', country: 'GB' }).route.id, 'uk-stopitnow');
+});
+
+test('every country we have a service for resolves to it under need:any', () => {
+  const want = { NL: 'nl-offlimits', DE: 'de-kein-taeter', GB: 'uk-stopitnow' };
+  const lang = { NL: 'nl', DE: 'de', GB: 'en' };
+  for (const [country, id] of Object.entries(want)) {
+    const r = resolve(lang[country], table, { need: 'any', country });
+    assert.equal(r.route.id, id, `${country} must resolve to ${id}, got ${r.route.id}`);
+  }
+});

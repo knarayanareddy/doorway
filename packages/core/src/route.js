@@ -45,15 +45,20 @@ export function resolve(langTag, table, opts = {}) {
 
   for (const entry of chain) {
     const candidates = [entry.default, ...(entry.alternatives || [])].filter(Boolean);
-    const hit = candidates.find((c) => satisfies(c, need) && servesCountry(c, country));
-    if (hit) {
+    const eligible = candidates.filter((c) => satisfies(c, need) && servesCountry(c, country));
+    if (eligible.length) {
+      // Specificity beats position. A service that explicitly lists your country
+      // outranks one with no `countries` field at all — otherwise a global
+      // self-help page listed as `default` hides a national helpline listed as
+      // an alternative. That is exactly what happened to UK users on 6 Nov.
+      const hit = eligible.find((c) => listsCountry(c, country)) || eligible[0];
       return {
         route: hit,
         lang: byLang[lang] ? lang : 'en',
         country,
-        reason: byLang[lang]
-          ? (country && servesCountry(hit, country) ? `direct match (${country})` : 'direct language match')
-          : 'fallback to en',
+        reason: listsCountry(hit, country)
+          ? `direct match (${country})`
+          : (byLang[lang] ? 'direct language match' : 'fallback to en'),
       };
     }
   }
@@ -112,6 +117,14 @@ export function servesCountry(route, country) {
   if (!country) return true;
   const list = route?.countries;
   if (!Array.isArray(list) || list.length === 0) return true;
+  return list.map((x) => String(x).toUpperCase()).includes(country);
+}
+
+/** True only when the service explicitly names this country. Used for ranking. */
+export function listsCountry(route, country) {
+  if (!country) return false;
+  const list = route?.countries;
+  if (!Array.isArray(list) || list.length === 0) return false;
   return list.map((x) => String(x).toUpperCase()).includes(country);
 }
 
