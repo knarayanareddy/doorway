@@ -9,13 +9,15 @@ CREATE TABLE IF NOT EXISTS installs (
 );
 
 CREATE TABLE IF NOT EXISTS agg (
-  key     TEXT NOT NULL,                  -- install|variant|format|trigger|bucket|hour
+  key     TEXT NOT NULL,                  -- install|variant|format|trigger|bucket|hour|outcome|route
   hour    TEXT NOT NULL,                  -- YYYY-MM-DDTHH  (no minutes, no seconds)
   install TEXT NOT NULL,
   variant TEXT NOT NULL,
   format  TEXT NOT NULL,
   trigger TEXT NOT NULL,
   bucket  TEXT NOT NULL,
+  outcome TEXT NOT NULL,                  -- clicked_help | dismissed | left_page | continued | timeout
+  route   TEXT NOT NULL,                  -- route id served, or 'xx-none'
   count   INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (key, hour)
 );

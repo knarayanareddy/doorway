@@ -25,10 +25,11 @@ test('an unknown severity is treated as medium, not as high', () => {
 
 test('the navigation event type maps onto the counter vocabulary', () => {
   const t = mapTrigger({ type: 'navigation', language: 'nl-NL', country: 'nl' });
-  const c = toCounterPayload(t, 'gate', 'legal', 'legal-01', 'clicked_help');
+  const c = toCounterPayload(t, 'gate', 'legal', 'legal-01', 'clicked_help', 'nl-offlimits', '1');
   assert.ok(c.ok, JSON.stringify(c.errors));
   assert.equal(c.payload.t, 'nav');
-  assert.equal(c.payload.r, 'nl-nl');
+  assert.equal(c.payload.r, 'nl-offlimits');
+  assert.equal(c.payload.e, '1');
 });
 
 test('sessionScopedId and timestamps never reach the counter', () => {
