@@ -12,7 +12,7 @@
     "packages/*"
   ],
   "scripts": {
-    "test": "node --test packages/shared/core.test.js 'packages/*/test/*.js'",
+    "test": "node --test packages/shared/core.test.js packages/*/test/",
     "test:core": "node --test packages/shared/core.test.js",
     "gate:privacy": "node scripts/gate-privacy.mjs",
     "lint:copy": "node scripts/lint-copy.mjs",
