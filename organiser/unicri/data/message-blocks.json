@@ -1,0 +1,206 @@
+[
+  {
+    "id": "legal-nl-1",
+    "category": "legal",
+    "lang": "nl",
+    "text": "Het bekijken, bezitten en verspreiden van beeldmateriaal van seksueel kindermisbruik is strafbaar op grond van artikel 252 van het Wetboek van Strafrecht. De maximumstraf is zes jaar gevangenis, of negen jaar bij gewoonte of beroep (artikel 254). Ook het online bekijken valt hieronder.",
+    "tone": "deterrent",
+    "evidence": [
+      "https://www.om.nl/onderwerpen/beleidsregels/aanwijzingen/jeugd---gezin---zeden/aanwijzing-kinderpornografie-2024a006",
+      "https://wetten.overheid.nl/jci1.3:c:BWBR0001854&artikel=252"
+    ]
+  },
+  {
+    "id": "legal-en-1",
+    "category": "legal",
+    "lang": "en",
+    "text": "Viewing, possessing and distributing child sexual abuse material is a criminal offence under article 252 of the Dutch Criminal Code. The maximum sentence is six years in prison, or nine years when done habitually or professionally (article 254). Viewing material online is covered because gaining access is criminalised.",
+    "tone": "deterrent",
+    "evidence": [
+      "https://www.om.nl/onderwerpen/beleidsregels/aanwijzingen/jeugd---gezin---zeden/aanwijzing-kinderpornografie-2024a006",
+      "https://wetten.overheid.nl/jci1.3:c:BWBR0001854&artikel=252"
+    ]
+  },
+  {
+    "id": "legal-nl-2",
+    "category": "legal",
+    "lang": "nl",
+    "text": "Sinds 1 juli 2024 valt dit materiaal onder artikel 252 van het Wetboek van Strafrecht (voorheen artikel 240b). Het zoeken naar en bekijken van dit materiaal is strafbaar.",
+    "tone": "deterrent",
+    "evidence": [
+      "https://wetten.overheid.nl/jci1.3:c:BWBR0001854&artikel=252"
+    ]
+  },
+  {
+    "id": "legal-en-2",
+    "category": "legal",
+    "lang": "en",
+    "text": "Since 1 July 2024, this material falls under article 252 of the Dutch Criminal Code (formerly article 240b). Searching for and viewing this material is a criminal offence.",
+    "tone": "deterrent",
+    "evidence": [
+      "https://wetten.overheid.nl/jci1.3:c:BWBR0001854&artikel=252"
+    ]
+  },
+  {
+    "id": "harm-nl-1",
+    "category": "harm",
+    "lang": "nl",
+    "text": "Elk beeld van seksueel kindermisbruik toont een echt kind dat wordt misbruikt. Het bekijken van dit materiaal houdt de vraag in stand en draagt bij aan het misbruik.",
+    "tone": "deterrent",
+    "evidence": [
+      "https://doi.org/10.48550/arXiv.2606.06417"
+    ]
+  },
+  {
+    "id": "harm-en-1",
+    "category": "harm",
+    "lang": "en",
+    "text": "Every image of child sexual abuse shows a real child being harmed. Viewing this material sustains the demand and contributes to the abuse.",
+    "tone": "deterrent",
+    "evidence": [
+      "https://doi.org/10.48550/arXiv.2606.06417"
+    ]
+  },
+  {
+    "id": "harm-nl-2",
+    "category": "harm",
+    "lang": "nl",
+    "text": "Achter elke afbeelding zit een kind. Door dit materiaal te bekijken draagt u bij aan hun lijden. Het is mogelijk om hiermee te stoppen.",
+    "tone": "therapeutic",
+    "evidence": [
+      "https://doi.org/10.48550/arXiv.2606.06417"
+    ]
+  },
+  {
+    "id": "harm-en-2",
+    "category": "harm",
+    "lang": "en",
+    "text": "Behind every image is a child. By viewing this material you add to their suffering. It is possible to stop.",
+    "tone": "therapeutic",
+    "evidence": [
+      "https://doi.org/10.48550/arXiv.2606.06417"
+    ]
+  },
+  {
+    "id": "help-nl-1",
+    "category": "help",
+    "lang": "nl",
+    "text": "Anonieme en gratis hulp is beschikbaar. Bel de Preventielijn van Offlimits: 0800 266 64 36. U kunt ook chatten via preventielijn.offlimits.nl. De lijn is anoniem en vertrouwelijk.",
+    "tone": "therapeutic",
+    "evidence": [
+      "https://preventielijn.offlimits.nl"
+    ]
+  },
+  {
+    "id": "help-en-1",
+    "category": "help",
+    "lang": "en",
+    "text": "Anonymous and free help is available. Call the Offlimits prevention line: 0800 266 64 36. You can also chat at preventielijn.offlimits.nl. The service is anonymous and confidential.",
+    "tone": "therapeutic",
+    "evidence": [
+      "https://preventielijn.offlimits.nl"
+    ]
+  },
+  {
+    "id": "help-nl-2",
+    "category": "help",
+    "lang": "nl",
+    "text": "U bent niet de enige die hiermee worstelt. Er zijn mensen die u kunnen helpen, vandaag nog, anoniem en zonder oordeel.",
+    "tone": "therapeutic",
+    "evidence": [
+      "https://www.suojellaanlapsia.fi/en/post/tmat-csam-perpetrator-research-report"
+    ]
+  },
+  {
+    "id": "help-en-2",
+    "category": "help",
+    "lang": "en",
+    "text": "You are not the only one struggling with this. There are people who can help you, today, anonymously and without judgement.",
+    "tone": "therapeutic",
+    "evidence": [
+      "https://www.suojellaanlapsia.fi/en/post/tmat-csam-perpetrator-research-report"
+    ]
+  },
+  {
+    "id": "self-efficacy-nl-1",
+    "category": "self_efficacy",
+    "lang": "nl",
+    "text": "Stoppen is mogelijk. Onderzoek laat zien dat mensen die hulp zoeken hun gedrag kunnen veranderen. De eerste stap is nu te zetten.",
+    "tone": "therapeutic",
+    "evidence": [
+      "https://news.ki.se/reduced-use-of-child-sexual-abuse-material-after-online-cbt"
+    ]
+  },
+  {
+    "id": "self-efficacy-en-1",
+    "category": "self_efficacy",
+    "lang": "en",
+    "text": "Stopping is possible. Research shows that people who seek help can change their behaviour. The first step can be taken now.",
+    "tone": "therapeutic",
+    "evidence": [
+      "https://news.ki.se/reduced-use-of-child-sexual-abuse-material-after-online-cbt"
+    ]
+  },
+  {
+    "id": "self-efficacy-nl-2",
+    "category": "self_efficacy",
+    "lang": "nl",
+    "text": "In een groot onderzoek gaf de helft van de ondervraagden aan te willen stoppen. Slechts 3% had ooit hulp ontvangen. Die hulp bestaat wel degelijk.",
+    "tone": "therapeutic",
+    "evidence": [
+      "https://www.suojellaanlapsia.fi/en/redirection"
+    ]
+  },
+  {
+    "id": "self-efficacy-en-2",
+    "category": "self_efficacy",
+    "lang": "en",
+    "text": "In a large survey, about half of respondents said they want to stop. Only 3% reported having received help. That help does exist.",
+    "tone": "therapeutic",
+    "evidence": [
+      "https://www.suojellaanlapsia.fi/en/redirection"
+    ]
+  },
+  {
+    "id": "confidentiality-nl-1",
+    "category": "confidentiality",
+    "lang": "nl",
+    "text": "De Preventielijn van Offlimits is anoniem. U hoeft uw naam niet te noemen. Er wordt niets gemeld aan politie of justitie.",
+    "tone": "therapeutic",
+    "evidence": [
+      "https://preventielijn.offlimits.nl"
+    ]
+  },
+  {
+    "id": "confidentiality-en-1",
+    "category": "confidentiality",
+    "lang": "en",
+    "text": "The Offlimits prevention line is anonymous. You do not have to give your name. Nothing is reported to police or the justice system.",
+    "tone": "therapeutic",
+    "evidence": [
+      "https://preventielijn.offlimits.nl"
+    ]
+  },
+  {
+    "id": "confidentiality-nl-2",
+    "category": "confidentiality",
+    "lang": "nl",
+    "text": "In Nederland is de preventielijn gebouwd op vertrouwelijkheid. In Duitsland beschermt het medisch beroepsgeheim (paragraaf 203 StGB) de gesprekken bij Kein Täter werden.",
+    "tone": "therapeutic",
+    "evidence": [
+      "https://preventielijn.offlimits.nl",
+      "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12289709/"
+    ]
+  },
+  {
+    "id": "confidentiality-en-2",
+    "category": "confidentiality",
+    "lang": "en",
+    "text": "In the Netherlands, the prevention line is built on confidentiality. In Germany, medical confidentiality under section 203 of the Penal Code protects conversations at Kein Täter werden.",
+    "tone": "therapeutic",
+    "evidence": [
+      "https://preventielijn.offlimits.nl",
+      "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12289709/"
+    ]
+  }
+]

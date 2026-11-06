@@ -11,6 +11,21 @@
 export const BUCKETS = ['1', '2', '3', '4', '5+'];
 
 export const DEFAULT_CONFIG = Object.freeze({
+  // Interval widens with the count: 10 minutes between the 1st and 2nd
+  // exposure, 6 hours between 2nd and 3rd, then 72 hours — the original value.
+  //
+  // Why this and not a flat 72: the Shift's whole argument is that the FORM
+  // should change as repetition continues (gate -> card -> chat). A flat 72h
+  // window returns `quiet` before the counter is ever consulted, so the first
+  // form repeats and the argument never runs. That showed up only in a real
+  // browser — five triggers in two seconds produced gate,quiet,quiet,quiet,quiet
+  // (docs/06-organiser-repos.md).
+  //
+  // Why it is safe: a person who opens a platform twice in ten minutes gets the
+  // second form, which is the behaviour we want. A daily user still sees one
+  // intervention every three days after the third exposure — the anti-nagging
+  // rule is unchanged where nagging would actually happen. See docs/07.
+  intervalHours: Object.freeze([0, 10 / 60, 6, 72]),
   minIntervalHours: 72,
   gateUntil: 2,
   chatFrom: 5,
@@ -22,6 +37,14 @@ export const DEFAULT_CONFIG = Object.freeze({
     quiet: 'harm',
   }),
 });
+
+/** Hours that must pass before exposure n+1 is shown at full strength. */
+export function intervalFor(n, cfg = DEFAULT_CONFIG) {
+  const table = cfg.intervalHours;
+  if (!Array.isArray(table) || table.length === 0) return cfg.minIntervalHours;
+  // After the table runs out, hold at its final value.
+  return Number(table[Math.min(Math.max(0, Math.floor(n)), table.length - 1)]);
+}
 
 export function bucketOf(n) {
   if (!Number.isFinite(n)) return '1';
@@ -51,13 +74,15 @@ export function pick(state = {}, cfg = DEFAULT_CONFIG, now = Date.now(), opts = 
   const hours = last ? (now - last) / 3.6e6 : Infinity;
 
   // Anti-nagging: inside the re-warning window, degrade rather than repeat loudly.
-  if (hours < cfg.minIntervalHours) {
+  // The window itself widens with exposure count (see DEFAULT_CONFIG.intervalHours).
+  const window = intervalFor(n, cfg);
+  if (hours < window) {
     return {
       state: 'HABITUATED',
       format: 'quiet',
       family: cfg.families.quiet,
       bucket: bucketOf(n),
-      reason: `inside the ${cfg.minIntervalHours}h re-warning interval`,
+      reason: `inside the ${window}h re-warning interval at exposure ${n}`,
     };
   }
 

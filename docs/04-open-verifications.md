@@ -16,7 +16,26 @@
 
 **Ask:** Emma Persson (UNICRI, on site) or the Offlimits prevention line directly. Precisely: *under what circumstances does the preventielijn share information with police or justice, and how is that stated to a caller?*
 
-**Status:** open · blocker
+**Status:** still open, but **downgraded from blocker to confirm-on-site**, 6 Nov.
+
+The organisers' own `data/legal-confidentiality.json` block `confidentiality-nl-1`
+asserts: *"Callers do not need to identify themselves and nothing is reported to
+law enforcement"*, with the basis given as a service-level confidentiality
+guarantee by Offlimits, and exceptions noted as *"No mandatory reporting
+obligation for the prevention line. General duty to report acute danger to
+children applies to all citizens under Dutch law, but this does not extend to
+anonymous helpline conversations."*
+
+That is their assertion with their own source, not ours — which satisfies this
+file's rule that a confidentiality claim must cite a named source, provided our
+copy says **who** asserts it rather than presenting it as established fact. Still
+worth one question to Emma Persson on site, because the phrase "general duty to
+report acute danger" is doing real work and a Dutch juror will know exactly how
+load-bearing it is.
+
+**Ask (unchanged):** Emma Persson (UNICRI, on site) or the preventielijn directly —
+*under what circumstances does the preventielijn share information with police or
+justice, and how is that stated to a caller?*
 
 ### V2 · Whether the prevention line serves English
 
@@ -26,7 +45,26 @@
 
 **Ask:** same contact. *Do you take contacts in English?*
 
-**Status:** open · blocker
+**Status:** still open, but **downgraded from blocker to confirm-on-site**, 6 Nov.
+
+The organisers' own `data/legal-confidentiality.json` block `confidentiality-nl-1`
+asserts: *"Callers do not need to identify themselves and nothing is reported to
+law enforcement"*, with the basis given as a service-level confidentiality
+guarantee by Offlimits, and exceptions noted as *"No mandatory reporting
+obligation for the prevention line. General duty to report acute danger to
+children applies to all citizens under Dutch law, but this does not extend to
+anonymous helpline conversations."*
+
+That is their assertion with their own source, not ours — which satisfies this
+file's rule that a confidentiality claim must cite a named source, provided our
+copy says **who** asserts it rather than presenting it as established fact. Still
+worth one question to Emma Persson on site, because the phrase "general duty to
+report acute danger" is doing real work and a Dutch juror will know exactly how
+load-bearing it is.
+
+**Ask (unchanged):** Emma Persson (UNICRI, on site) or the preventielijn directly —
+*under what circumstances does the preventielijn share information with police or
+justice, and how is that stated to a caller?*
 
 ---
 

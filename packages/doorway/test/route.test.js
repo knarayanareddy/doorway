@@ -28,10 +28,27 @@ test('when a human is needed but unavailable, self-help is offered rather than a
   assert.ok(r.route.id !== 'uk-stopitnow' || r.lang === 'en');
 });
 
-test('confidentiality is never rendered unverified — the honesty gate catches it', () => {
-  const problems = assertHonest(table);
-  assert.ok(problems.length > 0, 'shipped table must still be flagged until V1 closes');
+test('the honesty gate catches a route that claims confidentiality with no basis', () => {
+  // The shipped table now carries a basis on every route that makes a
+  // confidentiality claim (V1 evidence, docs/04), so it passes cleanly. The gate
+  // is tested against a synthetic table — otherwise a passing gate and a broken
+  // gate look identical from here.
+  const unverified = {
+    byLanguage: {
+      nl: { default: { id: 'nl-x', name: 'X', channel: 'phone', capacity: 'human', conf: 'VERIFY' } },
+      en: { default: { id: 'en-x', name: 'Y', channel: 'phone', capacity: 'human' } },
+    },
+  };
+  const problems = assertHonest(unverified);
+  // nl-x carries `conf: 'VERIFY'` → flagged as unverified.
+  // en-x carries no `conf` at all → flagged as a human route with no statement.
+  assert.equal(problems.length, 2, JSON.stringify(problems));
   assert.match(problems.join(), /unverified/);
+  assert.match(problems.join(), /no confidentiality statement/);
+});
+
+test('the shipped table passes the honesty gate', () => {
+  assert.deepEqual(assertHonest(table), [], 'every confidentiality claim must cite a basis');
 });
 
 test('baseLang handles malformed input', () => {

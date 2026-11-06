@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "message-blocks.schema.json",
+  "title": "Message Blocks",
+  "description": "Building blocks for intervention messages in multiple languages.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": { "type": "string" },
+      "category": {
+        "type": "string",
+        "enum": ["legal", "harm", "help", "self_efficacy", "confidentiality"]
+      },
+      "lang": { "type": "string", "description": "BCP 47 language tag" },
+      "text": { "type": "string" },
+      "tone": {
+        "type": "string",
+        "enum": ["deterrent", "therapeutic"]
+      },
+      "evidence": {
+        "type": "array",
+        "items": { "type": "string", "format": "uri" },
+        "description": "Source URLs for the evidence this message is based on"
+      }
+    },
+    "required": ["id", "category", "lang", "text", "tone"],
+    "additionalProperties": false
+  }
+}

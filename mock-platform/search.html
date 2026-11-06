@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zoekresultaten — Kletskoek Forum</title>
+  <link rel="stylesheet" href="/mock-platform/style.css">
+  <link rel="stylesheet" href="/starter-widget/widget.css">
+</head>
+<body>
+  <div class="demo-banner">
+    ⚠ Demo environment — uses fake trigger terms only. See <a href="https://github.com/Hackathon-for-Good-The-Hague/HFG8-UNICRI-Stop-Before-It-Starts/blob/main/SAFETY.md">SAFETY.md</a>
+  </div>
+
+  <header class="site-header">
+    <div class="site-header-inner">
+      <div class="site-title">
+        <a href="/mock-platform/index.html" style="text-decoration:none; color:inherit">Kletskoek Forum</a>
+        <small>De gezelligste hoek van het internet</small>
+      </div>
+      <form class="search-form" id="search-form" action="/mock-platform/search.html" method="get">
+        <input
+          class="search-input"
+          type="search"
+          name="q"
+          id="search-input"
+          placeholder="Zoek op het forum..."
+          aria-label="Search the forum"
+          autocomplete="off"
+        >
+        <button class="search-btn" type="submit">Zoek</button>
+      </form>
+    </div>
+  </header>
+
+  <main class="main-content" style="grid-template-columns: 1fr;">
+    <section class="search-results" id="search-results">
+      <h2>Zoekresultaten voor "<span id="search-query"></span>"</h2>
+
+      <div class="result-item">
+        <a href="#">Geen resultaten gevonden</a>
+        <p>Probeer een andere zoekterm. Dit is een demo-forum met beperkte inhoud.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    Kletskoek Forum is een fictief platform voor Hackathon for Good #8.
+    Dit is geen echt forum. Alle berichten en gebruikers zijn verzonnen.
+  </footer>
+
+  <!-- Show query in page -->
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('q') || '';
+    document.getElementById('search-query').textContent = q;
+    document.getElementById('search-input').value = q;
+  </script>
+
+  <!-- Platform trigger logic -->
+  <script type="module" src="/mock-platform/platform.js"></script>
+
+  <!-- Starter widget — teams: replace this one line with your own module -->
+  <script type="module" src="/starter-widget/widget.js"></script>
+</body>
+</html>

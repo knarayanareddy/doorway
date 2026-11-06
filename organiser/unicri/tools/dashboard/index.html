@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intervention Dashboard — SYNTHETIC DATA</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --accent: #6366f1;
+      --warn: #dc2626;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .banner {
+      background: var(--warn);
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .card h2 { font-size: 1.1rem; margin-bottom: 1rem; color: var(--accent); }
+    .charts { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+    .charts .chart-box { flex: 1 1 480px; min-width: 0; }
+    canvas { width: 100% !important; height: auto !important; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th, td {
+      padding: 0.5rem 0.75rem;
+      text-align: right;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    th { background: #f1f5f9; font-weight: 600; text-align: right; }
+    th:first-child, td:first-child { text-align: left; }
+    .ci-explanation {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    #status { color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem; }
+    #error { color: var(--warn); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="banner">SYNTHETIC DATA ONLY — Not real user data. See SAFETY.md.</div>
+  <h1>Intervention Funnel Dashboard</h1>
+  <p id="status">Loading data...</p>
+  <p id="error"></p>
+
+  <div class="card">
+    <h2>Variant Comparison</h2>
+    <div id="comparison"></div>
+  </div>
+
+  <div class="card">
+    <h2>Funnel Charts</h2>
+    <div class="charts" id="charts"></div>
+  </div>
+
+  <script type="module">
+    import {
+      parseJsonl,
+      aggregateByVariant,
+      renderFunnel,
+      renderComparison,
+    } from './dashboard.js';
+
+    const statusEl = document.getElementById('status');
+    const errorEl = document.getElementById('error');
+
+    try {
+      const resp = await fetch('./generated/traffic.jsonl');
+      if (!resp.ok) throw new Error(`Could not load traffic.jsonl (${resp.status}). Run: node tools/generate-traffic.js`);
+      const text = await resp.text();
+      const events = parseJsonl(text);
+
+      if (events.length === 0) throw new Error('No events found in traffic.jsonl.');
+
+      statusEl.textContent = `Loaded ${events.length} synthetic events.`;
+
+      const byVariant = aggregateByVariant(events);
+
+      // Comparison table
+      renderComparison(document.getElementById('comparison'), byVariant);
+
+      // One funnel chart per variant
+      const chartsEl = document.getElementById('charts');
+      for (const [name, data] of Object.entries(byVariant)) {
+        const box = document.createElement('div');
+        box.className = 'chart-box';
+        const canvas = document.createElement('canvas');
+        box.appendChild(canvas);
+        chartsEl.appendChild(box);
+        renderFunnel(canvas.getContext('2d'), data, name);
+      }
+    } catch (err) {
+      errorEl.textContent = err.message;
+      statusEl.textContent = '';
+    }
+  </script>
+</body>
+</html>

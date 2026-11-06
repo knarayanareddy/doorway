@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kletskoek Forum</title>
+  <link rel="stylesheet" href="/mock-platform/style.css">
+  <link rel="stylesheet" href="./demo-standin.css">
+</head>
+<body>
+  <div class="demo-banner">
+    ⚠ Demo environment — uses fake trigger terms only. See <a href="https://github.com/Hackathon-for-Good-The-Hague/HFG8-UNICRI-Stop-Before-It-Starts/blob/main/SAFETY.md">SAFETY.md</a>
+  </div>
+
+  <header class="site-header">
+    <div class="site-header-inner">
+      <div class="site-title">
+        Kletskoek Forum
+        <small>De gezelligste hoek van het internet</small>
+      </div>
+      <form class="search-form" id="search-form" action="/mock-platform/search.html" method="get">
+        <input
+          class="search-input"
+          type="search"
+          name="q"
+          id="search-input"
+          placeholder="Zoek op het forum..."
+          aria-label="Search the forum"
+          autocomplete="off"
+        >
+        <button class="search-btn" type="submit">Zoek</button>
+      </form>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <section class="thread-list">
+      <h2>Recente berichten</h2>
+
+      <div class="thread">
+        <a class="thread-title" href="#">Beste stamppot recepten voor de winter</a>
+        <div class="thread-meta">geplaatst door <strong>KokKarel</strong> · 14 reacties · 2 uur geleden</div>
+      </div>
+
+      <div class="thread">
+        <a class="thread-title" href="#">Ajax of Feyenoord — de eeuwige discussie</a>
+        <div class="thread-meta">geplaatst door <strong>VoetbalFan010</strong> · 42 reacties · 5 uur geleden</div>
+      </div>
+
+      <div class="thread">
+        <a class="thread-title" href="#">Tips voor fietsen in de regen</a>
+        <div class="thread-meta">geplaatst door <strong>RegenRijder</strong> · 8 reacties · 1 dag geleden</div>
+      </div>
+
+      <div class="thread">
+        <a class="thread-title" href="#">Heeft iemand ervaring met thuiswerken en katten?</a>
+        <div class="thread-meta">geplaatst door <strong>KattenMens</strong> · 23 reacties · 1 dag geleden</div>
+      </div>
+
+      <div class="thread">
+        <a class="thread-title" href="#">Mooiste wandelroutes in Drenthe</a>
+        <div class="thread-meta">geplaatst door <strong>WandelWillem</strong> · 11 reacties · 2 dagen geleden</div>
+      </div>
+
+      <div class="thread">
+        <a class="thread-title" href="#">Boekclub: wat lezen we in december?</a>
+        <div class="thread-meta">geplaatst door <strong>LeesLisa</strong> · 6 reacties · 3 dagen geleden</div>
+      </div>
+    </section>
+
+    <aside class="chat-panel">
+      <h2>💬 Live chat</h2>
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-message"><span class="author">KokKarel:</span> Iemand al boerenkool gemaakt dit seizoen?</div>
+        <div class="chat-message"><span class="author">RegenRijder:</span> Wat een weer vandaag! 🌧️</div>
+        <div class="chat-message"><span class="author">LeesLisa:</span> Heeft iemand het nieuwe boek van Griet Op de Beeck al gelezen?</div>
+      </div>
+      <div class="chat-input-area">
+        <input
+          class="chat-input"
+          type="text"
+          id="chat-input"
+          placeholder="Typ een bericht..."
+          aria-label="Type a chat message"
+        >
+        <button class="chat-send" id="chat-send">Stuur</button>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="site-footer">
+    Kletskoek Forum is een fictief platform voor Hackathon for Good #8.
+    Dit is geen echt forum. Alle berichten en gebruikers zijn verzonnen.
+  </footer>
+
+  <!-- Platform trigger logic -->
+  <script type="module" src="/mock-platform/platform.js"></script>
+
+  <!-- Starter widget — teams: replace this one line with your own module -->
+  <script type="module" src="/packages/doorway/src/sbis-adapter-entry.js"></script>
+</body>
+</html>

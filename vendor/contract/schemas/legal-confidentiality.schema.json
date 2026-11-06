@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "legal-confidentiality.schema.json",
+  "title": "Legal and Confidentiality Information",
+  "description": "Legal consequences and confidentiality rules per country, with sources.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "country": { "type": "string", "description": "ISO 3166-1 alpha-2" },
+      "country_name": { "type": "string" },
+      "legal": {
+        "type": "object",
+        "properties": {
+          "summary_en": { "type": "string" },
+          "summary_nl": { "type": "string" },
+          "articles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "reference": { "type": "string" },
+                "description": { "type": "string" },
+                "max_sentence": { "type": "string" }
+              },
+              "required": ["reference", "description"]
+            }
+          },
+          "source_url": { "type": "string", "format": "uri" }
+        },
+        "required": ["summary_en"]
+      },
+      "confidentiality": {
+        "type": "object",
+        "properties": {
+          "summary_en": { "type": "string" },
+          "basis": { "type": "string", "description": "Legal basis for confidentiality" },
+          "exceptions": { "type": "string" },
+          "source_url": { "type": "string", "format": "uri" }
+        },
+        "required": ["summary_en"]
+      },
+      "verify_flags": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Items that still need verification"
+      }
+    },
+    "required": ["country", "country_name", "legal", "confidentiality"],
+    "additionalProperties": false
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "trigger-event.schema.json",
+  "title": "Trigger Event",
+  "description": "Event emitted by a platform when a fake trigger term is detected. In the mock platform this is fired via fake-triggers.json; in a real integration the platform would fire this from its own detection logic.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "term": {
+        "type": "string",
+        "pattern": "^test-trigger-",
+        "description": "The trigger term. Must start with test-trigger- (safety rule 1)."
+      },
+      "severity": {
+        "type": "string",
+        "enum": ["low", "medium", "high"],
+        "description": "How urgently the warning should interrupt. low = subtle info link, medium = sidebar panel, high = full interstitial."
+      },
+      "type": {
+        "type": "string",
+        "enum": ["search", "chat", "navigation"],
+        "description": "How the trigger was detected: a search query, a chat message, or a navigation attempt."
+      }
+    },
+    "required": ["term", "severity", "type"],
+    "additionalProperties": false
+  }
+}

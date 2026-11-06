@@ -1,0 +1,4 @@
+/* Placeholder for the organisers' /starter-widget/widget.css, which we do not
+   vendor — Doorway renders inside a shadow root and brings its own styles.
+   This file exists only so the mock platform's stylesheet link resolves.
+   Empty on purpose. */

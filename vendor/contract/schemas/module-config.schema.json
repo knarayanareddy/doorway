@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "module-config.schema.json",
+  "title": "Module Configuration",
+  "description": "Configuration passed to an intervention module. Tells the module which country, language, message variant, and help services to use.",
+  "type": "object",
+  "properties": {
+    "country": {
+      "type": "string",
+      "description": "ISO 3166-1 alpha-2 country code (e.g. NL, DE, GB)."
+    },
+    "language": {
+      "type": "string",
+      "description": "BCP 47 language tag (e.g. nl, en, de). Typically from navigator.language."
+    },
+    "variant": {
+      "type": "string",
+      "description": "A/B test variant identifier (e.g. 'control', 'deterrent', 'therapeutic')."
+    },
+    "tone": {
+      "type": "string",
+      "enum": ["deterrent", "therapeutic", "mixed"],
+      "description": "Overall tone of the intervention: deterrent (legal consequences), therapeutic (help exists), or mixed."
+    },
+    "helpServices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "url": { "type": "string", "format": "uri" },
+          "phone": { "type": "string" },
+          "country": { "type": "string" },
+          "channels": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["phone", "chat", "email", "web", "self-help"] }
+          }
+        },
+        "required": ["id", "name", "url", "country"]
+      },
+      "description": "Help services to show for the configured country."
+    },
+    "messageBlocks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "category": { "type": "string" },
+          "text": { "type": "string" }
+        },
+        "required": ["id", "category", "text"]
+      },
+      "description": "Message blocks to display, filtered for the configured language and tone."
+    }
+  },
+  "required": ["country", "language"],
+  "additionalProperties": true
+}

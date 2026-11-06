@@ -33,8 +33,28 @@ function walk(dir) {
   }
 }
 
+/**
+ * Strip comments before scanning.
+ *
+ * A comment that *names* a forbidden identifier is documentation, not a
+ * vulnerability — and our own threat model requires us to write down what we
+ * refuse. Scanning raw source flagged three prose mentions of `sessionScopedId`
+ * in the adapter's header while the adapter reads only two fields.
+ *
+ * This is deliberately conservative: block comments are removed properly, line
+ * comments only when nothing precedes them on the line, and strings are left
+ * untouched so `'sessionScopedId'` in real code is still caught.
+ */
+function stripComments(src) {
+  const noBlock = src.replace(/\/\*[\s\S]*?\*\//g, '');
+  return noBlock
+    .split('\n')
+    .map((line) => (/^\s*\/\//.test(line) ? '' : line.replace(/(^|[^:])\/\/.*$/, '$1')))
+    .join('\n');
+}
+
 function check(p) {
-  const src = fs.readFileSync(p, 'utf8');
+  const src = stripComments(fs.readFileSync(p, 'utf8'));
   const rel = path.relative(ROOT, p);
 
   for (const { re, why } of FORBIDDEN) {

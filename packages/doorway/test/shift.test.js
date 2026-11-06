@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pick, advance, bucketOf, variantFor, DEFAULT_CONFIG } from '../../core/src/shift.js';
+import { pick, advance, bucketOf, variantFor, intervalFor, DEFAULT_CONFIG } from '../../core/src/shift.js';
 
 const H = 3.6e6;
 const T0 = 1_760_000_000_000;
@@ -45,4 +45,64 @@ test('variant rotation avoids repeating what was just shown', () => {
   assert.equal(variantFor('legal', []), 'legal-01');
   assert.equal(variantFor('legal', ['legal-01']), 'legal-02');
   assert.notEqual(variantFor('legal', ['legal-01', 'legal-02']), 'legal-01');
+});
+
+// ── Acceptance test #3, as it is actually written in README.md ──────────────
+// "Five consecutive triggers produce five visibly different responses."
+//
+// The first browser run returned gate,quiet,quiet,quiet,quiet. That was correct
+// behaviour for five triggers two seconds apart — a flat 72h window — but it
+// meant the Shift's central claim never ran. Two changes close it:
+//   1. the interval widens with the count, so exposures 1->2 and 2->3 are
+//      reachable inside one session (DEFAULT_CONFIG.intervalHours);
+//   2. "visibly different" is read as response, not format — variant rotation
+//      within a family is the mechanism, and there are only four formats.
+test('acceptance #3: five exposures at realistic gaps produce five distinct responses', () => {
+  let st = {};
+  let t = Date.now();
+  const responses = [];
+  for (const gap of [0, 10 * 60e3, 7 * H, 96 * H, 96 * H]) {
+    t += gap;
+    const d = pick(st, DEFAULT_CONFIG, t);
+    const v = d.format === 'quiet' ? null : variantFor(d.family, st.seen || []);
+    responses.push(d.format + (v ? '/' + v : ''));
+    st = advance(st, v, t);
+  }
+  assert.equal(responses.length, 5);
+  assert.equal(new Set(responses).size, 5, `expected 5 distinct, got ${JSON.stringify(responses)}`);
+});
+
+test('acceptance #3 guard: five triggers two seconds apart cannot be five responses', () => {
+  // This is the honest limit, and it must be stated rather than discovered live.
+  // Nobody sees five interventions in two seconds unless they are being tested.
+  let st = {};
+  const t0 = Date.now();
+  const forms = [];
+  for (let i = 0; i < 5; i++) {
+    const d = pick(st, DEFAULT_CONFIG, t0 + i * 2000);
+    forms.push(d.format);
+    st = advance(st, null, t0 + i * 2000);
+  }
+  assert.deepEqual(forms, ['gate', 'quiet', 'quiet', 'quiet', 'quiet'],
+    'a burst is exactly what the anti-nagging rule exists to absorb');
+});
+
+test('the interval widens with the count, so early repetition is reachable', () => {
+  // intervalFor(n) is the wait BEFORE exposure n+1.
+  assert.equal(intervalFor(0), 0, 'the first exposure is never refused');
+  assert.equal(intervalFor(1), 10 / 60, 'a second look ten minutes later is a returning user');
+  assert.equal(intervalFor(2), 6);
+  assert.equal(intervalFor(3), 72, 'by the fourth exposure we are back to the original restraint');
+  assert.equal(intervalFor(99), 72, 'holds at the last value rather than growing without bound');
+});
+
+test('a daily user is still not nagged', () => {
+  // By the seventh exposure the window is back to 72h and stays there.
+  assert.equal(pick({ n: 6, last: Date.now() - 20 * H }, DEFAULT_CONFIG, Date.now()).format, 'quiet',
+    '20h after a late exposure is still inside the 72h window');
+  assert.equal(pick({ n: 6, last: Date.now() - 80 * H }, DEFAULT_CONFIG, Date.now()).format, 'chat',
+    'past the window the persistent form returns');
+  // And the widening never shortens the late-stage window.
+  const windows = [3, 10, 50].map((n) => intervalFor(n));
+  assert.deepEqual(windows, [72, 72, 72]);
 });

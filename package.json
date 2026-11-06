@@ -16,9 +16,11 @@
     "test:core": "node --test packages/shared/core.test.js",
     "gate:privacy": "node scripts/gate-privacy.mjs",
     "lint:copy": "node scripts/lint-copy.mjs",
-    "verify": "node scripts/check-spine.mjs && npm run test && npm run gate:privacy && npm run lint:copy",
-    "build": "node scripts/build.mjs",
-    "check:spine": "node scripts/check-spine.mjs"
+    "verify": "node scripts/check-spine.mjs && node scripts/check-safety.mjs && npm run test && npm run gate:privacy && npm run lint:copy",
+    "check:spine": "node scripts/check-spine.mjs",
+    "e2e": "node scripts/e2e-mock.mjs",
+    "check": "node scripts/check-safety.mjs",
+    "vendor:verify": "shasum -a 256 -c vendor/MANIFEST.sha256"
   },
   "devDependencies": {}
 }

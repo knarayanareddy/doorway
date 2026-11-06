@@ -52,7 +52,7 @@ npx wrangler deploy edge/c.js
 
 1. **A non-developer installs it in under fifteen minutes**, on camera, no documentation.
 2. **The network panel shows eight fields and zero cookies.** Run the demo, open DevTools.
-3. **Five consecutive triggers produce five visibly different responses.**
+3. **Five consecutive triggers produce five visibly different responses.** ✅ Verified in Chromium: `gate/legal-01 → gate/legal-02 → card/harm-01 → card/harm-02 → chat/control-01` at realistic gaps. A burst of five in two seconds is absorbed to the quiet form by design (`docs/06`).
 
 ---
 
@@ -69,3 +69,18 @@ If CI is green, the privacy claim in `docs/02-threat-model.md` is mechanically t
 ## The one thing still blocking a ship
 
 `docs/04-open-verifications.md` **V1** — the Dutch confidentiality wording is unverified. `assertHonest()` will keep flagging it until it is closed, and the copy lint will not let it render.
+
+---
+
+## Anonymity model — built 6 Nov, in the ACAPS repo
+
+The gap was found reading ACAPS' rubric (three Must Haves, the second being
+expert-controlled anonymity) and it was filed here, in the wrong repo. Doorway
+has no experts: it warns a person and offers a route. The panel, the experts and
+the anonymity choice all live in **Benchmark**.
+
+It is now implemented there: `packages/core/src/anonymity.js` —
+three levels with the copy the expert actually reads, attribution that removes
+rather than blanks, a warning for the small-panel re-identification risk, and
+public suppression at n<10. Held by `npm run gate:anonymity` in CI and 15 tests.
+

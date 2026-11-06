@@ -2,10 +2,11 @@
 
 A free, self-serve install that turns on the detection tools a small platform would never find, puts a gate in front of the search rather than a banner beside it, changes shape every time it fires, and hands the person to the right help service in the right language — without the platform, or anyone else, learning who they are.
 
-**Status: runnable scaffold, not a product.** The pure core, the shared spine, the privacy gates and 37 tests are real and green. The interface layer is not built — see `BUILD.md` for exactly what exists and what does not, and `docs/03-the-gap-to-real.md` for what stands between this and a product.
+**Status: runnable scaffold, not a product.** The pure core, the shared spine, the privacy gates, the plug-in adapter and 55 tests are real and green. The interface layer is not built — see `BUILD.md` for exactly what exists and what does not, and `docs/03-the-gap-to-real.md` for what stands between this and a product.
 
 ```bash
-npm run verify     # 37 tests, privacy gate, copy lint — all green
+npm run verify     # 55 tests, spine check, safety check, privacy gate, copy lint — all green
+npm run e2e        # the mock platform in a real browser (needs Chromium)
 ```
 
 ---
@@ -37,7 +38,7 @@ npm run verify     # 37 tests, privacy gate, copy lint — all green
 
 1. A non-developer can install it in under fifteen minutes, on camera, without documentation.
 2. The network panel shows eight fields and zero cookies.
-3. Five consecutive triggers produce five visibly different responses.
+3. Five consecutive triggers produce five visibly different responses — **verified**: five spaced exposures yield `gate/legal-01`, `gate/legal-02`, `card/harm-01`, `card/harm-02`, `chat/control-01` in a real browser. Five triggers two seconds apart collapse to the quiet form, which is the anti-nagging rule doing its job; `npm run e2e` asserts both.
 4. The confidentiality copy cites a source you can name.
 5. Somebody can answer "does it work?" without flinching. The answer is *not proven, and nobody's is.*
 

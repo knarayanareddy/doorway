@@ -1,0 +1,182 @@
+/*
+ * Starter widget styles — Stop Before It Starts
+ *
+ * This is intentionally plain. Teams are expected to improve the design.
+ * All styles are scoped under .sbis-widget to avoid conflicts.
+ *
+ * Accessibility: WCAG AA contrast, focus states, reduced motion support.
+ */
+
+/* Overlay backdrop */
+.sbis-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+/* Main dialog */
+.sbis-widget {
+  --sbis-bg: #ffffff;
+  --sbis-text: #1a1a1a;
+  --sbis-text-muted: #555555;
+  --sbis-accent: #b71c1c;
+  --sbis-help-bg: #e8f5e9;
+  --sbis-help-accent: #2e7d32;
+  --sbis-border: #dddddd;
+  --sbis-radius: 8px;
+
+  background: var(--sbis-bg);
+  color: var(--sbis-text);
+  border-radius: var(--sbis-radius);
+  max-width: 520px;
+  width: 100%;
+  padding: 32px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+  .sbis-widget {
+    --sbis-bg: #1a1a1a;
+    --sbis-text: #e0e0e0;
+    --sbis-text-muted: #aaaaaa;
+    --sbis-border: #444444;
+    --sbis-help-bg: #1b3d1b;
+  }
+}
+
+/* Warning icon and heading */
+.sbis-widget__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.sbis-widget__icon {
+  font-size: 32px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.sbis-widget__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--sbis-accent);
+  margin: 0;
+}
+
+/* Message blocks */
+.sbis-widget__message {
+  margin-bottom: 12px;
+  font-size: 15px;
+}
+
+.sbis-widget__message--legal {
+  font-weight: 600;
+}
+
+/* Help section */
+.sbis-widget__help {
+  background: var(--sbis-help-bg);
+  border-radius: var(--sbis-radius);
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.sbis-widget__help-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--sbis-help-accent);
+  margin-bottom: 8px;
+}
+
+.sbis-widget__help-service {
+  margin-bottom: 8px;
+}
+
+.sbis-widget__help-link {
+  display: inline-block;
+  background: var(--sbis-help-accent);
+  color: #ffffff;
+  text-decoration: none;
+  padding: 10px 20px;
+  border-radius: var(--sbis-radius);
+  font-size: 15px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.sbis-widget__help-link:hover,
+.sbis-widget__help-link:focus {
+  opacity: 0.9;
+  outline: 2px solid var(--sbis-help-accent);
+  outline-offset: 2px;
+}
+
+.sbis-widget__phone {
+  font-size: 14px;
+  color: var(--sbis-text-muted);
+  margin-top: 4px;
+}
+
+/* Actions */
+.sbis-widget__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--sbis-border);
+}
+
+.sbis-widget__dismiss {
+  background: none;
+  border: 1px solid var(--sbis-border);
+  color: var(--sbis-text-muted);
+  padding: 8px 16px;
+  border-radius: var(--sbis-radius);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.sbis-widget__dismiss:hover,
+.sbis-widget__dismiss:focus {
+  border-color: var(--sbis-text-muted);
+  outline: 2px solid var(--sbis-text-muted);
+  outline-offset: 2px;
+}
+
+/* Focus trap: all interactive elements need visible focus */
+.sbis-widget *:focus-visible {
+  outline: 2px solid var(--sbis-help-accent);
+  outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .sbis-overlay,
+  .sbis-widget {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* Screen reader only */
+.sbis-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

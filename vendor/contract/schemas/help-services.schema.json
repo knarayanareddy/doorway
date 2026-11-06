@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "help-services.schema.json",
+  "title": "Help Services",
+  "description": "Directory of help services that the widget can route people to.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": { "type": "string" },
+      "name": { "type": "string" },
+      "country": { "type": "string", "description": "ISO 3166-1 alpha-2" },
+      "languages": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "BCP 47 language tags this service supports"
+      },
+      "phone": { "type": ["string", "null"] },
+      "url": { "type": "string", "format": "uri" },
+      "channels": {
+        "type": "array",
+        "items": { "type": "string", "enum": ["phone", "chat", "email", "web", "self-help"] }
+      },
+      "audience": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Who this service is for, e.g. 'self', 'partner', 'family', 'professional'"
+      },
+      "confidentiality_note": { "type": "string" },
+      "source_url": { "type": "string", "format": "uri" },
+      "verified": { "type": "boolean" }
+    },
+    "required": ["id", "name", "country", "url", "verified"],
+    "additionalProperties": false
+  }
+}

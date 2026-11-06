@@ -1,0 +1,41 @@
+{
+  "_why": "Reimplements the organisers' tools/check-safety.js contract so `npm run check` works with zero dependencies. Theirs needs Ajv; ours validates the two things that actually matter and refuses to grow a dependency tree.",
+  "triggerPrefix": "test-trigger-",
+  "allowedTriggerFiles": [
+    "mock-platform/fake-triggers.json"
+  ],
+  "forbiddenFilenamePatterns": [
+    "trigger",
+    "terms",
+    "keyword",
+    "keywords",
+    "blocklist",
+    "denylist",
+    "watchlist"
+  ],
+  "scanExtensions": [
+    ".js",
+    ".mjs",
+    ".json",
+    ".html",
+    ".md",
+    ".yml",
+    ".php",
+    ".txt",
+    ".csv"
+  ],
+  "skipDirs": [
+    "node_modules",
+    ".git",
+    "vendor",
+    "docs",
+    "research",
+    "design",
+    "planning",
+    "mockups"
+  ],
+  "notes": [
+    "No real abuse-related search terms may appear anywhere in this repo, ever - including examples, tests, fixtures and comments.",
+    "A file whose name looks like a trigger/keyword list is a fail unless it is in allowedTriggerFiles, even if its contents are innocuous."
+  ]
+}

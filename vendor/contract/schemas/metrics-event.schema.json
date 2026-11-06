@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "metrics-event.schema.json",
+  "title": "Metrics Event",
+  "description": "Aggregate metrics for a time period. Contains only counters — no individual identifiers. Counts below 10 are suppressed to protect privacy.",
+  "type": "object",
+  "properties": {
+    "period": {
+      "type": "object",
+      "properties": {
+        "start": { "type": "string", "format": "date-time" },
+        "end": { "type": "string", "format": "date-time" }
+      },
+      "required": ["start", "end"],
+      "description": "The time period these metrics cover."
+    },
+    "variantId": {
+      "type": "string",
+      "description": "Which A/B variant these counts belong to."
+    },
+    "counts": {
+      "type": "object",
+      "properties": {
+        "triggers": { "type": ["integer", "null"], "minimum": 0 },
+        "shown": { "type": ["integer", "null"], "minimum": 0 },
+        "dismissed": { "type": ["integer", "null"], "minimum": 0 },
+        "clicked_help": { "type": ["integer", "null"], "minimum": 0 },
+        "left_page": { "type": ["integer", "null"], "minimum": 0 },
+        "continued": { "type": ["integer", "null"], "minimum": 0 },
+        "timeout": { "type": ["integer", "null"], "minimum": 0 }
+      },
+      "description": "Aggregate counters for each outcome. Any count below 10 should be reported as null or omitted (small-count suppression)."
+    },
+    "suppressedSmallCounts": {
+      "type": "boolean",
+      "description": "True if any counts in this event were suppressed because they fell below the minimum threshold (10)."
+    }
+  },
+  "required": ["period", "counts"],
+  "additionalProperties": true
+}

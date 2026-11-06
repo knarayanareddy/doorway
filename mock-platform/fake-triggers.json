@@ -1,0 +1,37 @@
+[
+  {
+    "term": "test-trigger-red",
+    "severity": "high",
+    "type": "search"
+  },
+  {
+    "term": "test-trigger-red-alpha",
+    "severity": "high",
+    "type": "search"
+  },
+  {
+    "term": "test-trigger-red-chat",
+    "severity": "high",
+    "type": "chat"
+  },
+  {
+    "term": "test-trigger-amber",
+    "severity": "medium",
+    "type": "search"
+  },
+  {
+    "term": "test-trigger-amber-chat",
+    "severity": "medium",
+    "type": "chat"
+  },
+  {
+    "term": "test-trigger-green",
+    "severity": "low",
+    "type": "search"
+  },
+  {
+    "term": "test-trigger-green-info",
+    "severity": "low",
+    "type": "navigation"
+  }
+]

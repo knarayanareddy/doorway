@@ -1,0 +1,74 @@
+[
+  {
+    "country": "NL",
+    "country_name": "Netherlands",
+    "legal": {
+      "summary_en": "Since 1 July 2024, child sexual abuse material falls under article 252 of the Dutch Criminal Code (Wetboek van Strafrecht), formerly article 240b. Maximum sentence is 6 years. Up to 9 years when done habitually or professionally (article 254). Viewing online is covered because gaining access is criminalised.",
+      "summary_nl": "Sinds 1 juli 2024 valt materiaal van seksueel kindermisbruik onder artikel 252 van het Wetboek van Strafrecht (voorheen artikel 240b). De maximumstraf is 6 jaar gevangenisstraf. Bij gewoonte of beroepsmatig plegen kan de straf oplopen tot 9 jaar (artikel 254). Ook het online bekijken valt hieronder, omdat het zich toegang verschaffen strafbaar is.",
+      "articles": [
+        {
+          "reference": "Artikel 252 Wetboek van Strafrecht",
+          "description": "Criminalises distributing, offering, publicly displaying, manufacturing, importing, transporting, exporting, acquiring, possessing and accessing child sexual abuse material.",
+          "max_sentence": "6 years imprisonment or fifth-category fine"
+        },
+        {
+          "reference": "Artikel 254 lid 1 sub c Wetboek van Strafrecht",
+          "description": "Increases the maximum sentence by 3 years when the offence is committed habitually or professionally.",
+          "max_sentence": "9 years imprisonment (6 + 3)"
+        }
+      ],
+      "source_url": "https://www.om.nl/onderwerpen/beleidsregels/aanwijzingen/jeugd---gezin---zeden/aanwijzing-kinderpornografie-2024a006"
+    },
+    "confidentiality": {
+      "summary_en": "The anonymous prevention line of Offlimits is built on confidentiality. Callers do not need to identify themselves and nothing is reported to law enforcement.",
+      "basis": "Service-level confidentiality guarantee by Offlimits (formerly Stop it Now Nederland)",
+      "exceptions": "No mandatory reporting obligation for the prevention line. General duty to report acute danger to children applies to all citizens under Dutch law, but this does not extend to anonymous helpline conversations.",
+      "source_url": "https://preventielijn.offlimits.nl"
+    },
+    "verify_flags": []
+  },
+  {
+    "country": "DE",
+    "country_name": "Germany",
+    "legal": {
+      "summary_en": "The Dunkelfeld / Kein Täter werden programme provides free, confidential therapy for people who are sexually attracted to children and want help. Treatment is protected by medical confidentiality under section 203 of the German Penal Code (StGB).",
+      "articles": [
+        {
+          "reference": "Section 203 Strafgesetzbuch (StGB)",
+          "description": "Medical confidentiality: therapists may not disclose information shared in treatment without consent, with narrow exceptions for acute danger (section 34 StGB)."
+        }
+      ],
+      "source_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12289709/"
+    },
+    "confidentiality": {
+      "summary_en": "The Dunkelfeld programme relies on medical confidentiality under section 203 of the German Penal Code. Therapists may only break confidentiality when there is acute danger of serious crimes (section 34 StGB justification).",
+      "basis": "Section 203 StGB (medical confidentiality)",
+      "exceptions": "Section 34 StGB allows breaking confidentiality to prevent acute danger of serious crimes. The threshold is high and rarely met in therapeutic settings.",
+      "source_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12289709/"
+    },
+    "verify_flags": []
+  },
+  {
+    "country": "GB",
+    "country_name": "United Kingdom (England)",
+    "legal": {
+      "summary_en": "The Crime and Policing Act 2026 created a mandatory reporting duty for people in regulated activity with children. The Act received Royal Assent on 29 April 2026. Implementation guidance is still to come.",
+      "articles": [
+        {
+          "reference": "Crime and Policing Act 2026",
+          "description": "Creates a statutory duty for individuals in regulated activity with children to report child sexual abuse. Failure to report may result in referral to the Disclosure and Barring Service. Preventing someone from reporting is a criminal offence."
+        }
+      ],
+      "source_url": "https://learning.nspcc.org.uk/news/2026/may/mandatory-reporting-child-sexual-abuse-england"
+    },
+    "confidentiality": {
+      "summary_en": "England is moving towards mandatory reporting for people in regulated activity with children. Implementation guidance is still pending. It is not yet clear how this affects therapists treating adults who disclose viewing CSAM.",
+      "basis": "Crime and Policing Act 2026 (mandatory reporting in regulated activity)",
+      "exceptions": "The duty applies to those in regulated activity with children. Whether and how it applies to therapists treating adults is not yet specified in implementation guidance.",
+      "source_url": "https://learning.nspcc.org.uk/news/2026/may/mandatory-reporting-child-sexual-abuse-england"
+    },
+    "verify_flags": [
+      "VERIFY: how mandatory reporting under the Crime and Policing Act 2026 applies to therapists treating adults who disclose viewing CSAM"
+    ]
+  }
+]

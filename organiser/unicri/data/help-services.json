@@ -1,0 +1,67 @@
+[
+  {
+    "id": "offlimits-preventielijn",
+    "name": "Preventielijn van Offlimits",
+    "country": "NL",
+    "languages": ["nl"],
+    "phone": "0800 266 64 36",
+    "url": "https://preventielijn.offlimits.nl",
+    "channels": ["phone", "chat"],
+    "audience": ["self", "partner", "family", "professional"],
+    "confidentiality_note": "Anonymous and free. Formerly known as Stop it Now Nederland. Also supports partners, family members and professionals.",
+    "source_url": "https://preventielijn.offlimits.nl",
+    "verified": true
+  },
+  {
+    "id": "stoppen-is-mogelijk",
+    "name": "Stoppen is mogelijk",
+    "country": "NL",
+    "languages": ["nl"],
+    "phone": null,
+    "url": "https://stoppen-is-mogelijk.eu",
+    "channels": ["self-help", "web"],
+    "audience": ["self"],
+    "confidentiality_note": "Anonymous self-help module for people worried about their viewing behaviour. Also available in Flanders.",
+    "source_url": "https://stoppen-is-mogelijk.eu",
+    "verified": true
+  },
+  {
+    "id": "stopitnow-uk",
+    "name": "Stop It Now UK and Ireland",
+    "country": "GB",
+    "languages": ["en"],
+    "phone": "0808 1000 900",
+    "url": "https://www.stopitnow.org.uk",
+    "channels": ["phone", "chat", "email", "web"],
+    "audience": ["self", "partner", "family", "professional"],
+    "confidentiality_note": "Confidential helpline run by the Lucy Faithfull Foundation.",
+    "source_url": "https://www.stopitnow.org.uk",
+    "verified": true
+  },
+  {
+    "id": "redirection",
+    "name": "ReDirection",
+    "country": "FI",
+    "languages": ["en", "fi", "sv", "de", "fr", "es"],
+    "phone": null,
+    "url": "https://www.suojellaanlapsia.fi/en/redirection",
+    "channels": ["self-help", "web"],
+    "audience": ["self"],
+    "confidentiality_note": "Anonymous multilingual self-help programme by Protect Children (Finland).",
+    "source_url": "https://www.suojellaanlapsia.fi/en/redirection",
+    "verified": false
+  },
+  {
+    "id": "kein-taeter-werden",
+    "name": "Kein Täter werden / Dunkelfeld",
+    "country": "DE",
+    "languages": ["de"],
+    "phone": null,
+    "url": "https://www.kein-taeter-werden.de/",
+    "channels": ["web"],
+    "audience": ["self"],
+    "confidentiality_note": "Free, confidential therapy. Based on medical confidentiality under section 203 of the German Penal Code (StGB).",
+    "source_url": "https://eucpn.org/document/german-project-prevention-project-dunkelfeld-ppd",
+    "verified": false
+  }
+]
