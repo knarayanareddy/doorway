@@ -1,0 +1,52 @@
+{
+  "version": "2026.11.06",
+  "sig": "PLACEHOLDER-NOT-SIGNED",
+  "byLanguage": {
+    "nl": {
+      "default": {
+        "id": "nl-offlimits",
+        "name": "Offlimits preventielijn (voorheen Stop it Now)",
+        "channel": "chat",
+        "capacity": "human",
+        "languages": ["nl"],
+        "hours": "Mo-Fr 09:00-22:00; Sa-Su 09:30-18:00",
+        "phone": "0800 266 64 36",
+        "url": "https://offlimits.nl/?src=doorway",
+        "conf": "VERIFY — see docs/04-open-verifications.md V1 before rendering"
+      },
+      "alternatives": [
+        {
+          "id": "nl-stoppen",
+          "name": "Stoppen is mogelijk",
+          "channel": "selfhelp",
+          "capacity": "selfhelp",
+          "languages": ["nl"],
+          "url": "https://www.stoppenismogelijk.nl/?src=doorway"
+        }
+      ]
+    },
+    "en": {
+      "default": {
+        "id": "fi-redirection",
+        "name": "ReDirection (Protect Children)",
+        "channel": "selfhelp",
+        "capacity": "selfhelp",
+        "languages": ["en", "fi", "sv", "de", "fr", "es"],
+        "url": "https://www.redirection.fi/?src=doorway"
+      },
+      "alternatives": [
+        {
+          "id": "uk-stopitnow",
+          "name": "Stop It Now! UK & Ireland",
+          "channel": "phone",
+          "capacity": "human",
+          "languages": ["en"],
+          "phone": "0808 1000 900",
+          "url": "https://www.stopitnow.org.uk/?src=doorway",
+          "conf": "VERIFY — UK reporting duty under the Crime and Policing Act 2026; guidance pending"
+        }
+      ]
+    }
+  },
+  "selfHelpAlways": ["nl-stoppen", "fi-redirection"]
+}

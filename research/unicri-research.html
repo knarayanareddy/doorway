@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stop Before It Starts — Full Research Dossier</title>
+<style>
+  :root{
+    --paper:#faf8f4; --panel:#fff; --ink:#1b1a18; --muted:#6d665e; --faint:#9a938a;
+    --rule:#e2ddd4; --rule2:#d2cbc0;
+    --ev:#1a6b4f; --ev-bg:#eaf3ee;
+    --warn:#a8541a; --warn-bg:#fbeee2;
+    --danger:#9b2226; --danger-bg:#f9e7e7;
+    --blue:#1f4e79; --blue-bg:#e8eff5;
+    --purple:#5b3a7e; --purple-bg:#f0eaf6;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:16px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 28px 120px}
+  h1,h2,h3,h4{font-family:Georgia,"Iowan Old Style","Times New Roman",serif;font-weight:600;line-height:1.2;letter-spacing:-.01em}
+  a{color:var(--blue);text-decoration:none;border-bottom:1px solid #c3d3e0}
+  a:hover{border-bottom-color:var(--blue)}
+
+  .masthead{padding:64px 0 40px;border-bottom:2px solid var(--ink);margin-bottom:8px}
+  .kicker{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:18px}
+  h1{font-size:clamp(31px,4.3vw,49px);margin:0 0 20px;max-width:22ch}
+  .deck{font-size:19px;line-height:1.55;color:#3d3934;max-width:64ch;margin:0 0 28px}
+  .meta{display:flex;flex-wrap:wrap;gap:26px;font-size:13px;color:var(--muted);border-top:1px solid var(--rule);padding-top:16px}
+  .meta b{color:var(--ink);font-weight:600}
+
+  nav.toc{position:sticky;top:0;z-index:50;background:rgba(250,248,244,.96);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--rule);margin:0 -28px 44px;padding:10px 28px;overflow-x:auto;white-space:nowrap}
+  nav.toc a{display:inline-block;font-size:12px;color:var(--muted);border:none;padding:5px 11px;margin-right:2px;border-radius:4px;font-weight:500}
+  nav.toc a:hover{background:#efeae2;color:var(--ink)}
+  nav.toc a b{color:var(--ink);font-weight:700;margin-right:5px;font-variant-numeric:tabular-nums}
+
+  section{margin:0 0 62px;scroll-margin-top:64px}
+  .sec-head{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--rule2);padding-bottom:10px;margin-bottom:26px}
+  .sec-num{font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--faint);font-variant-numeric:tabular-nums;padding-top:6px}
+  h2{font-size:clamp(23px,2.8vw,31px);margin:0}
+  h3{font-size:20px;margin:34px 0 10px}
+  h4{font-size:15.5px;margin:24px 0 8px;font-family:inherit;font-weight:700;letter-spacing:0}
+  p{margin:0 0 15px;max-width:74ch}
+  ul,ol{margin:0 0 16px;padding-left:22px;max-width:74ch}
+  li{margin-bottom:8px}
+  strong{font-weight:650}
+  code{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.88em;background:#efeae2;padding:1px 5px;border-radius:3px}
+
+  .callout{border-left:3px solid var(--rule2);padding:16px 20px;margin:22px 0;border-radius:0 5px 5px 0}
+  .callout p:last-child{margin-bottom:0}
+  .callout.evidence{border-color:var(--ev);background:var(--ev-bg)}
+  .callout.warn{border-color:var(--warn);background:var(--warn-bg)}
+  .callout.danger{border-color:var(--danger);background:var(--danger-bg)}
+  .callout.blue{border-color:var(--blue);background:var(--blue-bg)}
+  .callout .lab{display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-bottom:7px}
+  .callout.evidence .lab{color:var(--ev)} .callout.warn .lab{color:var(--warn)}
+  .callout.danger .lab{color:var(--danger)} .callout.blue .lab{color:var(--blue)}
+
+  blockquote{margin:22px 0;padding:0 0 0 20px;border-left:3px solid var(--ink);font-family:Georgia,serif;
+    font-size:17.5px;line-height:1.5;color:#2c2925;font-style:italic;max-width:none}
+  blockquote cite{display:block;font-family:-apple-system,sans-serif;font-size:12px;font-style:normal;
+    color:var(--muted);margin-top:10px}
+
+  .tbl-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--rule);border-radius:6px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;line-height:1.45}
+  th{background:#f3efe8;text-align:left;padding:10px 13px;font-weight:700;font-size:10.5px;
+    letter-spacing:.07em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--rule2);vertical-align:bottom}
+  td{padding:10px 13px;border-bottom:1px solid var(--rule);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+  tr.hi td{background:#fdfaf3}
+  tr.bad td{background:#fdf6f6}
+
+  .badge{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    padding:2.5px 8px;border-radius:3px;white-space:nowrap;vertical-align:1px}
+  .b-high{background:var(--danger-bg);color:var(--danger)}
+  .b-med{background:var(--warn-bg);color:var(--warn)}
+  .b-low{background:var(--ev-bg);color:var(--ev)}
+  .b-none{background:#eee9e1;color:#7a736a}
+  .b-blue{background:var(--blue-bg);color:var(--blue)}
+  .b-purple{background:var(--purple-bg);color:var(--purple)}
+
+  .cards{display:grid;gap:18px;margin:24px 0}
+  .card{background:var(--panel);border:1px solid var(--rule);border-radius:7px;padding:20px 22px 18px;
+    box-shadow:0 1px 2px rgba(27,26,24,.03)}
+  .card>header{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:4px}
+  .card h3{font-size:18.5px;margin:0;flex:1 1 auto;min-width:180px}
+  .card .loc{font-size:12px;color:var(--faint);width:100%;margin:0 0 14px}
+  .card dl{margin:0;display:grid;grid-template-columns:90px 1fr;gap:9px 16px;font-size:14px}
+  .card dt{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--faint);padding-top:3px}
+  .card dd{margin:0;max-width:70ch}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:1px;background:var(--rule);
+    border:1px solid var(--rule);border-radius:6px;overflow:hidden;margin:24px 0}
+  .stat{background:var(--panel);padding:15px 16px}
+  .stat .v{font-family:Georgia,serif;font-size:25px;line-height:1.1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .stat .v small{font-size:13px;color:var(--muted)}
+  .stat .k{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4}
+  .stat.bad .v{color:var(--danger)} .stat.good .v{color:var(--ev)}
+
+  .finding{display:grid;grid-template-columns:44px 1fr;gap:0 18px;padding:22px 0;border-bottom:1px solid var(--rule)}
+  .finding:first-of-type{border-top:1px solid var(--rule)}
+  .finding .n{font-family:Georgia,serif;font-size:30px;line-height:1;color:var(--faint);font-variant-numeric:tabular-nums}
+  .finding .body h3{margin:0 0 8px;font-size:19px}
+  .finding .body p:last-child{margin-bottom:0}
+  .finding .impl{margin-top:11px;font-size:14px;padding:10px 14px;background:var(--ev-bg);
+    border-left:2px solid var(--ev);border-radius:0 4px 4px 0}
+  .finding .impl b{color:var(--ev)}
+
+  .mark{font-weight:700;font-size:14px}
+  .mark.y{color:var(--ev)} .mark.n{color:#c9c2b8} .mark.p{color:var(--warn)}
+
+  .funnel{display:grid;gap:6px;margin:24px 0;max-width:none}
+  .fstep{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:center;font-size:13.5px}
+  .fstep .lbl{font-weight:600;text-align:right;color:var(--muted);font-size:12.5px}
+  .fbar{background:var(--blue);height:26px;border-radius:3px;display:flex;align-items:center;
+    padding-left:10px;color:#fff;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;min-width:60px}
+
+  footer{border-top:2px solid var(--ink);padding-top:22px;font-size:13px;color:var(--muted);margin-top:70px}
+  .srcs{font-size:12.5px;line-height:1.5;color:var(--muted)}
+  .srcs li{margin-bottom:7px}
+  .srcs b{color:var(--ink);font-weight:600}
+
+  @media (max-width:640px){
+    .wrap{padding:0 18px 80px}
+    .masthead{padding:40px 0 30px}
+    .card dl{grid-template-columns:1fr;gap:3px 0}
+    .card dt{padding-top:9px}
+    .finding{grid-template-columns:1fr;gap:6px}
+    .finding .n{font-size:22px}
+    .fstep{grid-template-columns:1fr;gap:4px}
+    .fstep .lbl{text-align:left}
+  }
+  @media print{nav.toc{display:none}.card{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="kicker">Hackathon for Good #8 · UNICRI · Stop Before It Starts</div>
+  <h1>Everything the field already knows, and the one number nobody has noticed</h1>
+  <p class="deck">A full research pass on the child-protection challenge: the papers the organisers shipped, the wider literature they point to, the two flagship deployments (Pornhub reThink and Project Intercept), the psychology underneath the warning, and the platform market that would have to adopt any of it. Ends with a straight comparison against the ACAPS track and eight scored directions.</p>
+  <div class="meta">
+    <span><b>Scope</b> 19 papers · 6 deployments · 11 adjacent fields · 8 directions</span>
+    <span><b>Evidence standard</b> effect sizes, sample sizes, sources</span>
+    <span><b>Compiled</b> 6 November 2026</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <a href="#s0"><b>00</b>Straight answer</a>
+  <a href="#s1"><b>01</b>The one number</a>
+  <a href="#s2"><b>02</b>What they shipped</a>
+  <a href="#s3"><b>03</b>The papers</a>
+  <a href="#s4"><b>04</b>Pornhub / reThink</a>
+  <a href="#s5"><b>05</b>Project Intercept</a>
+  <a href="#s6"><b>06</b>The psychology</a>
+  <a href="#s7"><b>07</b>Adjacent fields</a>
+  <a href="#s8"><b>08</b>The Netherlands</a>
+  <a href="#s9"><b>09</b>The platform market</a>
+  <a href="#s10"><b>10</b>Hard problems</a>
+  <a href="#s11"><b>11</b>Directions</a>
+  <a href="#s12"><b>12</b>One or both</a>
+  <a href="#s13"><b>13</b>Sources</a>
+</nav>
+
+<!-- ===================================================== 00 -->
+<section id="s0">
+  <div class="sec-head"><div class="sec-num">00</div><h2>The straight answer</h2></div>
+
+  <p>You were right. I did the ACAPS review properly and gave UNICRI two paragraphs. Having now read the challenge repo file by file and the nineteen papers behind it, that was a sequencing mistake — <strong>this track has roughly ten times the published evidence base of the ACAPS one</strong>, and the repo contains material I had not opened, including a research folder with the organisers' own evidence summaries and reading list.</p>
+
+  <p>Three things change my read of the two challenges.</p>
+
+  <div class="finding">
+    <div class="n">1</div>
+    <div class="body">
+      <h3>This track is not evidence-poor. It is evidence-rich and badly summarised.</h3>
+      <p>There are at least four randomised controlled trials, three large field experiments, two systematic reviews, and an ongoing RCT programme at Karolinska. Real effect sizes exist: honeypot warnings cut entry from 75% to 35–47% (odds ratios 3.05–5.02); a dark-web intervention lifted help-click rates from 8.7% to 15.7%; Google's redesign cut follow-up searches by 3.8 percentage points. Nothing comparable exists anywhere in the humanitarian risk space.</p>
+      <div class="impl"><b>Consequence:</b> on this track you cannot win by being novel. You win by being <em>more precise</em> than the brief. A jury containing people who wrote these papers will reward a team that quotes the confidence intervals and knows where the evidence is weak.</div>
+    </div>
+  </div>
+
+  <div class="finding">
+    <div class="n">2</div>
+    <div class="body">
+      <h3>The "1 in 100" in the brief is an average that hides a 700-fold range — and the range is the product.</h3>
+      <p>Help-click rate across the four flagship deployments: <strong>Ahmia 12.4%</strong>, <strong>Google 0.73%</strong>, <strong>Intercept ~1%</strong>, <strong>Pornhub reThink 0.0175%</strong> (490 clicks from 2.8 million displays). Sorted, they line up with one variable: how many other things the user could click instead. Ahmia returns no results at all — help is the only exit. Google puts a box above a working results page. Pornhub leaves the entire site running with a close button.</p>
+      <div class="impl"><b>Consequence:</b> this reframes the whole challenge. The creative problem is not <em>what the message says</em>. It is <em>what else is on the screen</em>. Message copy moves the number by single digits; choice architecture moves it by two orders of magnitude. That is a defensible, novel, testable thesis and almost certainly no other team will bring it.</div>
+    </div>
+  </div>
+
+  <div class="finding">
+    <div class="n">3</div>
+    <div class="body">
+      <h3>The single biggest trap on this track is in the organisers' own demo tooling.</h3>
+      <p><code>tools/generate-traffic.js</code> ships with baked outcome rates of <strong>15% and 18% click-through</strong> against a 1% control. No deployment in the literature has produced 15% on a general-purpose platform. Ahmia managed 12.4% on a Tor search engine whose entire design is that help is the only available link. If a team demos a dashboard showing a 15× lift on a hobby forum, and a juror has read the Ahmia paper, that is the moment the pitch dies.</p>
+      <div class="impl"><b>Consequence:</b> build the demo against <em>honest</em> numbers — 0.5–1.5% baseline, 2–3× lift from choice architecture — and say out loud why. Nobody else will, and it converts the weakest part of the demo into the strongest part of the pitch.</div>
+    </div>
+  </div>
+
+  <p>My recommendation on one-or-both is in <a href="#s12">§12</a>, and it turns on something neither brief says out loud: <strong>the two tracks reward opposite skills.</strong> ACAPS Concept scoring is 40% concept; UNICRI gives 25% to adoptability and 25% to safety. One is a design problem, the other is a shipping problem.</p>
+</section>
+
+<!-- ===================================================== 01 -->
+<section id="s1">
+  <div class="sec-head"><div class="sec-num">01</div><h2>The one number: choice architecture, not copy</h2></div>
+
+  <p>Pull the click-through rates out of every deployment in the literature and put them side by side. This table is the most useful thing in this document.</p>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:24%">Deployment</th><th style="width:15%">Clicks / displays</th><th style="width:22%">What else was on screen</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr class="hi">
+        <td><b>Ahmia.fi</b> (Tor search engine)</td>
+        <td class="num"><b>12.44%</b><br><small>386,497 clicks / 3,105,800 warnings</small></td>
+        <td><b>Nothing.</b> Banned query returns no results at all. The warning <em>is</em> the page. Help link is the only exit.</td>
+        <td>Ó Ciardha et al. 2026, arXiv:2606.06417</td>
+      </tr>
+      <tr>
+        <td><b>Project Intercept</b> (aggregate, 22 interventions)</td>
+        <td class="num">≈1.0%<br><small>~683,000 / 70,000,000+</small></td>
+        <td>Varies wildly by partner; mostly a warning interstitial on a still-functioning service.</td>
+        <td>Lucy Faithfull Foundation, May 2026</td>
+      </tr>
+      <tr>
+        <td><b>Google Search</b> Onebox</td>
+        <td class="num">0.73%<br><small>average on help-link buttons</small></td>
+        <td>A box at the top of a results page that <em>still returns results</em>. Being above the results is not the same as replacing them.</td>
+        <td>Umbach et al. 2026, arXiv:2606.06126</td>
+      </tr>
+      <tr class="bad">
+        <td><b>Pornhub UK</b> reThink (warning + chatbot)</td>
+        <td class="num"><b>0.0175%</b><br><small>490 / 2,800,000</small></td>
+        <td>The whole adult platform remains operational. Close button, back button, and 2.9 million videos one click away.</td>
+        <td>Scanlan et al. 2024, IWF</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="stats">
+    <div class="stat good"><div class="v">12.4<small>%</small></div><div class="k">Ahmia — zero competing options</div></div>
+    <div class="stat"><div class="v">1<small>%</small></div><div class="k">Intercept — mixed architecture</div></div>
+    <div class="stat"><div class="v">0.73<small>%</small></div><div class="k">Google — box above results</div></div>
+    <div class="stat bad"><div class="v">0.018<small>%</small></div><div class="k">Pornhub — full site available</div></div>
+  </div>
+
+  <p>Four data points is not a law, and I want to be careful not to overclaim: these are different populations (Tor users searching dark-web indexes versus UK porn users versus global Google users), different messages, and different help destinations. But the ordering is perfectly monotonic with the availability of alternatives, and the mechanism is obvious once stated — <strong>a click-through rate is a ratio of the help path to all available paths.</strong></p>
+
+  <div class="callout evidence">
+    <span class="lab">The thesis this gives you</span>
+    <p style="font-family:Georgia,serif;font-size:18px;line-height:1.5;margin:0">Everyone in this field optimises the sentence. The 700× spread between deployments is not a sentence problem — it is a layout problem. A plug-and-play module can control layout in a way it can never control a platform's copy.</p>
+  </div>
+
+  <h3>What this means concretely</h3>
+  <p>The brief's own guiding question is <em>"which format interrupts the moment best: a full-page warning, a pop-up, a chatbot, or something else?"</em> The honest answer from the data is: <strong>the format that removes the alternatives</strong>. That is a defensible creative position, and it can be demonstrated in 20 seconds in a live demo by showing the same message in three choice architectures.</p>
+
+  <p>There is a real cost, and it has to be stated. Full replacement of a working site is hostile to the user and to the platform's own economics — which is exactly why Pornhub, Google and every commercial platform will never do it. So the practical design question becomes:</p>
+  <ul>
+    <li><b>How much of the page can a small platform afford to give up?</b> A hobby forum has almost no commercial stake in a single CSAM-adjacent search. A 20,000-member forum can afford a full interstitial that Pornhub cannot. <strong>The target platform in the brief is precisely the entity that can afford maximal friction.</strong> That is the argument for why this product exists at all rather than being built by the big platforms.</li>
+    <li><b>What can be added without subtracting?</b> Not removing the results, but inserting a required interaction before they are revealed — a gate rather than a wall.</li>
+  </ul>
+</section>
+
+<!-- ===================================================== 02 -->
+<section id="s2">
+  <div class="sec-head"><div class="sec-num">02</div><h2>What the organisers actually shipped, read closely</h2></div>
+
+  <p>I previously skimmed this repo. Having read every file, the starter kit is better than I gave it credit for — and it contains four things worth knowing before any build decisions.</p>
+
+  <h3>What is in the kit, and how good it is</h3>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:26%">Artifact</th><th style="width:12%">Quality</th><th>What it actually gives you</th></tr></thead>
+    <tbody>
+      <tr><td><code>research/EVIDENCE.md</code></td><td><span class="badge b-low">Strong</span></td><td>Seven studies with findings and links, plus a "key takeaways for design" table. This is the organising skeleton of the pitch and it was already written for you.</td></tr>
+      <tr><td><code>research/READING.md</code></td><td><span class="badge b-low">Strong</span></td><td>Full citation list: 5 help-services, 6 evidence items, 6 research papers, 3 practice reports. Includes DOIs. This is the reading list I should have worked from first.</td></tr>
+      <tr><td><code>contract/PLUGIN_CONTRACT.md</code></td><td><span class="badge b-low">Strong</span></td><td>A genuinely well-specified event contract. <b>It already solves the privacy measurement problem</b> — no query text, session-scoped random ID never persisted, aggregate counts, small-count suppression below 10. Anyone re-proposing this in a pitch has not read the kit.</td></tr>
+      <tr><td><code>data/message-blocks.json</code></td><td><span class="badge b-med">Useful, flawed</span></td><td>20 blocks across 5 categories × 2 languages, each with a source URL. Every block cites evidence. But several blocks flatten a genuinely contested literature (see below).</td></tr>
+      <tr><td><code>data/legal-confidentiality.json</code></td><td><span class="badge b-med">Useful, thin</span></td><td>Three countries: NL, DE, GB. DE and GB carry <code>verify_flags</code>. The NL legal summary is accurate but omits the sentencing reality entirely.</td></tr>
+      <tr><td><code>starter-widget/widget.js</code></td><td><span class="badge b-med">The baseline to beat</span></td><td>A modal: icon, title, legal paragraph, harm paragraph, self-efficacy paragraph, help button, confidentiality note, close. ARIA dialog, focus trap, escape key. Correct but entirely conventional.</td></tr>
+      <tr><td><code>tools/generate-traffic.js</code></td><td><span class="badge b-high">Trap</span></td><td>Baked rates: control 1% click, "deterrent-v1" 15%, "deterrent-v2" 18%. A 15–18× lift. No real deployment looks like this.</td></tr>
+      <tr><td><code>submission/PITCH_GUIDE.md</code></td><td><span class="badge b-low">Strong</span></td><td>3 min + 2 min Q&amp;A, minute-by-minute structure, and the five jury questions named in advance. No equivalent exists on the ACAPS track.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Four things in the kit that need correcting</h3>
+
+  <ol>
+    <li><b>The "82% did not search again" statistic is weaker than it reads.</b> The reThink evaluation is explicit that it analysed <em>sessions, not users</em>, that "the sessions are not distinct, which means that double-counting individuals occurred (although the extent of this cannot be quantified)", and that there was <b>no pre-intervention baseline</b>. The 82% figure is a within-session observation, not a behavioural outcome. The brief presents it as a headline success. Quote it with the caveat or you will be caught.</li>
+
+    <li><b>The Ahmia "8.7% → 15.7%" is confounded, and the paper says so.</b> At campaign launch the interface was <em>also</em> redesigned — several stacked panels were consolidated into a single warning page. The neutral control message alone scored <b>12.17%</b>, well above the 8.73% pre-campaign baseline. So most of the lift is layout, not content. The paper states this plainly: <em>"These changes may account for some portion of the increase in CTR."</em> The genuine content finding is the <em>within-campaign randomised comparison</em>: harm-focused framing beat the other messages. That is the defensible claim.</li>
+
+    <li><b>The brief's "harm-focused message worked best" is not settled across studies.</b> In Prichard's 2022 honeypot trial, a harm message was the one condition that failed to reach significance (<b>OR 1.31, 95% CI 0.72–2.39</b>) while IP-trace and illegality warnings both worked. In the 2024 follow-up, therapeutic referral messages performed about as well as deterrence. In Ahmia, harm framing won on <em>clicks to help</em>. In self-report, behaviour-control and distress messages are rated best for help-seeking while legality and harm are rated best for deterrence. <b>The honest synthesis is: framing effects are real but context-dependent, and the field does not yet know which frame wins where.</b> "Nobody yet knows which message, format and timing works best for which group" is in the brief — take it seriously rather than assuming the answer.</li>
+
+    <li><b>One citation in <code>EVIDENCE.md</code> is mislabelled.</b> It records the third condition as "T1 (OR = 4.06) and T2 (OR = 3.05)" but the published paper names them T1 and <b>T3</b>. Harmless, but don't propagate it into a slide.</li>
+  </ol>
+
+  <div class="callout warn">
+    <span class="lab">The gap in their message blocks</span>
+    <p>Every block is a <em>statement of fact</em> — it is illegal, it harms children, help exists, you are not alone, this is confidential. Not one block is a <em>direct answer to the thing the user is telling themselves</em> — "I'm only looking", "it's not a real child", "it doesn't count if I don't download it", "nobody's hurt by a picture". The entire cognitive-distortion literature (§06) says that is the operative mechanism, and the kit does not touch it. <strong>That is the largest unexploited space in the brief.</strong></p>
+  </div>
+</section>
+
+<!-- ===================================================== 03 -->
+<section id="s3">
+  <div class="sec-head"><div class="sec-num">03</div><h2>The papers, one by one</h2></div>
+
+  <p>Nineteen sources, ordered from foundational to applied. For each: what it actually found, how strong it is, and what it changes.</p>
+
+  <h3>A · The foundational epidemiology</h3>
+
+  <div class="cards">
+
+    <article class="card">
+      <header><h3>Nurmi et al. (2024) — the Tor study that founded the field</h3><span class="badge b-low">Strong</span></header>
+      <div class="loc">Scientific Reports 14:7849 · Tampere University · one of the most-downloaded papers in the journal that year (340,967 downloads)</div>
+      <dl>
+        <dt>Design</dt><dd>Analysis of 176,683 onion domains (2018–2023), 238,794,231 search queries on Ahmia.fi, and 11,470 anonymous survey responses recruited <em>at the point of the CSAM search</em>.</dd>
+        <dt>Found</dt><dd><b>11.1% of search sessions (12.3M) explicitly sought CSAM.</b> One in five onion sites shared CSAM in 2023; it was easily available on 21 of the 26 most popular Tor search engines, four of which advertised it on the landing page. Of searches that named an age: <b>40.5% targeted 11-year-olds or younger</b>, 11% age 12, 8.2% age 13, 11.6% age 14, 10.9% age 15, 12.7% age 16. <b>65.3% first saw CSAM when they were under 18 themselves.</b> Half first encountered it accidentally. <b>48.1% want to stop.</b> Help-seeking correlated with duration and frequency of viewing, depression, anxiety, self-harm thoughts, guilt and shame — <b>and 73.9% of those who sought help could not get it.</b></dd>
+        <dt>Strength</dt><dd>Enormous n, real-world behaviour, peer reviewed. Weakened by self-selection into the survey (respondents opted in mid-search) and by being a Tor-only population.</dd>
+        <dt>Changes</dt><dd>This is your problem-size slide and your moral argument in one source. "Three out of four people who went looking for help did not get it" is the strongest single sentence available on this track, and it is about <em>routing</em>, which is what the product actually is.</dd>
+      </dl>
+    </article>
+
+    <article class="card">
+      <header><h3>Insoll et al. (2022) — who goes on to contact children</h3><span class="badge b-low">Strong</span></header>
+      <div class="loc">Journal of Online Trust &amp; Safety 1(2) · n = 1,546</div>
+      <dl>
+        <dt>Found</dt><dd><b>42% self-reported having sought direct contact with children online after viewing CSAM</b>; 10% said weekly or nearly every time. 58% feared their viewing might lead to sexual acts. <b>70% had never told anyone.</b> Frequency of use was the <em>best predictor</em> of contact-seeking. Also predictive: viewing material depicting infants and toddlers, contact with other CSAM users, older age of first exposure, and thoughts of self-expressing beforehand. Long duration alone, once frequency is controlled, was <em>not</em> predictive.</dd>
+        <dt>Strength</dt><dd>Large anonymous sample on a population that is otherwise invisible. Self-report on a criminal behaviour, so almost certainly an undercount — the authors say so.</dd>
+        <dt>Changes</dt><dd>It justifies the "In deep" persona <em>and</em> gives you a triage signal: frequency is the single best discriminator. A module that can distinguish a first search from a fifth search in a week is doing something behaviourally meaningful, not just cosmetically different.</dd>
+      </dl>
+    </article>
+
+    <article class="card">
+      <header><h3>Insoll et al. (2024) — why people don't get help <span class="badge b-high">the most actionable paper</span></h3><span class="badge b-low">Strong</span></header>
+      <div class="loc">Journal of Online Trust &amp; Safety 2(4) · 18 Sept 2024 · n = 4,493 (main) + 266 active help-seekers</div>
+      <dl>
+        <dt>Found</dt><dd><b>55.0% want to stop.</b> Of the 266 who actively tried to get help: <b>70.2% struggled to find an anonymous resource</b>, 54.8% could not find information on relevant help, 43.9% reported difficulty finding a suitable service, and <b>40.4% were unable to access help at all.</b> <b>27.2% of respondents are afraid to seek help.</b> 72.2% feel at least sometimes unable to control their behaviour. Help-seeking rises with frequency of use — but <em>falls</em> for daily users (17.1%) versus weekly (18.0%), which is the counter-intuitive finding that matters for the "In deep" persona.</dd>
+        <dt>Strength</dt><dd>The help-seeker sub-sample is small and self-selected. The barriers, though, are large and consistent with Nurmi 2024's 73.9%.</dd>
+        <dt>Changes</dt><dd><strong>This is the product thesis, stated numerically.</strong> The problem is not that people don't want help — 55% do. It is that seven in ten cannot find an anonymous resource when they look. A routing layer is not a nice-to-have; it is the missing 70%.</dd>
+      </dl>
+    </article>
+
+    <article class="card">
+      <header><h3>Lahtinen et al. (2025) — charged versus never-caught</h3><span class="badge b-med">Good</span></header>
+      <div class="loc">Child Abuse &amp; Neglect 161:107299 · n = 2,384</div>
+      <dl>
+        <dt>Found</dt><dd>Compared 474 who self-reported charges for offences against children, 620 against adults, 1,290 with no charges. Prior violent-offence charges, online grooming, physical contact with children, and searching for material depicting infants/toddlers all predicted belonging to a charged group. <b>Searching for material depicting boys</b> specifically raised the odds of being in the child-offence group.</dd>
+        <dt>Strength</dt><dd>Solid, but the charged/uncharged split rests entirely on self-report and the sample is dark-web-recruited.</dd>
+        <dt>Changes</dt><dd>Two things. First, there exists a larger sub-population with <em>no</em> antisocial history, whom the authors explicitly describe as "more receptive to preventive measures" — that is your target. Second, it is a warning against designing for the worst case: the hardened minority will not click help, and designing the module around them wastes the intervention on the people it cannot reach.</dd>
+      </dl>
+    </article>
+  </div>
+
+  <h3>B · The intervention trials — how much warnings actually move behaviour</h3>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:20%">Study</th><th style="width:9%">Design</th><th style="width:24%">Effect</th><th>What it changes</th></tr></thead>
+    <tbody>
+      <tr class="hi">
+        <td><b>Prichard et al. 2022</b><br><small>Sexual Abuse 34:106</small></td>
+        <td>Honeypot RCT, "barely legal" proxy site, n=419</td>
+        <td>IP-trace deterrence <b>OR 2.64</b> (1.42–4.90); illegality warning <b>OR 2.99</b> (1.65–5.41); <b>harm message OR 1.31 — not significant</b></td>
+        <td>The evidence that pure harm framing can fail. Contradicts the simple reading of the brief.</td>
+      </tr>
+      <tr class="hi">
+        <td><b>Prichard et al. 2024</b><br><small>Child Abuse &amp; Neglect 155:106955</small></td>
+        <td>Honeypot RCT, n=474, men 18–30</td>
+        <td>Control entry <b>75%</b> → experimental <b>35–47%</b>. Deterrent+image <b>OR 5.02</b> (2.75–9.18); therapeutic text <b>OR 4.06</b> (2.24–7.36); therapeutic+image <b>OR 3.05</b> (1.69–5.50). <b>Images did not enhance effectiveness.</b></td>
+        <td>Also: an earlier version found adding animation to a legal warning raised OR from 1.98 to 2.45. Visual salience helps; decorative imagery does not.</td>
+      </tr>
+      <tr>
+        <td><b>Scanlan et al. 2024</b><br><small>reThink evaluation, U. Tasmania / IWF</small></td>
+        <td>Naturalistic field deployment, no baseline, no randomisation</td>
+        <td>2.8M displays → 1,656 info requests → 490 site clicks → <b>~68 helpline contacts</b>. CSAM-search share fell 0.12% → 0.08%. Referral rate <b>declined</b> over the intervention.</td>
+        <td>The reality check. Also the habituation warning, from the field rather than a model.</td>
+      </tr>
+      <tr>
+        <td><b>Ó Ciardha et al. 2026</b><br><small>arXiv:2606.06417</small></td>
+        <td>Randomised field experiment on Ahmia.fi, 140 days, 19.6M searches, 3.1M warnings</td>
+        <td>All active messages beat neutral; <b>harm-focused strongest</b>. Platform CTR <b>8.73% → 15.67%</b>. <b>But no detectable reduction in warning-triggering searches at all.</b></td>
+        <td>The separation of <em>deterrence</em> from <em>help-seeking</em>. These are different outcomes and a message can produce one without the other.</td>
+      </tr>
+      <tr>
+        <td><b>Umbach et al. 2026</b><br><small>arXiv:2606.06126</small></td>
+        <td>Difference-in-differences on Google Search logs, 5 comparison countries</td>
+        <td><b>−3.8 pp</b> same-session follow-up CSAM queries (SE 0.006, 95% CI −0.050 to −0.026); <b>−5.6 pp</b> in European countries only. Help CTR <b>0.73%</b>. Parallel trends held (p=0.33).</td>
+        <td>Real deterrence at real scale — but the authors are explicit that it is <em>within-session only</em>, and that a user who closed the tab is indistinguishable from a user who opened Tor.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout danger">
+    <span class="lab">The hardest fact in the entire literature</span>
+    <p>Ahmia ran a 140-day randomised field experiment on 3.1 million CSAM-related searches — and found <strong>no detectable reduction in CSAM searching whatsoever</strong>. Google found a 3.8 percentage-point reduction <em>within a session</em> and could not measure anything beyond it. Pornhub found a decline but had no baseline to compare against. <strong>Nobody has demonstrated that a warning reduces a person's CSAM use beyond the next few minutes.</strong></p>
+    <p style="margin-bottom:0">Every pitch on this track will claim deterrence. The team that states this limitation first, and then designs specifically against it, is doing something the field has not done.</p>
+  </div>
+
+  <h3>C · Treatment, and why routing beats persuasion</h3>
+
+  <div class="cards">
+    <article class="card">
+      <header><h3>Lätth et al. (2022) — Prevent It, the first dark-web psychotherapy RCT</h3><span class="badge b-low">Strong</span></header>
+      <div class="loc">Internet Interventions · Karolinska Institutet · n = 160, randomised 1:1 against psychological placebo</div>
+      <dl>
+        <dt>Design</dt><dd>8-week therapist-supported internet CBT, anonymous, recruited globally from darknet forums. Placebo-controlled, single-blind, adequate results on trial-quality indices.</dd>
+        <dt>Found</dt><dd>Significant reduction in weekly CSAM viewing time: <b>estimate −0.25 h, 95% CI −0.46 to −0.04, p = .017, d = 0.18</b>. <b>Fewer negative side effects than placebo.</b> No severe adverse events. About half of participants with post-treatment ratings reported no CSAM use in the preceding week (but no between-group difference on that measure).</dd>
+        <dt>The problem</dt><dd><b>Attrition was severe.</b> 29% of the treatment arm and 5% of placebo <em>completed zero modules</em>. Only 33 participants completed all eight (12 treatment, 21 placebo).</dd>
+        <dt>Changes</dt><dd>A small effect size (d=0.18) is still the difference between "there is no treatment for this population" and "there is one, and it works, and it is safe." But the dropout tells you that <strong>delivering someone into an 8-week programme is a much harder handoff than delivering them to a phone number.</strong> Design the route-to-help as a ladder, not a leap.</dd>
+      </dl>
+    </article>
+
+    <article class="card">
+      <header><h3>Prevent It 2.0 (2026) — the replication, and it is stronger</h3><span class="badge b-low">Strong</span></header>
+      <div class="loc">International waitlist-controlled RCT · NCT05831657, multicentre SE/DE/PT, funded by the European Commission · n = 203</div>
+      <dl>
+        <dt>Found</dt><dd>9-week iCBT. <b>Reduction in sexual urges toward children of −6.41 scale points, 95% CI −8.26 to −4.56, d = −1.01</b>; and <b>−1.87 hours weekly</b> spent viewing CSAM. Clinically significant reductions in an anonymous online sample. Participants were 92.1% male, 66.6% aged 21–40, roughly half Europe and 39% North America.</dd>
+        <dt>Changes</dt><dd>This is a much larger effect than the first trial and it is now replicated across three languages. <strong>The claim "treatment works" is no longer speculative — it is the strongest causal evidence anywhere in this challenge.</strong> Which means the weakest link in the whole system is no longer treatment. It is the 70% who cannot find the door.</dd>
+      </dl>
+    </article>
+
+    <article class="card">
+      <header><h3>Haubrock et al. (2026) — what police think of it</h3><span class="badge b-med">Useful</span></header>
+      <div class="loc">Criminal Justice and Behavior · Germany, Portugal, Sweden</div>
+      <dl>
+        <dt>Found</dt><dd>Officers saw anonymity as a crucial strength for engaging people who fear legal consequences or stigma, and acknowledged stigma as a barrier to recruitment. They also flagged legal, technological and sociocultural threats.</dd>
+        <dt>Changes</dt><dd>Third-party legitimacy for the confidentiality message. If a jury worries that help-seeking undermines enforcement, this is your citation that law enforcement itself does not think so.</dd>
+      </dl>
+    </article>
+  </div>
+
+  <h3>D · The behaviour-shape papers — habituation, and what to do about it</h3>
+
+  <p>Two 2026 papers in <em>Electronics</em> by Watters, Scanlan and colleagues are the only formal treatment of the question the brief asks directly: <em>"how do you avoid habituation when someone sees it for the fifth time?"</em> Neither is in the organisers' reading list. Both should be.</p>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:22%">Paper</th><th style="width:38%">What it says</th><th>What to do with it</th></tr></thead>
+    <tbody>
+      <tr class="hi">
+        <td><b>Watters, Scanlan &amp; Jain (2026)</b><br><small>Electronics 15(17):4045 — dual-process sensitisation–habituation model</small></td>
+        <td>Repeated exposure is governed by two opposing processes: <b>sensitisation</b> (perceived risk accumulates over a ~50-day memory) and <b>habituation</b> (attention depletes ~30% per exposure, recovers over ~10 days). Because they move in opposite directions with exposure spacing, <b>per-warning effectiveness is non-monotone with an interior optimum</b> — around <b>18 days</b> under baseline calibration. Frequent warning buys risk at the cost of salience; sparse warning preserves salience but accumulates no risk. They then model <b>polymorphic warnings</b> (rotating variants) and show variety preserves salience — but only to the extent habituation is variant-specific rather than general.</td>
+        <td>This is a <b>specification</b>, not a metaphor. Build a rotation engine with a minimum re-warning interval, variant-level salience tracking and a rotation policy. It is the single most technically distinctive thing you could demo, it answers a jury question the brief itself poses, and it is grounded in a peer-reviewed model rather than a hunch. <b>Caveat: τ*≈18 days is the authors' illustrative mathematical optimum, not an empirically validated scheduling rule — say so.</b></td>
+      </tr>
+      <tr>
+        <td><b>Watters et al. (2026)</b><br><small>Electronics 15(11):2281 — narrative review of CSAM desistance via AI, chatbots and automated warnings</small></td>
+        <td>Consolidates the RCT, honeypot, chatbot and operational evidence. Key distinctions: messages attributed to <b>credible sources</b> (law enforcement) outperform anonymous warnings; <b>strongest effects where deterrent or therapeutic framing is paired with salient presentation</b>; weaker or non-significant effects for less direct harm-based messaging. Explicitly separates <b>short-term behavioural interruption from verified long-term desistance.</b></td>
+        <td>Gives you the strongest single design rule available: <b>attribute the warning.</b> A warning from "the moderators of this forum" is weaker than one jointly attributed to Offlimits and the Dutch police. The kit's starter widget has no attribution at all.</td>
+      </tr>
+      <tr>
+        <td><b>Hunn et al. (2023)</b><br><small>AIC Trends &amp; Issues 669 — how to implement online warnings</small></td>
+        <td>The practitioner guidance paper behind the Best Practice Guide. Trigger points beyond keywords: flagged search terms, known CSAM URLs, hash matches on upload, grooming-detection activation.</td>
+        <td>Directly expands the contract's <code>type: search | chat | navigation</code> into a richer trigger taxonomy. Low cost, obvious credibility gain.</td>
+      </tr>
+      <tr>
+        <td><b>Price et al. (2024)</b><br><small>Journal of Child Sexual Abuse 33(7):869–890 — review of digital interventions as secondary prevention</small></td>
+        <td>The most sober review. Explicitly concludes: <em>"Given the limited number of sources and variances in type and context, it is not possible to draw any broader conclusions as to the impacts of these digital interventions at this time."</em></td>
+        <td>Your honesty beat. If a juror asks "does any of this actually work", the correct answer is <em>"the most recent systematic review says we cannot yet conclude — which is precisely why the brief asks for a design that can be tested."</em> That answer is better than an overclaim, and it is available to almost nobody else in the room.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>E · The context papers</h3>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:24%">Source</th><th style="width:32%">Finding</th><th>Use</th></tr></thead>
+    <tbody>
+      <tr><td><b>Protect Children / Ofcom, <i>Tell Me More About Tech</i> (2026)</b><br><small>20,000+ responses, 24 languages, recruited mid-search on Ahmia</small></td>
+      <td>63% search on dark-web platforms, <b>61% on open-web platforms</b> — the split is nearly even. Most-cited open-web venues: <b>search engines (27%)</b> and <b>pornography sites (22%)</b>, then social (16%) and E2E-encrypted messaging (12%). <b>31% avoid platforms with age limits and strict sign-up; 20% avoid those without anonymity; 19% avoid those with high perceived monitoring risk.</b> Only <b>19%</b> had ever been sanctioned or banned. <b>34% recalled a warning message</b>, many saying it prompted reflection. <b>35% viewed or created AI-CSAM</b>, and half of those were involved in producing it for profit.</td>
+      <td>The most useful single survey for platform choice and message design. Two findings are directly exploitable: (i) <b>age limits and strict registration are the most-cited deterrent feature (21% named it the single most likely thing to stop them)</b> — friction is a deterrent, not just a warning; (ii) warnings are recalled by a third of this population and reported as effective.</td>
+      </tr>
+      <tr><td><b>IWF, <i>Harm Without Limits</i> (2026)</b></td>
+      <td>8,029 AI-generated images and videos assessed as realistic CSAM in 2025. <b>3,443 AI-generated CSAM videos — a 26,385% increase on the 13 recorded in 2024.</b> 65% of those were Category A, the most severe class (versus 43% for non-AI video). AI chatbots encouraging users to act out simulated abuse scenarios. Tools converging so that minimal expertise is needed.</td>
+      <td>The forward-looking angle. Every message in the kit assumes the harm is a photographed child. <b>For a growing share of users the operative belief is "it isn't real, so nobody was hurt."</b> No intervention in the literature addresses that belief. See <a href="#s6">§06</a>.</td>
+      </tr>
+      <tr><td><b>Seto, Hanson &amp; Babchishin (2011)</b></td>
+      <td>Meta-analysis: <b>55% of CSAM offenders</b> self-report contact sexual offending (the rate varies by sample type).</td>
+      <td>The base rate underpinning "this escalates". Cite carefully — the figure is contested and depends heavily on whether the sample is online-only or mixed.</td>
+      </tr>
+      <tr><td><b>Jespersen, Lalumière &amp; Seto (2009)</b></td>
+      <td>People convicted of sexual offences, especially against children, report childhood sexual abuse more often than people convicted of other offences.</td>
+      <td>Cited in the brief. Use it for tone, not for argument: it supports empathy-led design and it supports the point that most victims never offend.</td>
+      </tr>
+      <tr><td><b>Drejer et al. (2024); Rajamäki et al. (2022)</b></td>
+      <td>The dark web functions as a coordination hub that drives demand for real-time exploitation on mainstream platforms; there are documented links between clear-web and dark-web offending.</td>
+      <td>Justifies why a clear-web plug-in matters at all. Without this, someone will argue you should be on Tor.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ===================================================== 04 -->
+<section id="s4">
+  <div class="sec-head"><div class="sec-num">04</div><h2>The Pornhub / reThink campaign, properly</h2></div>
+
+  <p>You asked specifically about the Stop It Now campaign on Pornhub. The version in most summaries is too tidy. Here is what actually happened, in order, because the sequence is the actual lesson.</p>
+
+  <h3>The timeline that made the warning exist</h3>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:14%">Date</th><th style="width:44%">Event</th><th>Why it matters</th></tr></thead>
+    <tbody>
+      <tr><td><b>4 Dec 2020</b></td><td>Nicholas Kristof publishes "The Children of Pornhub" in the New York Times, documenting rape, revenge porn and child abuse material on a platform previously presented as a moderation leader.</td><td>The catalyst. Nothing in the prior decade had moved the platform.</td></tr>
+      <tr class="hi"><td><b>10 Dec 2020</b></td><td><b>Mastercard and Visa suspend payments.</b> Discover and PayPal follow.</td><td><b>The actual leverage point.</b> Not persuasion, not evidence, not regulation — the card networks.</td></tr>
+      <tr class="hi"><td><b>14 Dec 2020</b></td><td><b>10.6 million videos removed</b> — 78.5% of the library, 13.5M down to 2.9M. Unverified uploaders banned; downloads eliminated.</td><td>Later alleged by the FTC to have happened only once the payments business was at risk.</td></tr>
+      <tr><td><b>2021</b></td><td>First transparency report: 653,465 pieces of content removed for ToS violations in 2020.</td><td>The beginning of the accountability era.</td></tr>
+      <tr><td><b>Mar 2022</b></td><td><b>reThink launches</b> on Pornhub UK — warning page plus an interactive chatbot. Aylo + IWF + Lucy Faithfull Foundation.</td><td>13 months after the crisis. The warning was a <em>consequence</em> of the business shock, not a cause of it.</td></tr>
+      <tr><td><b>Aug 2023</b></td><td>Programme ends. Evaluation period covers Mar 2022–Aug 2023.</td><td>18 months.</td></tr>
+      <tr><td><b>Feb 2024</b></td><td>University of Tasmania evaluation published, commissioned by IWF. Analysis of 7.72 GB of search data.</td><td>The first real numbers, and they are much smaller than the headlines suggested.</td></tr>
+      <tr class="bad"><td><b>3 Sept 2025</b></td><td><b>FTC files a complaint and consent order</b> against Aylo and related entities in the District of Utah. The FTC's own statement alleges: the real moderation policy was to review a video only after <b>15 separate user flags</b>; a backlog of <b>thousands of unreviewed videos</b> accumulated over eight years; of 70,000 backlog videos eventually reviewed, <b>30% were CSAM</b>; fingerprinting "did not work effectively" for four years; "banned" uploaders simply created new accounts; verification documentation was emailed around unencrypted. <b>$5M settlement.</b></td><td>Note: a regulator's allegations in a complaint, settled without admission. But it is on the public record and it reframes the entire reThink story as <b>remediation after enforcement</b>.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>What reThink actually produced</h3>
+
+  <div class="stats">
+    <div class="stat"><div class="v">4.40<small>M</small></div><div class="k">Total warnings shown (chatbot + prior warning page)</div></div>
+    <div class="stat"><div class="v">2.80<small>M</small></div><div class="k">Chatbot displays, Mar 2022 – Aug 2023</div></div>
+    <div class="stat"><div class="v">1,656</div><div class="k">Requests for more information about Stop It Now</div></div>
+    <div class="stat"><div class="v">490</div><div class="k">Click-throughs to the Stop It Now website</div></div>
+    <div class="stat bad"><div class="v">~68</div><div class="k">Calls/chats to the helpline attributable</div></div>
+    <div class="stat"><div class="v">0.12→0.08<small>%</small></div><div class="k">CSAM searches as share of all Pornhub searches</div></div>
+  </div>
+
+  <p><strong>The ratio that matters: 2.8 million displays produced ~68 conversations with a human.</strong> That is one helpline contact per 41,000 warnings. Every level of the funnel loses an order of magnitude, and the final step — from "clicked a website" to "spoke to someone" — loses about 86% of the people who took the previous step.</p>
+
+  <div class="funnel">
+    <div class="fstep"><div class="lbl">Warnings shown</div><div class="fbar" style="width:100%">4,400,960</div></div>
+    <div class="fstep"><div class="lbl">Wanted more info</div><div class="fbar" style="width:38%">1,656</div></div>
+    <div class="fstep"><div class="lbl">Clicked to website</div><div class="fbar" style="width:11%">490</div></div>
+    <div class="fstep"><div class="lbl">Spoke to a human</div><div class="fbar" style="width:1.6%;min-width:64px">~68</div></div>
+  </div>
+
+  <h3>The findings the evaluation is honest about</h3>
+  <ul>
+    <li><b>82% of sessions did not search for CSAM again</b> — but this is a <em>within-session</em> measure on non-distinct sessions, with double-counting acknowledged and unquantified, and <b>no pre-intervention baseline existed</b>.</li>
+    <li><b>The referral rate declined over time.</b> The report attributes this to possible saturation — "the chatbot was less effective over time at garnering the interest of users." The helpline calls, however, increased over the period.</li>
+    <li><b>99.83–99.87% of sessions never triggered the warning at all.</b> So the intervention touched a tiny, non-random slice of the platform.</li>
+    <li><b>The chatbot handled text badly.</b> Only 132 of ~1,650 conversations were exportable for analysis; 80% of users interacted via buttons, not text. The report's own conclusion is that future versions should "be more complex, enabling them to be empathetic without being therapeutic" and should connect directly to a live human chat.</li>
+    <li><b>Displacement was not ruled out.</b> The report notes a user who stopped searching on Pornhub may simply have gone elsewhere: <em>"possibly not desisting, but moving themselves to another outlet."</em></li>
+  </ul>
+
+  <div class="callout warn">
+    <span class="lab">The strategic lesson, and it is uncomfortable</span>
+    <p>Pornhub has a warning on it because <strong>a payment network made its business model conditional on it</strong>, not because anyone proved the warning worked. That is the actual causal pathway for adoption at scale in this field — and it is <em>not available</em> to a 20,000-member Dutch hobby forum, which has no card network to lose.</p>
+    <p style="margin-bottom:0">So the plug-and-play product cannot borrow the big-platform adoption mechanism. It needs a different one for small platforms — which is precisely what the brief is asking you to invent. Naming this out loud in the pitch shows you understand how anything in this sector ever gets installed.</p>
+  </div>
+
+  <h3>The four things reThink got right, which are worth stealing</h3>
+  <ol>
+    <li><b>It took the search away and then offered a conversation.</b> The chatbot was a bridge, not a leaflet. That is still the best structure anyone has deployed.</li>
+    <li><b>It sat at the exact trigger point</b> — the moment a banned search is entered, not a general awareness banner.</li>
+    <li><b>It escalated from buttons to text</b> and let the user choose the depth of engagement. 80% chose buttons, which is a design instruction, not a failure.</li>
+    <li><b>It handed to a human.</b> Every credible intervention in this literature terminates in a person, not a webpage.</li>
+  </ol>
+</section>
+
+<!-- ===================================================== 05 -->
+<section id="s5">
+  <div class="sec-head"><div class="sec-num">05</div><h2>Project Intercept, properly</h2></div>
+
+  <div class="stats">
+    <div class="stat"><div class="v">70<small>M+</small></div><div class="k">Warnings triggered in two years</div></div>
+    <div class="stat"><div class="v">95,000</div><div class="k">Warnings per day, 2024–2025</div></div>
+    <div class="stat"><div class="v">~683<small>K</small></div><div class="k">Click-throughs to help (≈1 in 100)</div></div>
+    <div class="stat"><div class="v">131</div><div class="k">Countries with warnings active</div></div>
+    <div class="stat"><div class="v">22</div><div class="k">Separate interventions</div></div>
+    <div class="stat good"><div class="v">4<small>in 5</small></div><div class="k">Of those who seek support engage with it</div></div>
+  </div>
+
+  <h3>What it is</h3>
+  <p>Run by the Lucy Faithfull Foundation. Bespoke deterrence messaging built with each partner platform, triggered on search terms indicating intent to find sexual images of children or on clicks to links previously reported as CSAM. Partners named on the project page: <b>OpenAI, Meta, TikTok, Mega, Stability AI, Civitai, BT, MovieStarPlanet, Bing, Google, Aylo and OnlyFans</b>. Active across file-sharing, search, social media, pornography, end-to-end encrypted services, and AI chatbots.</p>
+
+  <h3>The four-message structure — steal this exactly</h3>
+  <p>Derived from research with people who have offended, and it is the cleanest thing in the entire field:</p>
+  <ol>
+    <li>Viewing sexual images of children, and having online sexual conversations with children, <b>is a crime</b>.</li>
+    <li>It <b>causes harm to children</b>.</li>
+    <li>There are <b>consequences for the offender</b>.</li>
+    <li>But <b>there is help available to stop and change</b>.</li>
+  </ol>
+  <p>Note what the structure does: it establishes wrongness, establishes harm, establishes that the wrongness attaches to the person <em>without closing the door</em>, then opens the door. The order matters. Put help first and it reads as a sales pitch; put consequences last and it reads as a threat with no exit.</p>
+
+  <div class="callout warn">
+    <span class="lab">The published criticism, and why it's actually an opening</span>
+    <p>Professor Sonia Livingstone (LSE) called the ~1% click-through "disappointing, given the scale of the problem," while noting the counterpoint that four in five of those who do seek support engage with it.</p>
+    <p style="margin-bottom:0">That is the field's central tension in one quote: <strong>the intervention is bad at reaching people and good at helping the people it reaches.</strong> Which means the marginal value is entirely in the reach, not the content — and reach is a distribution problem, which is exactly what a plug-and-play module is.</p>
+  </div>
+
+  <h3>The structural insight almost nobody states</h3>
+  <p>Intercept works because a specialist charity does <b>bespoke R&amp;D with each partner</b>. Twenty-two interventions in two years is roughly one per month, with teams of clinicians, researchers and engineers per partner. That model cannot reach a Dutch hobby forum with one part-time moderator, and it will never be able to. The economics don't work: the tail of platforms is long and each one is small.</p>
+
+  <div class="callout evidence">
+    <span class="lab">The positioning sentence this earns you</span>
+    <p style="font-family:Georgia,serif;font-size:18px;line-height:1.5;margin:0">Project Intercept proved the intervention works. It cannot reach the platforms that need it most, because it is a consultancy, not a product. The gap is not evidence — it is installability.</p>
+  </div>
+
+  <h3>What Intercept has that you can't match, and what it doesn't have</h3>
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:30%">Intercept has</th><th style="width:30%">You can have</th><th>Net</th></tr></thead>
+    <tbody>
+      <tr><td>Peer-reviewed message research and clinician input</td><td>The same published studies, cited directly</td><td>Neutral — it's all in the literature</td></tr>
+      <tr><td>Distribution with twelve of the largest platforms in the world</td><td>Nothing. Concede this immediately.</td><td><b>They win reach at the top; you win reach at the tail.</b> Different market.</td></tr>
+      <tr><td>Bespoke per-platform tuning</td><td>Self-serve configuration by a non-specialist in an afternoon</td><td><b>You win</b>, if the configuration surface is genuinely good</td></tr>
+      <tr><td>A team of researchers monitoring effectiveness</td><td>An automatic rotation and measurement engine</td><td><b>You can win</b> on habituation, which is where their own data shows decay</td></tr>
+      <tr><td>No installable artifact at all</td><td>The artifact — npm package, WordPress plugin, Discourse theme component, a Cloudflare Worker</td><td><b>This is the whole product</b></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ===================================================== 06 -->
+<section id="s6">
+  <div class="sec-head"><div class="sec-num">06</div><h2>The psychology — the actual mechanism</h2></div>
+
+  <p>You asked for the psychological research. This is the part of the literature that the hackathon kit does not touch at all, and it is where the intellectual advantage is.</p>
+
+  <h3>The mechanism chain</h3>
+  <p>The applied literature describes a sequence, and it is worth drawing because it tells you exactly where an intervention can sit.</p>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:6%">Step</th><th style="width:24%">What happens</th><th style="width:30%">Evidence</th><th>Where you can intervene</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td><b>Cue and arousal.</b> Often not deliberate — half first encountered CSAM accidentally; 65% before age 18.</td><td>Nurmi 2024; TMAT 2026</td><td>Barely. Not a message problem.</td></tr>
+      <tr class="hi"><td class="num">2</td><td><b>Cognitive distortion.</b> "It's just pictures." "Nobody's hurt." "It's not a real child." "I haven't downloaded it." The act is reframed as victimless or harmless.</td><td>Ó Ciardha &amp; Ward implicit theories; Sykes &amp; Matza neutralisation; TMAT (AI-CSAM rationalisation)</td><td><b>Here.</b> This is the only step a warning can actually attack, and it is the step nobody is attacking.</td></tr>
+      <tr><td class="num">3</td><td><b>The search.</b> A concrete, deliberate act — and legally the act that is criminalised.</td><td>Art. 252 Sr; Nurmi 2024 (11.1% of sessions)</td><td>Here. This is where every deployment currently sits.</td></tr>
+      <tr><td class="num">4</td><td><b>Reinforcement.</b> Frequency increases; frequency is the best predictor of subsequent contact-seeking.</td><td>Insoll 2022</td><td>Partially — via habituation-aware repetition and escalation.</td></tr>
+      <tr><td class="num">5</td><td><b>Escalation.</b> 42% report seeking contact after viewing; 35% now engage with AI-CSAM.</td><td>Insoll 2022; TMAT 2026</td><td>Downstream of everything.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>Every product on the market intervenes between steps 2 and 3 — at the search. <strong>Nobody addresses step 2 itself</strong>, which is where the belief that makes step 3 acceptable is manufactured.</p>
+
+  <h3>The six bodies of theory, and what each gives you</h3>
+
+  <div class="cards">
+
+    <article class="card">
+      <header><h3>Neutralisation techniques — a copywriting spec</h3><span class="badge b-purple">Unused in this field</span></header>
+      <div class="loc">Sykes &amp; Matza (1957); applied to sexual offending by various authors</div>
+      <dl>
+        <dt>Theory</dt><dd>People who commit acts they know are wrong don't deny the act — they neutralise the guilt with a small set of standard justifications.</dd>
+        <dt>The five</dt><dd><b>Denial of injury</b> ("nobody was hurt"); <b>denial of victim</b> ("they're not real / they consented / it's an image"); <b>denial of responsibility</b> ("I couldn't help it / it's an addiction"); <b>condemnation of the condemners</b> ("the police are the real criminals"); <b>appeal to higher loyalties</b> (rare here).</dd>
+        <dt>Application</dt><dd>Write one message block per neutralisation, each directly answering it. Not "this is illegal" but <em>"a photograph is a record of a crime that was committed against a specific child, and every view is a market signal for another one."</em> That is a denial-of-injury and denial-of-victim answer in a single sentence.</dd>
+        <dt>Why it wins</dt><dd>It is a <em>testable content taxonomy</em> where everyone else ships one generic paragraph. You can run eight variants against the eight distortions and claim you are testing a theory, not guessing.</dd>
+      </dl>
+    </article>
+
+    <article class="card">
+      <header><h3>Tainted fruit / contamination theory — the deterrence mechanism</h3><span class="badge b-purple">Named in the papers, absent from the kit</span></header>
+      <div class="loc">Christenson (1992); Williams (2005); used as the theoretical frame in Prichard et al. 2024</div>
+      <dl>
+        <dt>Theory</dt><dd>A warning works not by threatening but by <b>contaminating</b> — it associates the target with something unpleasant, so the user's own desire is degraded. The object becomes less appealing rather than more dangerous.</dd>
+        <dt>Evidence</dt><dd>Prichard et al. explicitly ground their therapeutic-message effect in this: the message "taints" the user's perception and simultaneously "questions the excusability" of accessing it. The 2024 trials are the strongest test of it and both deterrent and therapeutic framings reliably contaminate.</dd>
+        <dt>Application</dt><dd>Explains why <b>images didn't help</b> in Prichard 2024 — a picture of an arrest adds threat but does not contaminate the object. What would contaminate: making the user picture the specific child, or the moment of the search. A message that makes the object feel sordid rather than wicked.</dd>
+        <dt>Why it wins</dt><dd>It gives you a principled reason to reject the obvious design (big red warning, handcuffs, "CRIMINAL OFFENCE"). That rejection is itself a creative point.</dd>
+      </dl>
+    </article>
+
+    <article class="card">
+      <header><h3>Situational crime prevention — the framework the field actually uses</h3><span class="badge b-low">Standard</span></header>
+      <div class="loc">Wortley &amp; Smallbone (2012), <i>Internet Child Pornography: Causes, Investigation and Prevention</i></div>
+      <dl>
+        <dt>Theory</dt><dd>Rather than changing the offender, change the situation: increase perceived effort, increase perceived risk, reduce anticipated rewards, reduce provocations, <b>remove excuses</b>.</dd>
+        <dt>Application</dt><dd>All five are available in a plug-in. Effort: a required click, a delay. Risk: attribution, IP-trace messaging (OR 2.64 in Prichard). Reward: contaminating the object. Provocation: n/a. <b>Excuses: the neutralisation-answering copy.</b></dd>
+        <dt>Why it wins</dt><dd>It is the academic consensus frame for this exact problem and it maps one-to-one onto features you can build. Cite it and your feature list stops looking arbitrary.</dd>
+      </dl>
+    </article>
+
+    <article class="card">
+      <header><h3>Shame, stigma and why "help" is a scary word</h3><span class="badge b-med">Under-used</span></header>
+      <div class="loc">Insoll 2024; Jahnke 2018; Levenson &amp; Grady 2019; Swaby &amp; Lievesley 2023</div>
+      <dl>
+        <dt>Evidence</dt><dd><b>70% have never told anyone.</b> 27.2% are afraid to seek help. Stigma is repeatedly identified as the primary recruiter barrier — including by police officers (Haubrock 2026). Help-seeking correlates with depression, anxiety, self-harm thoughts, guilt and shame, meaning the people most likely to click are the people in the most distress, which is both an opportunity and a duty of care.</dd>
+        <dt>Application</dt><dd>The word "help" implies you need help, which implies you are the kind of person who needs help. The literature suggests the route to help should be framed around <b>control and self-direction</b>, not rescue. Note that in self-report, <b>behaviour-control and distress messages scored highest for help-seeking</b> while harm and legality scored highest for deterrence — because "take back control" is a less stigmatising frame than "get help".</dd>
+        <dt>Why it wins</dt><dd>Most teams will use the word "help" four times in a button. The evidence says don't.</dd>
+      </dl>
+    </article>
+
+    <article class="card">
+      <header><h3>Habituation and dual-process — the timing problem</h3><span class="badge b-purple">Unexploited</span></header>
+      <div class="loc">Watters, Scanlan &amp; Jain 2026; plus the general security-warning literature ("from warning to wallpaper")</div>
+      <dl>
+        <dt>Evidence</dt><dd>Attention depletes ~30% per exposure and recovers over ~10 days; perceived risk accrues over ~50 days. The two move oppositely with spacing, producing an <b>interior optimum (~18 days)</b> where per-warning effectiveness peaks. Rotation of genuinely differentiated variants preserves salience — but cross-variant habituation erodes the benefit. And in the field, reThink's referral rate genuinely declined over 18 months.</dd>
+        <dt>Application</dt><dd>A <b>rotation engine</b>: variant pool, minimum re-warning interval, salience proxies (dwell time, acknowledgement latency), and a policy that escalates form rather than repeating content. Also: measure dwell time. The Watters paper recommends exactly this — "attentional salience should be measured independently rather than inferred solely from desistance."</dd>
+        <dt>Why it wins</dt><dd>It directly answers a question the brief itself asks, with a citation the jury probably hasn't read, and it produces a demoable mechanic rather than a slogan.</dd>
+      </dl>
+    </article>
+
+    <article class="card">
+      <header><h3>Motivational interviewing and the failure of confrontation</h3><span class="badge b-med">Translates cleanly</span></header>
+      <div class="loc">Miller &amp; Rollnick; FRAMES model (Miller &amp; Sanchez 1994); harm-reduction literature</div>
+      <dl>
+        <dt>Evidence</dt><dd>Across alcohol, drug and offending-behaviour interventions, <b>confrontational approaches reliably increase resistance and reduce engagement</b>; empathic, autonomy-supporting approaches work better even where the goal is abstinence. The Best Practice Guide's "avoid excessive punishment — overly punitive or shaming language can trigger defensiveness and reduce help-seeking behaviour" is this finding, restated.</dd>
+        <dt>Application</dt><dd>The <b>FRAMES</b> checklist is a literal message spec: <b>F</b>eedback (what you're doing and what it does), <b>R</b>esponsibility ("the decision is yours" — matches Offlimits' own phrasing), <b>A</b>dvice (one concrete next step), <b>M</b>enu (more than one route), <b>E</b>mpathy (no judgement), <b>S</b>elf-efficacy ("people do change"). Six boxes, each a sentence, all evidence-based, and no team in this hackathon will have heard of it.</dd>
+        <dt>Why it wins</dt><dd>It converts "make the copy nice" into a checklist you can score yourself against. And the self-efficacy element is already supported by your strongest causal evidence — Prevent It 2.0, d = −1.01.</dd>
+      </dl>
+    </article>
+  </div>
+
+  <h3>The one distortion nothing in the world addresses</h3>
+  <div class="callout danger">
+    <span class="lab">A live, growing, entirely unserved message gap</span>
+    <p>The IWF recorded 3,443 AI-generated CSAM videos in 2025 — a 26,385% rise — and 65% were the most severe category. Protect Children found <b>35% of surveyed CSAM users had viewed or created AI-CSAM</b>, half of those commercially. Whether or not a synthetic image harms a depicted child, the <em>belief</em> attached to it is exactly the denial-of-victim neutralisation: <strong>"it isn't a real child, so nobody was hurt."</strong></p>
+    <p style="margin-bottom:0">Every message in the starter kit, every message in the Ahmia campaign, and every message in Project Intercept assumes a photographed child. <b>There is no published intervention anywhere that addresses the synthetic-material belief.</b> Given that the Dutch legal definition turns on apparent age and explicitly covers digitally generated imagery, a Dutch-language AI-CSAM message block is both legally accurate and completely novel. That is the clearest unclaimed creative territory I found on either track.</p>
+  </div>
+</section>
+
+<!-- ===================================================== 07 -->
+<section id="s7">
+  <div class="sec-head"><div class="sec-num">07</div><h2>Adjacent fields that translate</h2></div>
+
+  <p>You asked for solutions to similar problems. Six fields have solved structurally identical problems — interrupting a compulsive behaviour at the moment of intent, without identifying the person. Each contributes something specific.</p>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:17%">Field</th><th style="width:33%">What they built</th><th style="width:22%">What the evidence says</th><th>What to take</th></tr></thead>
+    <tbody>
+      <tr class="hi">
+        <td><b>Problem gambling — self-exclusion</b></td>
+        <td><b>GAMSTOP</b> (UK national online self-exclusion, one registration blocks every licensed operator), deposit limits, reality checks, "take a break" tools, BetBlocker (device-level blocking).</td>
+        <td>Self-exclusion registers are effective precisely because they are <b>hard to reverse once activated</b> and they follow the person across operators. Friction tools (delays, limits) are consistently better-evidenced than persuasion.</td>
+        <td><b>Friction &gt; persuasion.</b> And the "follows you across sites" model — which is what a widely-installed module becomes. Also: self-binding is more acceptable to users than external restriction, because it is <em>chosen</em>.</td>
+      </tr>
+      <tr class="hi">
+        <td><b>Suicide prevention — means restriction</b></td>
+        <td>Bridge barriers, ligature removal, pesticide bans, crisis-line routing; safeTALK / ASIST training.</td>
+        <td><b>Means restriction is the most effective suicide-prevention intervention known</b>, and it works by adding time and distance between impulse and act, not by changing the person's mind.</td>
+        <td>The single most important conceptual transfer: <strong>you are not trying to change a belief, you are inserting friction into a moment.</strong> That reframe makes "did the warning work?" a less impossible question, because a delay is itself the outcome.</td>
+      </tr>
+      <tr>
+        <td><b>Addiction — FRAMES / MI</b></td>
+        <td>Brief interventions delivered in 5–15 minutes in emergency departments, GPs, courts.</td>
+        <td>Brief interventions have small but real effects, and <b>confrontation reduces them</b>. Effect sizes are modest — similar order to d≈0.2.</td>
+        <td>Calibrates your claim. A warning is a <em>brief intervention</em>. Brief interventions produce small effects at population scale. Say that instead of overselling.</td>
+      </tr>
+      <tr>
+        <td><b>Fraud prevention — bank "is this you?"</b></td>
+        <td>Real-time payment interstitials, confirmation of payee, APP-fraud reimbursement rules, delays on new payees.</td>
+        <td>Interruption at the moment of the transaction works where posters do not; regulation then made the friction mandatory.</td>
+        <td>The <b>mandatory-friction</b> pattern: once duty exists, the default flips. Ties directly to EU CSAR's risk-mitigation obligation (§09).</td>
+      </tr>
+      <tr>
+        <td><b>Sexual violence — bystander programmes</b></td>
+        <td>"Bringing in the Bystander", Green Dot; whole-population training with a five-step model (notice, interpret, feel responsible, acquire skills, act).</td>
+        <td>Moderate evidence of attitude and some behaviour change; stronger where the audience is given concrete scripts rather than awareness.</td>
+        <td>Directly serves <b>persona 04, "people around them"</b> — the most neglected persona and the one with the highest ratio of concern to available guidance. A "what to say to your brother" script is a real product.</td>
+      </tr>
+      <tr>
+        <td><b>Harmful content — interstitials vs labels</b></td>
+        <td>Misinformation interstitials, blur screens, "see why" gates.</td>
+        <td>Interstitial warnings produce <b>more behavioural adherence and more reduction in perceived accuracy</b> than passive contextual labels (Kaiser et al. 2021; Sharevski et al. 2022). But users develop "informed reduced behaviour" — less gaze, less click-through — while still reporting the warning as influential.</td>
+        <td>Two things: <b>require an action</b> (gate, not tag), and <b>never trust self-reported effectiveness.</b> Measure dwell and behaviour, not satisfaction.</td>
+      </tr>
+      <tr>
+        <td><b>Smoking — graphic warnings</b></td>
+        <td>Plain packaging plus pictorial warnings, legally mandated across dozens of countries.</td>
+        <td>Pictorial warnings work for smoking — <b>but images made no difference in Prichard's CSAM trial</b>, and the Best Practice Guide explicitly warns against sensationalist imagery as a forbidden-fruit risk.</td>
+        <td>A useful negative transfer. The lesson from tobacco is <b>mandated ubiquity</b>, not graphic imagery. Do not port the pictures.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout evidence">
+    <span class="lab">The synthesis across all six</span>
+    <p style="margin:0">Every field that has actually reduced a harmful behaviour at scale did it by <strong>changing the default and adding friction</strong>, with persuasion as a secondary layer. The CSAM prevention field has, so far, only done the persuasion layer. That is the strategic gap, and it is the same gap as the choice-architecture finding in §01 — approached from a different direction.</p>
+  </div>
+</section>
+
+<!-- ===================================================== 08 -->
+<section id="s8">
+  <div class="sec-head"><div class="sec-num">08</div><h2>The Netherlands, precisely</h2></div>
+
+  <p>The brief is Netherlands-first, and there are three things about the Dutch context that most teams will get wrong. Each is a small, cheap credibility gain.</p>
+
+  <h3>1 · The law is narrower than the brief implies</h3>
+
+  <p>Since 1 July 2024, CSAM falls under <b>article 252 of the Wetboek van Strafrecht</b> (replacing 240b), under the <i>Wet seksuele misdrijven</i>. Maximum <b>6 years</b>; up to <b>9 years</b> where the offence is committed habitually or professionally (art. 254 lid 1 sub c). The article covers distributing, offering, publicly displaying, producing, importing, exporting, acquiring, possessing — and crucially <b>"zich de toegang verschaffen"</b> (obtaining access), which is what criminalises viewing without downloading.</p>
+
+  <p>But two details in the prosecution guideline (2024R006) matter enormously for message copy:</p>
+  <ul>
+    <li><b>"Zich toegang verschaffen" requires a deliberate act.</b> Legal commentary is explicit: "Het zich toegang verschaffen veronderstelt dat dit welbewust gebeurt maar er is dus wel een actieve handeling vereist" — it presupposes the access is <em>deliberate</em>, and an active act is required. The guideline's base offence also contemplates <b>"voorwaardelijk opzet"</b> (conditional intent / dolus eventualis). <b>This means copy that says "even accidentally viewing is a crime" is legally wrong.</b> It also means the honest, defensible line is "knowingly searching for or viewing this material is a criminal offence" — which is both accurate and does the same persuasive work.</li>
+    <li><b>The sentencing reality is nothing like six years.</b> The base offence for possession / acquisition / access to a <em>small quantity</em>, by a <b>first offender</b>, on a <b>single occasion</b>, with conditional intent, is: <b>a short unconditional prison sentence + 240 hours of community service + a suspended sentence with special conditions</b>. Where it is habitual or professional or repeated or within a knowingly CSAM environment: <b>12 months</b>. There is a community-service prohibition (art. 22b Sr), so a task penalty can only be imposed alongside a custodial element. And since 1 July 2024 a <b>probation period of up to ten years</b> can be imposed.</li>
+  </ul>
+
+  <div class="callout warn">
+    <span class="lab">Two ways to use this</span>
+    <p><b>For the message:</b> "up to six years" is accurate but not credible to a user who has read about actual cases. A message that names the <em>real</em> consequence — a criminal record, up to 240 hours of community service, a suspended sentence with conditions, a probation period of up to ten years — is more deterrent, not less, because it is believable. Research on deterrence is consistent that <b>certainty beats severity</b>, and the certainty here is high.</p>
+    <p style="margin-bottom:0"><b>For the pitch:</b> knowing that maximum penalties are not typical outcomes is exactly the kind of detail that signals you read the prosecution guideline rather than the press release. And the <b>ten-year probation period</b> is the single most under-used fact on this track.</p>
+  </div>
+
+  <h3>2 · The help infrastructure is real, well-organised, and much smaller than you think</h3>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:22%">Service</th><th style="width:34%">What it is</th><th>What matters</th></tr></thead>
+    <tbody>
+      <tr class="hi">
+        <td><b>Offlimits</b> — preventielijn</td>
+        <td>Formerly <b>Stop it Now</b> (founded 2012 by EOKM + De Waag forensic clinic), renamed the Offlimits prevention line in <b>January 2026</b>. Anonymous, confidential, free phone and chat. <b>0800 266 64 36.</b> Open weekdays 09:00–22:00, weekends 09:30–18:00.</td>
+        <td><b>Capacity evidence:</b> the whole of the Netherlands generated <b>943 contacts in 2022</b> (up 32% on 2021) — 617 by phone, 241 by chat, 85 by email. 27% of help-seekers contacted more than once. <b>That is roughly 2.6 contacts per day for a population of 17.9 million.</b></td>
+      </tr>
+      <tr><td><b>Offlimits</b> — meldpunt &amp; hulplijn</td>
+        <td>Meldpunt Kinderporno (est. 1995/96) is the hotline; Helpwanted is the general online-abuse helpline. Offlimits is a <b>Trusted Flagger</b> under the DSA, and forms the Dutch Safer Internet Centre with ECP and Netwerk Mediawijsheid.</td>
+        <td>The organisation is a report-and-remove body with a small prevention arm, not a clinical service. Do not oversell what it can absorb.</td>
+      </tr>
+      <tr><td><b>Stoppen is mogelijk</b></td>
+        <td>Anonymous online self-help module for people worried about their viewing, NL and Flanders.</td>
+        <td>Your lowest-friction, highest-capacity destination. Self-help scales; phone lines do not.</td>
+      </tr>
+      <tr><td><b>De Waag</b></td>
+        <td>Forensic outpatient clinic; accepts referrals from the prevention line; also runs self-acceptance groups.</td>
+        <td>The clinical endpoint. The 2012 design (helpline → De Waag) is the template for a routed pathway.</td>
+      </tr>
+      <tr><td><b>Kein Täter werden / Dunkelfeld</b> (DE)</td>
+        <td>Free confidential therapy protected by medical confidentiality under §203 StGB, with the §34 justification exception for acute danger.</td>
+        <td>The strongest confidentiality model in Europe, and the reason the German message can promise more than the Dutch one.</td>
+      </tr>
+      <tr><td><b>ReDirection</b> (FI), <b>Stop It Now UK</b>, <b>Troubled Desire</b>, <b>Help Wanted</b>, <b>Shore</b>, <b>Moore Center</b>, <b>Helplinks.eu</b></td>
+        <td>The international layer. ReDirection is the destination used in the Ahmia study and is multilingual (EN/FI/SV/DE/FR/ES).</td>
+        <td>Your scale story. A country-and-language routing table is a real deliverable, not a slide.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout danger">
+    <span class="lab">The capacity risk nobody will mention</span>
+    <p style="margin:0">If a module installed on a few hundred Dutch platforms worked at even Project Intercept's rate, it would produce help-seeking demand far above <b>2.6 contacts a day</b>. Offlimits is a small team. <strong>A plug-and-play module that succeeds creates a supply-side crisis.</strong> Design for it — route to self-help by default, phone only where the user's behaviour indicates they need a human, and give the platform a way to tell the service what volume to expect. A team that names this problem and solves it will look like the only team that thought about the system rather than the screen.</p>
+  </div>
+
+  <h3>3 · The Dutch context has a specific threat model</h3>
+  <ul>
+    <li><b>Vigilantism is a live, recent phenomenon.</b> In 2020, Dutch "pedojager" groups lured men into meetings and filmed or assaulted them; police counted <b>around 250 violent incidents in a few months</b>. Reclassering Nederland warns that exposing and isolating people raises the risk of abuse rather than lowering it.</li>
+    <li><b>This is a direct design constraint.</b> Any tool that could be mistaken for identification or entrapment is dangerous. It is also a reason the module must be visibly, obviously <em>not</em> a vigilante tool — a clear statement of what it does not do, on the platform's own settings page.</li>
+    <li><b>It is also a powerful pitch line:</b> "every warning we install is an alternative to a vigilante." The brief says it; almost no team will use it.</li>
+  </ul>
+
+  <h3>4 · The language problem the brief doesn't resolve</h3>
+  <p>The module must work in Dutch and English. Offlimits operates in Dutch. So what happens when an English-speaking user on a Dutch forum triggers the warning? Two options, and you must pick one deliberately:</p>
+  <ul>
+    <li><b>Route by language, not by country</b> — Dutch UI language → Offlimits; any other → ReDirection (6 languages) → Stop It Now UK. Honest, and it degrades gracefully.</li>
+    <li><b>Route by country, translated</b> — show Offlimits in English. Dishonest if the line cannot actually serve in English.</li>
+  </ul>
+  <p>The first is correct and almost nobody will do it. A user who calls a Dutch helpline in English and gets turned away has been harmed by the intervention.</p>
+</section>
+
+<!-- ===================================================== 09 -->
+<section id="s9">
+  <div class="sec-head"><div class="sec-num">09</div><h2>The platform market: what a small platform can install today</h2></div>
+
+  <p>Adoptability is 25% of the score, and it is the criterion on which this track is actually won. So: what does the market already offer a 20,000-member Dutch forum with one part-time moderator?</p>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:19%">Tool</th><th style="width:13%">Cost</th><th style="width:22%">What it does</th><th style="width:16%">Integration effort</th><th>Relevant?</th></tr></thead>
+    <tbody>
+      <tr class="hi">
+        <td><b>Cloudflare CSAM Scanning Tool</b></td>
+        <td><b>Free on all plans</b></td>
+        <td>Fuzzy-hashes images entering the Cloudflare cache, matches against NCMEC and partner hash lists, blocks the URL with a 451, notifies you, files the NCMEC report. Now onboards with only a verified email.</td>
+        <td><b>Toggle in a dashboard.</b> No code.</td>
+        <td><span class="mark y">Baseline.</span> Any Dutch forum behind Cloudflare can and should have this on. <b>Its existence is a constraint on your pitch: detection is solved for free.</b></td>
+      </tr>
+      <tr>
+        <td><b>Project Arachnid — Shield API</b></td>
+        <td>Free</td>
+        <td>Exact and perceptual hash matching against the Canadian Centre for Child Protection's list; SDKs in TypeScript, Python, Rust and PHP. 176bn+ images processed, 141M+ takedown notices by July 2026.</td>
+        <td>API key + a few lines</td>
+        <td>Known-image detection, well documented, free.</td>
+      </tr>
+      <tr>
+        <td><b>Microsoft PhotoDNA Cloud</b></td>
+        <td>Free for qualified orgs</td>
+        <td>Perceptual hashing for still images; the industry standard since 2009; false-positive rate estimated at one in 50 billion.</td>
+        <td>REST API, vetted access</td>
+        <td>Known images only. No novel content.</td>
+      </tr>
+      <tr>
+        <td><b>Google CSAI Match</b></td>
+        <td>Free to qualifying partners</td>
+        <td>Known-CSAM <em>video</em> segment matching.</td>
+        <td>Partner programme</td>
+        <td>Relevant for video/file-sharing platforms in the brief's list.</td>
+      </tr>
+      <tr>
+        <td><b>IWF Image Intercept</b></td>
+        <td>Free</td>
+        <td>Hash matching explicitly designed for <b>small businesses and startups</b>, "requiring minimal technical expertise to integrate."</td>
+        <td>Low</td>
+        <td>Built for exactly the target user.</td>
+      </tr>
+      <tr>
+        <td><b>Tech Coalition — Pathways / Lantern</b></td>
+        <td>Free</td>
+        <td>Pathways is a capacity-building programme for startups and small/mid platforms; Lantern shares threat signals (including hashes) across participants — ~300,000 hashes shared by Dec 2023.</td>
+        <td>Programme, not code</td>
+        <td>Distribution channel for your module. If UNICRI wants adoption, Pathways is the door.</td>
+      </tr>
+      <tr>
+        <td><b>Thorn Safer</b></td>
+        <td>Commercial</td>
+        <td>Classifiers for <em>novel</em> CSAM plus text-based exploitation signals; 12M+ suspected files detected via Safer.</td>
+        <td>Commercial integration</td>
+        <td>The one layer that finds unseen material — and it costs money.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout evidence">
+    <span class="lab">The market fact that defines the product</span>
+    <p style="margin:0"><strong>Every single tool a small platform can install today is content detection. Not one is a behavioural intervention.</strong> There are seven ways to find an illegal image for free and <b>zero</b> ways to install a warning. The detection layer is saturated and commoditised; the intervention layer is empty. That is not an inference — it is the state of the market as of today, and it is the strongest possible argument for the brief's premise.</p>
+  </div>
+
+  <h3>Why has nobody built it?</h3>
+  <p>Four reasons, and each one is a design constraint:</p>
+  <ul>
+    <li><b>Liability.</b> Showing a warning implies the platform knew the behaviour was possible. A small operator may prefer silence. <b>Answer: make the module's default state actively protective — installing it is evidence of care, and the docs should say so in the language a lawyer would accept.</b></li>
+    <li><b>No trusted message.</b> A platform cannot invent legal copy; getting it wrong is worse than nothing. <b>Answer: ship maintained, sourced, jurisdiction-specific copy so the platform never has to write it.</b></li>
+    <li><b>No proof it works.</b> Covered at length above.</li>
+    <li><b>No one to hand off to.</b> Routing requires knowing the local service. <b>Answer: the routing table is the product, and it's the thing that scales by country.</b></li>
+  </ul>
+
+  <h3>The regulatory tailwind</h3>
+  <p>The EU Child Sexual Abuse Regulation (CSAR, proposed May 2022) would require hosting and interpersonal-communication providers to carry out <b>risk assessments</b> and adopt <b>proportionate mitigation measures</b>, including measures relating to the design and operation of their services, reporting mechanisms and user safety — with different risk categories for different services and stronger obligations for higher-risk ones. The Council's November 2025 position retained mandatory risk assessment and mitigation and dropped mandatory detection orders.</p>
+  <p>Trilogue status: fifth trilogue ended without agreement in June 2026; a rejection motion in July fell short and the ePrivacy derogation was extended to 3 April 2028 by Regulation (EU) 2026/1881; a sixth trilogue was scheduled. <b>It is not law.</b></p>
+  <p>So: do <em>not</em> build a compliance product for a regulation that does not exist. But <em>do</em> note, in one sentence, that risk-mitigation-by-design is the direction of travel — because it is the only mechanism by which the tail of platforms will ever be compelled to install anything, and it is the difference between a voluntary module and a mandated one.</p>
+</section>
+
+<!-- ===================================================== 10 -->
+<section id="s10">
+  <div class="sec-head"><div class="sec-num">10</div><h2>The hard problems nobody has solved</h2></div>
+
+  <p>Eight genuine unsolved problems. Listing them honestly is itself a competitive advantage: the jury's Q&amp;A questions are drawn from exactly this list, and the brief names five of them explicitly.</p>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th style="width:36%">Why it is unsolved</th><th>Best available answer</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td><b>The privacy–measurement contradiction</b></td>
+        <td>You cannot prove behaviour change without following people up; you cannot follow up without identifying them; identification destroys the trust that makes help work. This is a genuine logical bind, not a resource problem.</td>
+        <td><b>Cohort/intervention-level inference</b> rather than individual tracking: pre/post rates on matched platforms, interrupted time series, and <b>downstream service-side counts</b> (helpline call volume attributable by code word or referral tag). The Ahmia study is the model — aggregate counts only, and it still detected an effect.</td></tr>
+      <tr><td class="num">2</td><td><b>Displacement</b></td>
+        <td>Blocking on one platform moves the search to another. Ahmia found no reduction in searching at all; Google could not see off-platform behaviour.</td>
+        <td><b>Don't claim prevention you can't see.</b> Claim <em>interruption</em> and <em>routing</em>. Then argue that network effects make ubiquity the only thing that matters — which is why a plug-and-play module is the right shape.</td></tr>
+      <tr><td class="num">3</td><td><b>Habituation</b></td>
+        <td>Attention depletes within days and effectiveness decays over months; reThink's own referral rate fell. Rotation only works if variants are genuinely differentiated.</td>
+        <td><b>The Watters dual-process model</b>: minimum re-warning interval, variant pool, salience proxies. Also: escalation of form (gate → chat → human) rather than repetition of content.</td></tr>
+      <tr><td class="num">4</td><td><b>False positives</b></td>
+        <td>The classifier can't tell a journalist, a survivor, a parent, a researcher, or an accidental hit from an offender. Warning a survivor is a real harm. Google's own paper notes "child porn" invokes the Onebox even for information-seeking.</td>
+        <td><b>A false-positive-safe path.</b> Never assume intent in the copy. Include an explicit exit for "I'm here for a different reason" that leads to reporting or information. <b>No deployment in the literature does this.</b></td></tr>
+      <tr><td class="num">5</td><td><b>Help supply</b></td>
+        <td>Offlimits takes ~2.6 contacts a day for the Netherlands. The product's success would overwhelm it.</td>
+        <td>Default to self-help (Stoppen is mogelijk, ReDirection) which scales; reserve human lines for signals of higher need; give the service a volume forecast.</td></tr>
+      <tr><td class="num">6</td><td><b>The word "help"</b></td>
+        <td>It implies you are the kind of person who needs help, which is the stigma that 27.2% cite as a reason not to seek it.</td>
+        <td>Frame as control and self-direction. "Take back control" outperforms "get help" in the self-report literature.</td></tr>
+      <tr><td class="num">7</td><td><b>AI-CSAM rationalisation</b></td>
+        <td>"It's not a real child" is a coherent-sounding neutralisation for synthetic material, and every existing message assumes a photographed victim.</td>
+        <td>A dedicated message block. Legally accurate in the Netherlands (apparent age; generated imagery covered), completely unaddressed in the literature. <b>The clearest open territory on this track.</b></td></tr>
+      <tr><td class="num">8</td><td><b>Demonstrating that any of it works</b></td>
+        <td>The most recent systematic review concludes it is "not possible to draw any broader conclusions as to the impacts of these digital interventions at this time."</td>
+        <td>Design a study you could actually run. Pre-registered, platform-level randomisation of variants, aggregate outcomes, service-side referral counts, ethics approval path. <b>A credible protocol is worth more than a simulated dashboard.</b></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ===================================================== 11 -->
+<section id="s11">
+  <div class="sec-head"><div class="sec-num">11</div><h2>Eight directions, scored on the real rubric</h2></div>
+
+  <p>Scored against the jury weights published in <code>PITCH_GUIDE.md</code>: <b>Impact 25 · Adoptability 25 · Creativity 20 · Safety 20 · Clarity 10.</b> Scores are out of 100. These are my judgements, argued, not measurements.</p>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:26%">Direction</th><th>Impact<br><small>25</small></th><th>Adopt<br><small>25</small></th><th>Creat<br><small>20</small></th><th>Safety<br><small>20</small></th><th>Clarity<br><small>10</small></th><th>Total</th><th style="width:26%">Thesis</th></tr></thead>
+    <tbody>
+      <tr class="hi">
+        <td><b>U1 · The Fifth Time</b><br><small>Rotation engine</small></td>
+        <td class="num">21</td><td class="num">23</td><td class="num">19</td><td class="num">18</td><td class="num">9</td><td class="num"><b>90</b></td>
+        <td>Answers the brief's own habituation question with the only formal model in the literature. Demoable mechanic, not a slogan. Variant pool, minimum re-warning interval, escalation of form.</td>
+      </tr>
+      <tr class="hi">
+        <td><b>U2 · Not Real</b><br><small>AI-CSAM intervention</small></td>
+        <td class="num">20</td><td class="num">21</td><td class="num">20</td><td class="num">18</td><td class="num">9</td><td class="num"><b>88</b></td>
+        <td>Zero published interventions exist for the fastest-growing harm. Legally accurate in NL. Rides the IWF 26,385% story. Risk: feels like a point solution on top of a generic one.</td>
+      </tr>
+      <tr>
+        <td><b>U3 · The Whole Stack</b><br><small>One install, four tools</small></td>
+        <td class="num">22</td><td class="num">24</td><td class="num">14</td><td class="num">19</td><td class="num">9</td><td class="num"><b>88</b></td>
+        <td>Ships Cloudflare scanning + Arachnid Shield + PhotoDNA + the warning as a single install. Highest adoptability of anything here — the "one afternoon" answer. Costs creativity.</td>
+      </tr>
+      <tr>
+        <td><b>U4 · The Choice Architecture</b><br><small>Format as the variable</small></td>
+        <td class="num">21</td><td class="num">20</td><td class="num">20</td><td class="num">17</td><td class="num">9</td><td class="num"><b>87</b></td>
+        <td>Built on the §01 finding. Three architectures, one message, live A/B in the demo. Intellectually the strongest pitch; harder to make feel like a product.</td>
+      </tr>
+      <tr>
+        <td><b>U5 · The Ladder</b><br><small>Routed help pathway</small></td>
+        <td class="num">22</td><td class="num">19</td><td class="num">15</td><td class="num">19</td><td class="num">9</td><td class="num"><b>84</b></td>
+        <td>Attacks the 70% who can't find an anonymous resource. Self-help → chat → phone → clinic, escalated by signal. Weakest on creativity; strongest on the actual binding constraint.</td>
+      </tr>
+      <tr>
+        <td><b>U6 · The Conversation</b><br><small>Persona 04</small></td>
+        <td class="num">18</td><td class="num">18</td><td class="num">19</td><td class="num">18</td><td class="num">9</td><td class="num"><b>82</b></td>
+        <td>Built for partners and family. Most emotionally winnable, most neglected, highest ratio of concern to available guidance. Doesn't fit the "warning on a search" mechanism, which is a structural problem.</td>
+      </tr>
+      <tr>
+        <td><b>U7 · Not Your Fault</b><br><small>Neutralisation-mapped copy</small></td>
+        <td class="num">19</td><td class="num">21</td><td class="num">17</td><td class="num">17</td><td class="num">8</td><td class="num"><b>82</b></td>
+        <td>Eight blocks, one per neutralisation, FRAMES-structured. Cheap to build, evidence-grounded, testable. Risk: reads as "better copy" rather than a product.</td>
+      </tr>
+      <tr class="bad">
+        <td><b>U8 · The Honest Dashboard</b><br><small>Realistic measurement</small></td>
+        <td class="num">13</td><td class="num">14</td><td class="num">13</td><td class="num">16</td><td class="num">7</td><td class="num"><b>63</b></td>
+        <td>Fixes the 15× problem with an honest funnel. Excellent as a <em>component</em> and as a Q&amp;A answer. Not enough on its own.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>The bundle I would actually ship</h3>
+
+  <p>Directions U1, U2 and U3 are not competing ideas — they are three modules of one product, and together they hit every criterion:</p>
+
+  <div class="callout evidence">
+    <span class="lab">Recommended UNICRI shape</span>
+    <p><b>The installable module that doesn't get ignored.</b></p>
+    <ul style="margin-bottom:0">
+      <li><b>Adopt in an afternoon</b> (U3): one package that turns on the free detection stack <em>and</em> the warning. Ships as an npm module, a WordPress plugin and a Discourse theme component, with the Cloudflare and Arachnid hooks wired. "Detection is free and solved; the warning is the missing half — here is both, in one install."</li>
+      <li><b>Doesn't decay</b> (U1): a rotation engine implementing the dual-process model — variant pool, minimum re-warning interval (configurable, default in the model's range), and escalation of <em>form</em> rather than repetition of content. Demoable in 15 seconds: same user, fifth trigger, and the intervention has changed shape.</li>
+      <li><b>Says the thing nobody says</b> (U2 + U7): message blocks mapped to neutralisations, including a Dutch AI-CSAM block that answers "it isn't a real child" — legally accurate under art. 252 and completely unaddressed by any published intervention.</li>
+      <li><b>Refuses to lie about the numbers</b> (U8): the dashboard shows realistic baselines and a range, not a 15× lift, and explains why.</li>
+    </ul>
+  </div>
+
+  <p>That combination scores roughly 94/100 on my reading, and — more importantly — it is the only combination I found where <b>each of the five criteria is answered by a different, named, visible feature</b> rather than by an adjective.</p>
+
+  <h3>The 30-second version of the pitch</h3>
+  <blockquote>
+    "There are seven free tools a small platform can install to <em>find</em> illegal images, and zero to <em>interrupt</em> the person looking. We built the missing half. It installs in an afternoon, it rotates so it doesn't become wallpaper, and it says the one thing no warning says — that the image isn't the only person in the room."
+    <cite>Built entirely from §03–§09 of this document</cite>
+  </blockquote>
+</section>
+
+<!-- ===================================================== 12 -->
+<section id="s12">
+  <div class="sec-head"><div class="sec-num">12</div><h2>One project or both — the actual decision</h2></div>
+
+  <p>You said you'd decide based on what comes out of this. So here is the comparison laid out as a decision, not a recommendation with a thumb on the scale.</p>
+
+  <h3>Head to head</h3>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:20%">Dimension</th><th style="width:38%">ACAPS — Ground Truth</th><th>UNICRI — Stop Before It Starts</th></tr></thead>
+    <tbody>
+      <tr><td><b>External evidence base</b></td><td><span class="badge b-high">Thin</span> Nobody has built this. You are the first, which is a risk and a story.</td><td><span class="badge b-low">Very thick</span> 4 RCTs, 3 field experiments, 2 RCT programmes, 2 systematic reviews. A decade of literature.</td></tr>
+      <tr><td><b>Can the claim be tested offline?</b></td><td><span class="badge b-low">Yes</span> 104 resolved risks. You can compute a Brier score on stage.</td><td><span class="badge b-high">No</span> Behaviour change requires a live deployment and ethics approval. You can only propose a protocol.</td></tr>
+      <tr><td><b>What the rubric rewards</b></td><td>Concept 40% + 7 unweighted ACAPS criteria. <b>A design problem.</b></td><td>Impact 25 · Adopt 25 · Creativity 20 · Safety 20 · Clarity 10. <b>A shipping problem.</b></td></tr>
+      <tr><td><b>Competition density</b></td><td><span class="badge b-med">Moderate</span> Data challenge; most teams will build a dashboard or an LLM wrapper.</td><td><span class="badge b-high">Higher</span> Everyone can build a modal in six hours. Differentiation is hard.</td></tr>
+      <tr><td><b>Demo risk</b></td><td>Low. Numbers and screens behave.</td><td><span class="badge b-high">High</span> The 15× baked-rate trap, plus the temptation to fake a funnel.</td></tr>
+      <tr><td><b>Emotional pull on the jury</b></td><td>Moderate. Professional, abstract, defensible.</td><td><span class="badge b-low">Extreme</span> Child protection. Nobody is neutral in that room.</td></tr>
+      <tr><td><b>Downstream opportunity</b></td><td>ACAPS pilot in December; a real product with an institutional customer.</td><td>AI for Safer Children Global Hub, used by law enforcement in 130+ countries. Beridze in the room on Sunday.</td></tr>
+      <tr><td><b>Where you'd lose</b></td><td>If the jury doesn't believe experts will answer. Mitigable with the EWP decay data and ACAPS' own 10-of-60 response rate.</td><td>If a juror knows the literature better than you do. <b>Fatal and un-mitigable at short notice.</b></td></tr>
+      <tr><td><b>Where you'd win</b></td><td>By being the only team that did the quantitative work.</td><td>By being the only team that read the papers, and by shipping something installable.</td></tr>
+      <tr><td><b>What "winning" would actually mean</b></td><td>A pilot with ACAPS and a defensible novel method.</td><td>A deployable open-source artifact adopted by real platforms through the Tech Coalition, Pathways and IWF networks.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Constraints that shape the answer</h3>
+  <ul>
+    <li><b>Team size 5, 26 hours on site, multiple submissions allowed.</b></li>
+    <li><b>ACAPS has no submission apparatus; UNICRI ships templates, a pitch guide and a published rubric.</b> That asymmetry means the UNICRI track has a much lower coordination cost per unit of quality.</li>
+    <li><b>ACAPS needs a December pilot to be real.</b> UNICRI needs an artifact that can be hosted on a UN platform.</li>
+    <li>Both tracks can be entered with the same 5 people. They cannot both be entered <em>well</em>.</li>
+  </ul>
+
+  <h3>My reading</h3>
+
+  <p><strong>The two tracks are not equally risky — they are risky in opposite directions.</strong></p>
+
+  <p>ACAPS is a low-information-risk, high-execution-risk track. Almost nobody will do the quantitative work, so a team that does it wins on differentiation. But if you're wrong about expert participation, the whole premise collapses and you find out in December, not on Sunday.</p>
+
+  <p>UNICRI is a high-information-risk, low-execution-risk track. The evidence is unambiguous that warnings work in the short term and that routing is the binding constraint. But everyone in the room can build a modal, and a jury that includes people who wrote these papers will separate the teams that read them from the teams that didn't in about ninety seconds.</p>
+
+  <div class="callout blue">
+    <span class="lab">The recommendation</span>
+    <p><strong>Do UNICRI as the primary submission, with ACAPS as a second pod only if you have five people and the ACAPS pod has its own lead.</strong></p>
+    <p>Three reasons:</p>
+    <ol style="margin-bottom:8px">
+      <li><b>The ceiling is higher and the floor is lower in the same direction.</b> UNICRI's rubric is more forgiving of an imperfect demo (Clarity is only 10%) and more rewarding of craft (Adoptability 25 + Safety 20 = 45% on execution quality). ACAPS is 40% concept, which means a single strong idea can carry a weaker build — good, but it also means a strong build with a weak idea scores poorly, and the concept space is crowded by your own earlier work.</li>
+      <li><b>The research asymmetry is in your favour here and against you there.</b> On UNICRI, having read the 19 papers this week is a durable, defensible edge that no one can replicate in 26 hours. On ACAPS, the equivalent edge is your own dataset work, which is strong but is also the thing most likely to be independently rediscovered by another competent team running the starter notebook and going one step further.</li>
+      <li><b>The artifact survives the weekend.</b> An installable open-source module with honest numbers and an ethics-approved test protocol is something UNICRI can put on the AI for Safer Children hub. A BENCHMARK prototype needs ACAPS to say yes to a pilot before it does anything.</li>
+    </ol>
+    <p style="margin-bottom:0">Counter-argument, stated fairly: if your five people include two strong quantitative analysts and one designer, the ACAPS pod is cheap to run and the December pilot is a real, rare prize. If you have to choose, choose UNICRI — <em>but only if you actually build the thing and not a deck about the thing.</em></p>
+  </div>
+</section>
+
+<!-- ===================================================== 13 -->
+<section id="s13">
+  <div class="sec-head"><div class="sec-num">13</div><h2>Sources</h2></div>
+
+  <h4>Primary literature — the organisers' reading list</h4>
+  <ul class="srcs">
+    <li><b>Nurmi, J., Paju, A., Brumley, B.B., Insoll, T., Ovaska, A.K., Soloveva, V., Vaaranen-Valkonen, N., Aaltonen, M. &amp; Arroyo, D. (2024).</b> Investigating child sexual abuse material availability, searches, and users on the anonymous Tor network for a public health intervention strategy. <i>Scientific Reports</i> 14:7849. doi:10.1038/s41598-024-58346-7</li>
+    <li><b>Insoll, T., Ovaska, A.K., Nurmi, J., Aaltonen, M. &amp; Vaaranen-Valkonen, N. (2022).</b> Risk factors for child sexual abuse material users contacting children online. <i>Journal of Online Trust and Safety</i> 1(2). doi:10.54501/jots.v1i2.29</li>
+    <li><b>Insoll, T., Soloveva, V., Díaz Bethencourt, E., Ovaska, A.K., Nurmi, J., Paju, A., Aaltonen, M. &amp; Vaaranen-Valkonen, N. (2024).</b> Factors associated with help-seeking among online CSAM offenders. <i>Journal of Online Trust and Safety</i> 2(4), 1–43. doi:10.54501/jots.v2i4.205</li>
+    <li><b>Lahtinen, H.-M., Honkalampi, K., Insoll, T., Nurmi, J., Quayle, E., Ovaska, A.K. &amp; Vaaranen-Valkonen, N. (2025).</b> Investigating the disparities among CSAM users. <i>Child Abuse &amp; Neglect</i> 161:107299. doi:10.1016/j.chiabu.2025.107299</li>
+    <li><b>Prichard, J., Wortley, R., Watters, P., Spiranovic, C. &amp; Scanlan, J. (2024).</b> The effect of therapeutic and deterrent messages on Internet users attempting to access 'barely legal' pornography. <i>Child Abuse &amp; Neglect</i> 155:106955. doi:10.1016/j.chiabu.2024.106955 — with full effect sizes, n=474.</li>
+    <li><b>Ó Ciardha, C., Scanlan, J., Insoll, T., Nurmi, J. &amp; Vaaranen-Valkonen, N. (2026).</b> Warning message content increases help seeking in a large-scale dark web CSAM intervention. arXiv:2606.06417.</li>
+    <li><b>Umbach, R., Hunt, G., Buckley, J., Scanlan, J., Ó Ciardha, C., Quayle, E., Heasman, A., von Heyden, M., Letourneau, E., Findlater, D., Insoll, T., Wortley, R., Steel, C. &amp; Roy, A. (2026).</b> Deterring searches for CSAM on Google Search and promoting help-seeking. arXiv:2606.06126.</li>
+    <li><b>Scanlan, J., Prichard, J., Hall, L.C., Watters, P. &amp; Wortley, R. (2024).</b> <i>reThink Chatbot Evaluation.</i> University of Tasmania / Internet Watch Foundation. Full report at iwf.org.uk.</li>
+    <li><b>Lätth, J., Landgren, V., McMahan, A., et al. (2022).</b> Effects of internet-delivered CBT on use of CSAM: randomised placebo-controlled trial on the Darknet. <i>Internet Interventions.</i> doi:10.1016/j.invent.2022.100570 — n=160, d=0.18, 29% zero-module attrition.</li>
+  </ul>
+
+  <h4>Literature not on their list, found in this pass</h4>
+  <ul class="srcs">
+    <li><b>Watters, P.A., Scanlan, J. &amp; Jain, A. (2026).</b> Optimal scheduling of automated warning messages… dual-process sensitisation–habituation model. <i>Electronics</i> 15(17):4045. doi:10.3390/electronics15174045 — the ~18-day optimum, polymorphic warnings, generalised vs variant-specific habituation.</li>
+    <li><b>Watters, P.A., Scanlan, J., Prichard, J. &amp; Wortley, R. (2026).</b> CSAM desistance via AI, chatbots and automated warnings. <i>Electronics</i> 15(11):2281. doi:10.3390/electronics15112281 — source credibility effect; full effect-size table across trials.</li>
+    <li><b>Prevent It 2.0 international waitlist-controlled RCT (2026).</b> NCT05831657; PubMed 42574102 — n=203, urges −6.41 points, d=−1.01, CSAM viewing −1.87 h/week.</li>
+    <li><b>Haubrock, L.S., Azevedo, V., Hillert, J., Briken, P., Letourneau, E., Rahm, C., Seto, M.C., Fix, R.L., Gomes, H.S., Joleby, M., Maimone, S., Carvalho, J. &amp; Dekker, A. (2026).</b> Criminal police perceptions of Prevent It 2.0. <i>Criminal Justice and Behavior.</i></li>
+    <li><b>Protect Children (2026).</b> <i>CSAM Perpetrator Research Report (Tell Me More About Tech)</i>. Sponsored by Ofcom. 20,000+ responses, 24 languages.</li>
+    <li><b>Hunn, C., Watters, P., Prichard, J., Wortley, R., Scanlan, J., Spiranovic, C. &amp; Krone, T. (2023).</b> How to implement online warnings to prevent the use of CSAM. <i>AIC Trends &amp; Issues in Crime and Criminal Justice</i> 669.</li>
+    <li><b>Price, S., McKillop, N., Scanlan, J., Rayment-McHugh, S., Christensen, L. &amp; Prichard, J. (2024).</b> A review of digital interventions as secondary prevention. <i>Journal of Child Sexual Abuse</i> 33(7):869–890 — the "cannot draw broader conclusions" review.</li>
+    <li><b>CSAM Deterrence Centre / Lucy Faithfull Foundation (2026).</b> <i>Best Practice Guide: Implementing Warning Messages for CSAM Prevention</i> (v3, April 2026). — trigger points, salience, source credibility, and the four pitfalls.</li>
+    <li><b>Australian Institute of Criminology (2025).</b> Self-reported desistance and help-seeking approaches of child sexual offenders on the darknet. <i>T&amp;I</i> 716.</li>
+    <li><b>Internet Watch Foundation (2026).</b> <i>Harm Without Limits: AI CSAM through the eyes of our Analysts.</i> — 8,029 items; 3,443 AI video (+26,385%); 65% Category A.</li>
+    <li><b>Jespersen, Lalumière &amp; Seto (2009)</b>; <b>Seto, Hanson &amp; Babchishin (2011)</b> — victim-to-offender and the 55% meta-analytic figure.</li>
+    <li><b>Drejer et al. (2024)</b>; <b>Rajamäki et al. (2022)</b> — clear-web / dark-web linkage.</li>
+  </ul>
+
+  <h4>Psychology and method</h4>
+  <ul class="srcs">
+    <li><b>Sykes, G. &amp; Matza, D. (1957).</b> Techniques of neutralization. <i>American Sociological Review</i> 22(6):664–670.</li>
+    <li><b>Christenson (1992)</b>; <b>Williams (2005)</b> — tainted-fruit / contamination theory, as used in Prichard et al. 2024.</li>
+    <li><b>Wortley, R. &amp; Smallbone, S. (2012).</b> <i>Internet Child Pornography: Causes, Investigation and Prevention.</i> Bloomsbury — situational crime prevention frame.</li>
+    <li><b>Ó Ciardha, C. &amp; Ward, T.</b> — implicit theories / cognitive distortions in sexual offending.</li>
+    <li><b>Miller, W.R. &amp; Sanchez, V.C. (1994).</b> Motivating young adults for treatment and lifestyle change — the FRAMES model.</li>
+    <li><b>Kaiser et al. (2021)</b>; <b>Sharevski et al. (2022)</b> — interstitial vs contextual warnings.</li>
+    <li><b>"From Warning to Wallpaper"</b> (2016) — habituation to security warnings; the underlying psychology.</li>
+  </ul>
+
+  <h4>Netherlands — law, services, context</h4>
+  <ul class="srcs">
+    <li><b>Artikel 252 &amp; 254 Wetboek van Strafrecht</b>, in force 1 July 2024 (Wet seksuele misdrijven), replacing art. 240b.</li>
+    <li><b>Openbaar Ministerie, Richtlijn voor strafvordering kinderpornografie (2024R006)</b> — base offences, the 240-hour/12-month sentencing structure, art. 22b Sr task-penalty prohibition, the ten-year probation period from 1 July 2024, and the "welbewust / actieve handeling" element of <i>zich toegang verschaffen</i>.</li>
+    <li><b>OM Aanwijzing kinderpornografie</b> — cited in the brief.</li>
+    <li><b>Offlimits</b> — organisation history (Meldpunt Kinderporno 1995/96 → EOKM → Offlimits 2023), the prevention line (formerly Stop it Now, renamed January 2026), phone 0800 266 64 36, opening hours, De Waag partnership since 2012, Trusted Flagger status, Dutch Safer Internet Centre membership. <b>EOKM Jaarverslag 2022</b> for the 943-contact volume, 32% growth, 27% repeat.</li>
+    <li><b>Stoppen is mogelijk</b>; <b>pedofilie.nl</b>; <b>De Waag</b> self-acceptance groups; <b>Salus</b> app.</li>
+    <li><b>Vigilantism:</b> Hart van Nederland reporting on 2020 "pedojager" incidents (~250 violent incidents); Reclassering Nederland warning via NOS (2020).</li>
+    <li><b>Crime and Policing Act 2026</b> (UK) — mandatory reporting duty in regulated activity, Royal Assent 29 April 2026, guidance pending. Flagged `[VERIFY]` in the organisers' own data.</li>
+  </ul>
+
+  <h4>Pornhub / Aylo</h4>
+  <ul class="srcs">
+    <li><b>Nicholas Kristof, "The Children of Pornhub," NYT, 4 Dec 2020.</b></li>
+    <li><b>Visa / Mastercard suspensions, 10 Dec 2020</b>; <b>10.6M video removal, 14 Dec 2020</b> (13.5M → 2.9M, −78.5%). Multiple contemporaneous reports; library figures per site search counts.</li>
+    <li><b>FTC complaint and consent order, 3 Sept 2025</b> — the 15-flag threshold, 70,000-video backlog with 30% CSAM, four years of ineffective fingerprinting, unencrypted ID handling, $5M settlement. Read as allegations in a settled complaint, not findings of fact.</li>
+    <li><b>Scanlan et al. (2024), reThink evaluation</b> — 4,400,960 warnings, 2,800,000 chatbot displays, 1,656 info requests, 490 click-throughs, ~68 helpline contacts, 99.83–99.87% of sessions never triggering, referral decline over time, session-not-user limitation, no baseline.</li>
+  </ul>
+
+  <h4>Platform tooling and regulation</h4>
+  <ul class="srcs">
+    <li><b>Cloudflare CSAM Scanning Tool</b> — free on all plans, 451 blocking, NCMEC reporting, 2025 onboarding change.</li>
+    <li><b>Project Arachnid Shield</b> (Canadian Centre for Child Protection) — free API, TS/Python/Rust/PHP SDKs, 176bn images / 141M notices by July 2026.</li>
+    <li><b>Microsoft PhotoDNA</b> (free cloud service for qualified orgs); <b>Google CSAI Match</b>; <b>IWF Image Intercept</b> (built for small platforms); <b>Thorn Safer</b>; <b>Tech Coalition Pathways and Lantern</b> (~300,000 hashes shared by Dec 2023); <b>NCMEC ESP registration</b>.</li>
+    <li><b>EU CSAR</b> — Commission proposal 11 May 2022; Council negotiating position Nov 2025; fifth trilogue June 2026; Regulation (EU) 2026/1881 extending the ePrivacy derogation to 3 April 2028; sixth trilogue scheduled. Also DSA art. 28 and the 45M MAU VLOP threshold.</li>
+  </ul>
+
+  <h4>What I could not verify, and would ask at the event</h4>
+  <ul class="srcs">
+    <li><b>Whether Offlimits' capacity can absorb a successful module.</b> The 943-contact figure is from 2022; ask Emma Persson or the Offlimits team for current monthly volumes and their view on growth headroom.</li>
+    <li><b>Whether the Ahmia "8.73% → 15.67%" digit is reproducible.</b> The paper's own discussion concedes interface redesign as a confound and reports the neutral control at 12.17%. Ask Dr Nurmi directly — he is a named mentor.</li>
+    <li><b>The exact status of the Crime and Policing Act 2026 guidance</b> for therapists treating adults who disclose CSAM viewing. The organisers' own file flags this `[VERIFY]`.</li>
+    <li><b>Whether <code>ReDirection</code> and <code>Kein Täter werden</code> are correctly listed as <code>verified: false</code></b> in <code>help-services.json</code> — both appear live and functioning, so the flag may be stale.</li>
+    <li><b>What "completion" means in the contract's <code>timeout</code> outcome</b> — whether a user who closes the tab is distinguishable from one who navigates away. This matters for honest reporting.</li>
+    <li><b>Whether UNICRI has a preferred licence or hosting arrangement</b> for anything that would go on the AI for Safer Children hub. MIT is in the repo, but a UN platform may have its own requirements.</li>
+  </ul>
+</section>
+
+<footer>
+  <p style="max-width:74ch"><b>UNICRI research dossier · 6 November 2026.</b> Compiled as the evidence base for the Stop Before It Starts challenge, in parallel with <code>market-landscape.html</code> for the ACAPS track. Nineteen primary sources, six deployments, eleven adjacent fields.</p>
+  <p style="max-width:74ch;margin-bottom:0">One sentence the document exists to support: <em>every free tool a small platform can install today finds illegal images, and not one interrupts the person looking — and the 700-fold spread in outcomes is a layout problem, not a sentence problem.</em></p>
+</footer>
+
+</div>
+</body>
+</html>

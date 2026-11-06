@@ -1,0 +1,24 @@
+{
+  "name": "doorway",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Plug-and-play CSAM warning + help routing for small platforms. No personal data.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "node --test packages/shared/core.test.js packages/*/test/",
+    "test:core": "node --test packages/shared/core.test.js",
+    "gate:privacy": "node scripts/gate-privacy.mjs",
+    "lint:copy": "node scripts/lint-copy.mjs",
+    "verify": "node scripts/check-spine.mjs && npm run test && npm run gate:privacy && npm run lint:copy",
+    "build": "node scripts/build.mjs",
+    "check:spine": "node scripts/check-spine.mjs"
+  },
+  "devDependencies": {}
+}

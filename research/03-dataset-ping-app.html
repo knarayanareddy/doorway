@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Three Questions: the dataset, the ping, and the app</title>
+<style>
+  :root{
+    --paper:#faf8f4; --panel:#fff; --ink:#1b1a18; --muted:#6d665e; --faint:#9a938a;
+    --rule:#e2ddd4; --rule2:#d2cbc0;
+    --ev:#1a6b4f; --ev-bg:#eaf3ee;
+    --warn:#a8541a; --warn-bg:#fbeee2;
+    --danger:#9b2226; --danger-bg:#f9e7e7;
+    --blue:#1f4e79; --blue-bg:#e8eff5;
+    --purple:#5b3a7e; --purple-bg:#f0eaf6;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:16px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 28px 110px}
+  h1,h2,h3,h4{font-family:Georgia,"Iowan Old Style","Times New Roman",serif;font-weight:600;line-height:1.2;letter-spacing:-.01em}
+  a{color:var(--blue);text-decoration:none;border-bottom:1px solid #c3d3e0}
+  a:hover{border-bottom-color:var(--blue)}
+
+  .masthead{padding:58px 0 36px;border-bottom:2px solid var(--ink);margin-bottom:8px}
+  .kicker{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:16px}
+  h1{font-size:clamp(29px,4vw,44px);margin:0 0 18px;max-width:26ch}
+  .deck{font-size:18px;line-height:1.55;color:#3d3934;max-width:64ch;margin:0 0 24px}
+  .meta{display:flex;flex-wrap:wrap;gap:22px;font-size:13px;color:var(--muted);border-top:1px solid var(--rule);padding-top:14px}
+  .meta b{color:var(--ink);font-weight:600}
+
+  nav.toc{position:sticky;top:0;z-index:50;background:rgba(250,248,244,.96);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--rule);margin:0 -28px 42px;padding:10px 28px;overflow-x:auto;white-space:nowrap}
+  nav.toc a{display:inline-block;font-size:12px;color:var(--muted);border:none;padding:5px 11px;border-radius:4px;font-weight:500}
+  nav.toc a:hover{background:#efeae2;color:var(--ink)}
+  nav.toc a b{color:var(--ink);font-weight:700;margin-right:5px;font-variant-numeric:tabular-nums}
+
+  section{margin:0 0 58px;scroll-margin-top:64px}
+  .sec-head{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--rule2);padding-bottom:10px;margin-bottom:24px}
+  .sec-num{font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--faint);font-variant-numeric:tabular-nums;padding-top:6px}
+  h2{font-size:clamp(22px,2.7vw,29px);margin:0}
+  h3{font-size:19px;margin:32px 0 10px}
+  h4{font-size:15px;margin:22px 0 8px;font-family:inherit;font-weight:700}
+  p{margin:0 0 15px;max-width:74ch}
+  ul,ol{margin:0 0 16px;padding-left:22px;max-width:74ch}
+  li{margin-bottom:8px}
+  code{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.86em;background:#efeae2;padding:1px 5px;border-radius:3px}
+
+  .callout{border-left:3px solid var(--rule2);padding:15px 19px;margin:20px 0;border-radius:0 5px 5px 0}
+  .callout p:last-child,.callout ul:last-child,.callout ol:last-child{margin-bottom:0}
+  .callout.evidence{border-color:var(--ev);background:var(--ev-bg)}
+  .callout.warn{border-color:var(--warn);background:var(--warn-bg)}
+  .callout.danger{border-color:var(--danger);background:var(--danger-bg)}
+  .callout.blue{border-color:var(--blue);background:var(--blue-bg)}
+  .callout .lab{display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-bottom:6px}
+  .callout.evidence .lab{color:var(--ev)} .callout.warn .lab{color:var(--warn)}
+  .callout.danger .lab{color:var(--danger)} .callout.blue .lab{color:var(--blue)}
+
+  blockquote{margin:20px 0;padding:0 0 0 19px;border-left:3px solid var(--ink);font-family:Georgia,serif;
+    font-size:17px;line-height:1.5;color:#2c2925;font-style:italic}
+  blockquote cite{display:block;font-family:-apple-system,sans-serif;font-size:12px;font-style:normal;color:var(--muted);margin-top:9px}
+
+  .tbl-wrap{overflow-x:auto;margin:20px 0;border:1px solid var(--rule);border-radius:6px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;line-height:1.45}
+  th{background:#f3efe8;text-align:left;padding:10px 13px;font-weight:700;font-size:10.5px;
+    letter-spacing:.07em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--rule2);vertical-align:bottom}
+  td{padding:10px 13px;border-bottom:1px solid var(--rule);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+  tr.hi td{background:#fdfaf3}
+  tr.bad td{background:#fdf6f6}
+  tr.zero td{background:#f2f6f4}
+
+  .badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    padding:2.5px 8px;border-radius:3px;white-space:nowrap;vertical-align:1px}
+  .b-high{background:var(--danger-bg);color:var(--danger)}
+  .b-med{background:var(--warn-bg);color:var(--warn)}
+  .b-low{background:var(--ev-bg);color:var(--ev)}
+  .b-none{background:#eee9e1;color:#7a736a}
+  .b-blue{background:var(--blue-bg);color:var(--blue)}
+  .b-purple{background:var(--purple-bg);color:var(--purple)}
+
+  .cards{display:grid;gap:15px;margin:22px 0}
+  .card{background:var(--panel);border:1px solid var(--rule);border-radius:7px;padding:18px 20px 16px;
+    box-shadow:0 1px 2px rgba(27,26,24,.03)}
+  .card>header{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:3px}
+  .card h3{font-size:17.5px;margin:0;flex:1 1 auto;min-width:170px}
+  .card .loc{font-size:12px;color:var(--faint);width:100%;margin:0 0 12px}
+  .card dl{margin:0;display:grid;grid-template-columns:86px 1fr;gap:8px 15px;font-size:14px}
+  .card dt{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--faint);padding-top:3px}
+  .card dd{margin:0;max-width:70ch}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--rule);
+    border:1px solid var(--rule);border-radius:6px;overflow:hidden;margin:22px 0}
+  .stat{background:var(--panel);padding:13px 15px}
+  .stat .v{font-family:Georgia,serif;font-size:23px;line-height:1.1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .stat .v small{font-size:12.5px;color:var(--muted)}
+  .stat .k{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4}
+  .stat.bad .v{color:var(--danger)} .stat.good .v{color:var(--ev)}
+
+  .verdict{display:grid;grid-template-columns:auto 1fr;gap:4px 15px;align-items:start;
+    background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:14px 17px;margin:16px 0}
+  .verdict .v{font-family:Georgia,serif;font-size:14.5px;font-weight:600;padding-top:1px;white-space:nowrap}
+  .verdict .t{font-size:14px;margin:0;max-width:none}
+  .verdict.pass{border-left:3px solid var(--ev)} .verdict.pass .v{color:var(--ev)}
+  .verdict.warn{border-left:3px solid var(--warn)} .verdict.warn .v{color:var(--warn)}
+  .verdict.fail{border-left:3px solid var(--danger)} .verdict.fail .v{color:var(--danger)}
+
+  .mark{font-weight:700;font-size:14px}
+  .mark.y{color:var(--ev)} .mark.n{color:#c9c2b8} .mark.p{color:var(--warn)}
+
+  .flow{margin:24px 0;border-left:2px solid var(--rule2)}
+  .step{position:relative;padding:0 0 20px 28px}
+  .step:before{content:'';position:absolute;left:-7px;top:6px;width:12px;height:12px;border-radius:50%;
+    background:var(--paper);border:2px solid var(--blue)}
+  .step.term:before{background:var(--blue)}
+  .step h4{margin:0 0 3px;font-size:14.5px}
+  .step .who{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);font-weight:700;margin-bottom:5px}
+  .step p{font-size:14px;margin:0 0 5px;max-width:72ch}
+
+  footer{border-top:2px solid var(--ink);padding-top:20px;font-size:13px;color:var(--muted);margin-top:64px}
+  .srcs{font-size:12.5px;line-height:1.5;color:var(--muted)}
+  .srcs li{margin-bottom:7px}
+  .srcs b{color:var(--ink);font-weight:600}
+
+  @media (max-width:700px){
+    .wrap{padding:0 18px 70px}
+    .masthead{padding:36px 0 26px}
+    .card dl{grid-template-columns:1fr;gap:3px 0}
+    .card dt{padding-top:9px}
+    .step{padding-left:20px}
+  }
+  @media print{nav.toc{display:none}.card,.verdict{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="kicker">Hackathon for Good #8 · three questions · 6 November 2026</div>
+  <h1>The dataset, the ping, and the app</h1>
+  <p class="deck">Nurmi's interaction data — what actually exists, what is released, and why an LLM on it is the wrong move on four separate grounds. Then the expert-notification idea, which is the best idea you've had on the ACAPS track and changes the product. Then whether either thing needs to be an app, which has a short answer and a two-hour version of it.</p>
+  <div class="meta">
+    <span><b>New evidence</b> One Nurmi paper not in the earlier dossier</span>
+    <span><b>Verdict on the LLM</b> Don't — four reasons</span>
+    <span><b>Verdict on the ping</b> Build it — it's the retention mechanism</span>
+    <span><b>Verdict on the app</b> PWA, not native, and only for Benchmark</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <a href="#s0"><b>00</b>Three answers</a>
+  <a href="#s1"><b>01</b>The dataset</a>
+  <a href="#s2"><b>02</b>Why not an LLM</a>
+  <a href="#s3"><b>03</b>What to use instead</a>
+  <a href="#s4"><b>04</b>The ping</a>
+  <a href="#s5"><b>05</b>Designing the ping</a>
+  <a href="#s6"><b>06</b>App, web, or PWA</a>
+  <a href="#s7"><b>07</b>What changes today</a>
+</nav>
+
+<!-- ===================================================== 00 -->
+<section id="s0">
+  <div class="sec-head"><div class="sec-num">00</div><h2>Three answers</h2></div>
+
+  <div class="cards">
+    <article class="card">
+      <header><h3>On the data</h3><span class="badge b-high">Not available — by deliberate choice</span></header>
+      <div class="loc">And the real number is 2,387× the one you were told</div>
+      <dl>
+        <dt>What exists</dt><dd><b>238,794,231 search queries</b> and <b>110,133,715 search sessions</b> from Ahmia.fi, February 2018 – February 2023 — plus a newer, larger analysis covering 2018–2024 at <b>171,262,465 queries / 132,778,744 sessions</b>.</dd>
+        <dt>What's released</dt><dd>Only the survey: <b>11,470 responses</b>, a 2.3 MB dataset and replication tutorial on Zenodo. <b>The search logs are explicitly withheld.</b></dd>
+        <dt>The paper's own words</dt><dd>"Although the web search logs do not necessarily contain personal information, it seems feasible to combine or extract such information from the data; thus, we do not release the web search logs."</dd>
+        <dt>Verdict</dt><dd>Don't train on it. See <a href="#s2">§02</a> — it is unavailable, methodologically wrong for the task, forbidden by the brief, and unnecessary. Ask Nurmi for the <em>statistics</em> instead; they're worth more to you than the data.</dd>
+      </dl>
+    </article>
+
+    <article class="card">
+      <header><h3>On the expert ping</h3><span class="badge b-low">Good idea — build it</span></header>
+      <div class="loc">The best product idea to come out of the ACAPS track</div>
+      <dl>
+        <dt>Why it works</dt><dd>It converts judgement from a <b>supply problem</b> (analysts must go find experts) into a <b>matching problem</b> (the platform knows who knows what). Every forecasting system in the literature is pull-based, and pull-based systems leak participants.</dd>
+        <dt>The one correction</dt><dd>Self-declared expertise is an <b>onboarding mechanism, not a weighting mechanism</b>. Let people declare it — it gets them in the door — but weight by track record. People are reliably overconfident about what they know.</dd>
+        <dt>The mechanism to add</dt><dd>A fourth notification type nobody has built: <b>"the statement you dissented on has been rewritten."</b> That is the loop-closing that makes the whole thing retain, and it is the only feature that directly serves the "my dissent changed the paragraph" promise.</dd>
+      </dl>
+    </article>
+
+    <article class="card">
+      <header><h3>On the app</h3><span class="badge b-med">No native app. PWA for one track only.</span></header>
+      <div class="loc">Two hours, not two days</div>
+      <dl>
+        <dt>Doorway</dt><dd><b>No app at all.</b> The intervention renders on the <em>platform's</em> website, which you don't control. An app of ours is irrelevant to the person being warned and is used once by the moderator. Spend the time on mobile-web rendering instead — most forum traffic is phones and almost every team will demo a desktop modal.</dd>
+        <dt>Benchmark</dt><dd><b>PWA, shipping with the web app.</b> Ninety seconds is a phone-shaped task, and an installed PWA gets push notifications without an app-store review. Manifest plus service worker is about two hours; a native app is two days and two codebases and earns zero points on either rubric.</dd>
+        <dt>The rule</dt><dd>Never fork the codebase. One web app, plus a manifest.</dd>
+      </dl>
+    </article>
+  </div>
+
+  <div class="callout danger">
+    <span class="lab">Read this before anything else — you have a new paper to know about</span>
+    <p>While checking the data question I found a <b>Nurmi paper that is not in the research dossier</b>: <i>Illicit Search Behavior and Responses to Filtering and Deterrence on Tor: Evidence from Ahmia</i> (Nurmi, Paju, Arroyo, Scanlan &amp; Patsakis), posted to SSRN on 5 March 2026. It is a 2018–2024 update and it contains three things that belong in the pitch:</p>
+    <ul>
+      <li><b>CSAM search volume fell from 27.2% of Ahmia queries in 2018 to 6.0% in 2024</b> — the strongest real-world evidence that <em>filtering</em>, not messaging, moves the aggregate number.</li>
+      <li><b>4.5% of search sessions redirected users to therapy resources.</b></li>
+      <li>A proposed <b>"two-out-of-three" theorem</b> for privacy-enhancing technologies: you can have only two of privacy, anonymous publishing, and absolute censorship resistance — and the authors argue for relaxing the third to create a moderation layer. That is a directly relevant design argument for a product that has to sit <em>inside</em> a privacy-preserving service.</li>
+    </ul>
+    <p style="margin-bottom:0"><b>Two cautions.</b> It is an SSRN preprint, not peer reviewed. And its 4.5% is <em>not</em> comparable to the 12.44% in Ó Ciardha et al. — one is a share of all sessions, the other a share of warnings triggered. Don't put them in the same sentence without saying so.</p>
+  </div>
+</section>
+
+<!-- ===================================================== 01 -->
+<section id="s1">
+  <div class="sec-head"><div class="sec-num">01</div><h2>The dataset: what Nurmi actually has</h2></div>
+
+  <p>Someone told you "100,000 interactions." That figure is not wrong so much as tiny — it is roughly <b>1/2,387th</b> of the search data that exists, and it may refer to a subset, a survey, or a misremembering. Here is the actual inventory.</p>
+
+  <div class="stats">
+    <div class="stat good"><div class="v">238.8<small>M</small></div><div class="k">Search queries, Feb 2018 – Feb 2023 <i>(Sci Rep 2024)</i></div></div>
+    <div class="stat good"><div class="v">110.1<small>M</small></div><div class="k">Search sessions in the same period</div></div>
+    <div class="stat good"><div class="v">171.3<small>M</small></div><div class="k">Queries in the 2018–2024 update <i>(SSRN 2026)</i></div></div>
+    <div class="stat"><div class="v">132.8<small>M</small></div><div class="k">Sessions in the update</div></div>
+    <div class="stat"><div class="v">11,470</div><div class="k">Survey responses — <b>the only released data</b></div></div>
+  </div>
+
+  <h3>Three datasets, one released</h3>
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:22%">Dataset</th><th style="width:14%">Size</th><th style="width:14%">Released?</th><th>How it was collected</th></tr></thead>
+    <tbody>
+      <tr><td><b>(i) Tor website text</b></td><td>176,683 onion domains</td><td><span class="mark n">No</span></td><td>Crawled by Ahmia. Withheld because it would give "direct access to CSAM."</td></tr>
+      <tr class="hi"><td><b>(ii) Search engine web-server logs</b></td><td>238.8M queries</td><td><span class="mark n">No</span></td><td>Ahmia's own logs. <b>Withheld because re-identification is judged feasible.</b> This is the dataset you were thinking of.</td></tr>
+      <tr class="zero"><td><b>(iii) Questionnaire responses</b></td><td>11,470</td><td><span class="mark y">Yes</span></td><td>"Help us to help you" survey served to people searching Ahmia, 5 May 2021 – 28 Feb 2023. 32 questions, 15–20 minutes, no compensation. <b>Free on Zenodo</b> with a replication tutorial and Python code.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout warn">
+    <span class="lab">How the "sessions" were actually built — this matters for your idea</span>
+    <p>Ahmia stores no IP addresses and sets no cookies. So the paper reconstructs sessions heuristically: <b>from HTTP referer metadata, assuming a new query within five minutes belongs to the same session.</b> That is a defensible method for counting, and it is <em>not</em> a person-level identifier. It also means the "sessions" in the data are <b>inferred chains, not observed users</b> — which quietly undermines the premise of training a behaviour-classifier on them.</p>
+    <p style="margin-bottom:0">The paper is honest about this in its own data statement: the logs "do not necessarily contain personal information," but "it seems feasible to combine or extract such information from the data." That is the reason for withholding, and it is a good reason.</p>
+  </div>
+
+  <h3>What is actually on Zenodo</h3>
+  <p>Record <code>10.5281/zenodo.10457587</code> (version record 10457588), published 4 January 2024. Contents: <code>protocol_exchange.zip</code> (108.7 kB) containing <code>protocol.md</code>, twelve per-question CSVs, and <code>survey_data.csv</code> at 2.3 MB. Twelve single-answer questions on thoughts, feelings and actions related to CSAM use; designed to inform an anonymous CBT rehabilitation programme.</p>
+  <p><b>It is usable right now, this weekend.</b> It is a cross-sectional survey of 11,470 respondents with coded single-choice answers — which means it supports exactly the kind of analysis a hackathon can actually finish: distributions, cross-tabs, and a help-seeking model. It does not support training a language model, and it was never going to.</p>
+
+  <div class="callout evidence">
+    <span class="lab">The reframe worth having</span>
+    <p style="margin:0">Luigi — you were told about 100,000 interactions. The truth is bigger and more useful: <b>there are 238 million queries you cannot have, and 11,470 survey responses you can have today.</b> The second number is the one that fits inside a weekend, and it is the one the entire prevention field was built on. Every headline statistic in the brief — 55% want to stop, 42% sought contact, 70% never told anyone — comes from that survey or its siblings.</p>
+  </div>
+</section>
+
+<!-- ===================================================== 02 -->
+<section id="s2">
+  <div class="sec-head"><div class="sec-num">02</div><h2>Why training an LLM on it is the wrong move — four grounds</h2></div>
+
+  <p>This is a good instinct pointed at the wrong target. The instinct is right: there is a large behavioural corpus and nobody has mined it. The problem is that the corpus is unavailable, the task is ill-posed, the output is forbidden, and the alternative is stronger.</p>
+
+  <div class="verdict fail">
+    <div class="v">1 · Unavailable</div>
+    <p class="t"><b>The data does not exist outside Tampere, and deliberately.</b> The authors withheld the logs on re-identification grounds. There is no licence, no repository, no API. The only route is a direct collaboration request to Nurmi — who happens to be a mentor at this event — and he will say no to "train a classifier to identify offenders," for reasons he has already published.</p>
+  </div>
+
+  <div class="verdict fail">
+    <div class="v">2 · Ill-posed</div>
+    <p class="t"><b>There is no behaviour in a search query, and the "sessions" are inferred.</b> A query is one to five tokens. What you would want to model — escalation, persistence, intent — lives in sequences, and the sequences here are reconstructions from a referer header and a five-minute rule with no cookie and no IP. So a model trained on them would be learning to predict <em>the heuristic</em>, not the person. Add that CSAM-seeking is 11.1% of sessions: a classifier at that base rate, on reconstructed data, will mostly be detecting the reconstruction.</p>
+  </div>
+
+  <div class="verdict fail">
+    <div class="v">3 · Forbidden</div>
+    <p class="t"><b>It breaks the brief on three separate lines.</b> "Should not: <em>identify, track or expose individuals</em>." "Must: <em>protect the privacy of the people who see it</em>." And safety rule 2: "<em>No vigilante tooling: nothing that identifies, exposes or tracks individuals</em>." A model that scores a person as likely to offend is the definition of the thing all three sentences prohibit. It is not a grey area and a jury containing UNICRI will not treat it as one.</p>
+  </div>
+
+  <div class="verdict fail">
+    <div class="v">4 · Unnecessary</div>
+    <p class="t"><b>The best predictor in the literature is a counter, not a classifier.</b> Insoll et al. 2022, n=1,546: <em>frequency of use</em> is the strongest predictor of subsequent contact-seeking — better than duration, better than age of onset, better than any content feature. You do not need a neural network to count. And Lahtinen 2025 (n=2,384) found the majority of <em>all</em> groups — charged and uncharged — were never sanctioned, which means the population you would be trying to "detect" is most of the population. A detector that fires on everyone is not a detector.</p>
+  </div>
+
+  <div class="callout danger">
+    <span class="lab">And one practical trap</span>
+    <p style="margin:0">Even the <em>queries</em> are abuse-related text. The brief's first safety instruction is absolute: <b>never search for, open, download or share CSAM, and never type abuse-related terms into real platforms.</b> A training pipeline that ingests term lists and generates examples is exactly the kind of thing that gets a team disqualified rather than praised. There is no version of this that is safe to build in a 48-hour hackathon on a shared laptop.</p>
+  </div>
+</section>
+
+<!-- ===================================================== 03 -->
+<section id="s3">
+  <div class="sec-head"><div class="sec-num">03</div><h2>What to do with the instinct instead</h2></div>
+
+  <p>Four alternatives, in descending order of value. The first is worth more than the LLM would have been.</p>
+
+  <h3>1 · Ask Nurmi for the statistics, not the data — highest value, costs one conversation</h3>
+  <p>He has published parameter estimates that no one else has. Take them straight into the pitch:</p>
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:34%">Number</th><th style="width:12%">Value</th><th>Why it belongs in the deck</th></tr></thead>
+    <tbody>
+      <tr class="hi"><td>CSAM share of Ahmia queries, 2018 → 2024</td><td class="num">27.2% → 6.0%</td><td>The best available evidence that <b>filtering</b>, not messaging, moves the aggregate. It reframes the whole field — and it is a number almost nobody in the room will know.</td></tr>
+      <tr><td>Sessions redirected to therapy resources</td><td class="num">4.5%</td><td>A real-world redirect rate measured over six years. Careful: not comparable to Ó Ciardha's 12.44%, which is a share of warnings <em>triggered</em>.</td></tr>
+      <tr><td>CSAM-seeking vs illicit-marketplace seeking</td><td class="num">5×</td><td>Users are five times more likely to look for CSAM than for drugs. Kills any assumption that this is a niche behaviour.</td></tr>
+      <tr><td>Verified CSAM domains, Aug–Dec 2024</td><td class="num">35,546</td><td>Of 47,116 domains across 6,050 distinct services. Scale, from the most recent crawl.</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p><b>Questions to actually ask him, in order:</b> (1) is the 4.5% a click rate or an automatic redirect? (2) does the 2018→2024 decline survive controls for the filter expansions, or is it partly definitional? (3) would he endorse quoting the two-out-of-three theorem in a platform-facing product? Each answer is worth ten minutes of reading.</p>
+
+  <h3>2 · Use the Zenodo dataset for a real, finishable analysis</h3>
+  <p>11,470 responses, twelve coded questions, published with a replication tutorial. What you can honestly do in a few hours: reproduce the help-seeking distribution, cross-tabulate help-seeking against intensity of use, and produce <b>one chart that shows the gap between wanting to stop and having sought help</b> — with your own computation behind it rather than a citation.</p>
+  <div class="callout warn">
+    <span class="lab">Caveat, and say it out loud</span>
+    <p style="margin:0">It is a <b>convenience sample of Tor users who both searched for CSAM and chose to answer a 20-minute survey.</b> The authors say so explicitly. So use it for the shape of the problem, not for population inference. One sentence in the pitch — "this is a self-selected dark-web sample, so treat the magnitude as indicative and the direction as real" — buys you more credibility than the chart does.</p>
+  </div>
+
+  <h3>3 · Put the ML somewhere it is welcome</h3>
+  <p>There is a legitimate machine-learning contribution inside the brief, and it is not user classification. It is <b>message-to-outcome at the aggregate level</b>: given variant, format, trigger class and exposure bucket, which response produces a higher click-through? That is a small, honest model over counts — no personal data, no individual scores, and it produces the one thing the field has never had: <b>a ranking of message × format × context</b>. It also happens to be exactly the kind of thing a jury from UNICRI would call a real contribution rather than a demo.</p>
+
+  <h3>4 · Keep the behaviour signal you already have</h3>
+  <p>Doorway's Shift already tracks <code>n = 5</code> in the browser. That <em>is</em> behavioural: it says this browser has seen the module five times, which is the strongest predictor in the literature, rendered as an integer, on the device, never transmitted. <b>Frequency without identification.</b> That is the technically honest version of what an LLM would have been reaching for.</p>
+
+  <blockquote>
+    "The single best predictor of escalation in this literature is how often someone does it. We measure that — as a number in your own browser that never leaves it. We don't need a model to know you've been here five times, and we shouldn't have one."
+    <cite>Ten seconds of Q&amp;A, if anyone asks why there's no ML</cite>
+  </blockquote>
+</section>
+
+<!-- ===================================================== 04 -->
+<section id="s4">
+  <div class="sec-head"><div class="sec-num">04</div><h2>The ping: evaluating the expert-notification idea</h2></div>
+
+  <div class="callout blue">
+    <span class="lab">The idea, restated as a product thesis</span>
+    <p style="margin:0">Experts declare the regions and topics they actually know. When a risk statement lands in one of those domains, they get told — instead of having to remember to go looking. <b>Judgement becomes a matching problem rather than a supply problem.</b> That is a genuinely better framing than anything I gave you on the ACAPS track, and it is the strongest argument for the panel existing that we have.</p>
+  </div>
+
+  <h3>Why it works — four independent reasons</h3>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:24%">Reason</th><th>Evidence and mechanism</th></tr></thead>
+    <tbody>
+      <tr class="hi"><td><b>Every system in this literature is pull-based, and pull leaks</b></td><td>Metaculus, Good Judgment, Cultivate, and ACAPS' own matrix all require the expert to remember to come back. The failure record is unambiguous: the X-risk forecasting tournament saw <b>51% expert dropout against 19% for superforecasters</b>; the RAND forecasting programme was eventually shut down; and in ACAPS' own corpus <b>73% of the triggers carrying a completion rate carry no written criterion to complete</b>. Every one of those is a system where the participant has to initiate.</td></tr>
+      <tr class="hi"><td><b>Push collapses the marginal cost to near zero</b></td><td>The reason a busy country analyst does not fill in a matrix is not that they cannot estimate a probability in ninety seconds. It is that they have to <em>remember</em>, <em>find the link</em>, and <em>log in</em>. A notification removes all three. That is the entire difference between a criterion nobody can act on and one they can.</td></tr>
+      <tr><td><b>Matching is the one thing a platform can do that a spreadsheet cannot</b></td><td>The risk statements already carry country and theme. So "a question in your field" is not a marketing promise — it is a query. That is more than Metaculus can do, because Metaculus has no idea what you know.</td></tr>
+      <tr><td><b>It solves the analyst's real problem</b></td><td>The analyst currently has to know <em>who</em> to ask as well as <em>what</em> to ask. Matching removes a whole class of judgement from the person least able to make it, and it produces a defensible answer to "why did you ask this person?"</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Two failure modes it will hit, and the design fix for each</h3>
+
+  <div class="verdict warn">
+    <div class="v">F1 · Self-declared expertise is overconfident</div>
+    <p class="t"><b>The problem.</b> People reliably overestimate what they know, and the more confident they are the worse the calibration tends to be. If you weight by self-declared expertise you build a panel of the confidently wrong — which is worse than a random panel, because the errors correlate and the dispersion looks reassuringly tight.</p>
+  </div>
+  <div class="callout evidence" style="margin-top:0">
+    <span class="lab">The fix, which is the key insight in this whole section</span>
+    <p style="margin:0"><b>Self-declared expertise is an onboarding mechanism, not a weighting mechanism.</b> Let people tick their regions and themes — the declaration is what gets them in the door and what makes the notification feel personal, and that is its real job. Then <b>ignore the declaration entirely when you weight</b>, and weight by realised track record instead: how well has this person scored on the statements they <em>were</em> notified about? Display each expert's own calibration curve back to them. That is Good Judgment's actual mechanism — scores, not self-report — and it is the only thing in the literature that has been shown to improve a panel over time.</p>
+  </div>
+
+  <div class="verdict warn">
+    <div class="v">F2 · Notification fatigue kills it in week three</div>
+    <p class="t"><b>The problem.</b> An expert who ticks five regions and three themes will, at a few hundred statements a month, receive a notification every couple of hours. They will not answer more — they will mute the app, and then uninstall it. Every push-based product dies this way, and public-sector tools die faster because the user has no reason to stay.</p>
+  </div>
+  <div class="callout warn" style="margin-top:0">
+    <span class="lab">The fix</span>
+    <p style="margin-bottom:8px">Four rules, and they should be visible on the settings screen as commitments:</p>
+    <ul style="margin-bottom:0">
+      <li><b>A weekly cap, default three.</b> Not "you'll get notified" — "you will get at most three a week, ever." A hard promise is what makes the notification safe to accept.</li>
+      <li><b>Batch into one digest by default</b>, with an instant option for the highest-severity statements only.</li>
+      <li><b>"Not this week" is one tap</b> and does not reduce your standing or your match score.</li>
+      <li><b>A notification must open a ninety-second task.</b> Never a form. Notification-to-completion ratio is the health metric, and it should be on the analyst dashboard like any other.</li>
+    </ul>
+  </div>
+
+  <div class="callout danger">
+    <span class="lab">The deepest risk, and it is a framing risk not a design one</span>
+    <p style="margin:0">This turns a forecasting product into a <b>notification product</b>. Notifications are saturated, unglamorous, and every juror has been annoyed by one. The pitch must never describe it as "we send push notifications." It is the <em>dispatch layer</em> — the thing that makes judgement arrive where the analyst needs it without asking anyone to log in. Name the feature the Ping if you build it; describe the capability as dispatch.</p>
+  </div>
+</section>
+
+<!-- ===================================================== 05 -->
+<section id="s5">
+  <div class="sec-head"><div class="sec-num">05</div><h2>Designing the ping properly</h2></div>
+
+  <p>The version you floated has one notification type. The product needs four, and the fourth is the one that makes it retain.</p>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:6%">#</th><th style="width:26%">Trigger</th><th style="width:22%">Who receives it</th><th>Why it exists, and when to suppress it</th></tr></thead>
+    <tbody>
+      <tr class="hi"><td class="num">1</td><td><b>A new statement in your domain</b><br><small>"A new risk for the Sahel was published. Ninety seconds."</small></td><td>Everyone who declared that region or theme</td><td>The basic case from your message. <b>Suppress</b> if it is their fourth this week, or if the statement failed the gate — never notify anyone about a statement that hasn't passed quality control, because their first task will be a bad one and they will not come back for a second.</td></tr>
+      <tr><td class="num">2</td><td><b>You are the reliable one on something contested</b><br><small>"Panel is split on this one. Your last four calls on this country were well calibrated."</small></td><td>Only experts with a track record in that domain</td><td>This is where the panel earns its cost. A split panel is the highest-information state and the one most likely to be wrong; sending it to the best-calibrated people is the cheapest quality gain available. <b>Never</b> reveal the split before the estimate — that is anchoring.</td></tr>
+      <tr><td class="num">3</td><td><b>Your estimate is an outlier</b><br><small>"Your estimate sits outside the panel. Do you want to say why?"</small></td><td>The divergent expert only, after the fact</td><td>Converts a statistical anomaly into a rationale, which is the only thing that can explain a surprising number to an analyst. Must be <b>after</b> submission and <b>private</b> — never framed as "you're wrong".</td></tr>
+      <tr class="zero"><td class="num">4</td><td><b>Your dissent was acted on</b><br><small>"You said this was two risks. It has been split. Here are both."</small></td><td>The dissenting expert</td><td><b>The retention mechanism.</b> Nobody in this field closes the loop — an expert who objects into silence does not object twice, and then does not forecast twice. This is also the only feature that literally delivers "my dissent changed the paragraph," which is the strongest emotional promise in the ACAPS pitch. If you build one notification type, build this one.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>How it changes the product</h3>
+  <p>Three structural changes, all of them improvements:</p>
+  <ol>
+    <li><b>A new screen: the Declaration.</b> Regions × themes, as a grid the expert fills in on first use, in about two minutes. It doubles as the reason the notification is welcome — a notification about <em>your</em> subject reads as a service; a generic one reads as spam.</li>
+    <li><b>The card becomes phone-first.</b> A ninety-second task is a phone-shaped task, and the card must render in one viewport. This is the real argument for a PWA, below.</li>
+    <li><b>A new analyst metric: dispatch health.</b> Notifications sent, opened, completed, and muted — per domain. <b>If a domain's completion rate falls below a threshold, stop notifying into it and tell the analyst the domain is uncovered.</b> A panel that quietly has nobody in a region is worse than a known gap, because ACAPS cannot see it.</li>
+  </ol>
+
+  <div class="callout warn">
+    <span class="lab">The honest counter-argument, because a juror will make it</span>
+    <p style="margin:0">"This is a mailing list with extra steps." The answer has to be structural rather than defensive: <b>a mailing list has no resolution, no scoring and no dissent</b>. The ping is only a product because it opens onto a card that gets scored against an outcome weeks later and a dissent channel that can rewrite the statement. Take those away and it is indeed a mailing list — which is precisely why the ping alone is not the idea, and why it has to be attached to the gate and the dissent loop.</p>
+  </div>
+</section>
+
+<!-- ===================================================== 06 -->
+<section id="s6">
+  <div class="sec-head"><div class="sec-num">06</div><h2>App, web, or PWA — decided per product</h2></div>
+
+  <p>The tempting answer is "both, it shows ambition." That is the wrong answer on both rubrics, and the reasoning is different for each product.</p>
+
+  <h3>The framework: what surface does each user actually touch?</h3>
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:18%">Product</th><th style="width:24%">Who the user is</th><th style="width:20%">Surface you control</th><th>What an app would actually be for</th></tr></thead>
+    <tbody>
+      <tr class="bad"><td><b>Doorway</b></td><td><b>Two</b>: the moderator who installs it, and the person who sees the warning</td><td>The person sees it on <b>the platform's own website</b> — a surface you do not control and cannot replace</td><td>Nothing. <b>An app of ours cannot host the intervention</b>, because the intervention happens inside someone else's search box. The moderator uses the settings screen once, on a laptop.</td></tr>
+      <tr class="zero"><td><b>Benchmark</b></td><td>Experts on their phones, briefly and repeatedly</td><td>The card, which you fully control</td><td>Genuinely useful — ninety seconds, several times a week, arriving as a notification. This is the textbook PWA case.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Why not native, for either</h3>
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:26%">Cost of a native app</th><th>Reality at hour 20 of a 26-hour event</th></tr></thead>
+    <tbody>
+      <tr><td>Two codebases</td><td>You have one team. A second client is roughly 60% of the first one's cost, for a product that does nothing the web version can't.</td></tr>
+      <tr><td>Store review</td><td>Apple review is not instant and a first submission can bounce. <b>You cannot demo a build that is "in review".</b></td></tr>
+      <tr><td>Signing, provisioning, builds</td><td>A day of setup for a device that half the jury does not have.</td></tr>
+      <tr><td>Accounts</td><td>An app forces identity in a way the web does not — and on Benchmark, the promise is that peers never see your name. Adding an identity system to a product about anonymity needs a plan, not an afternoon.</td></tr>
+      <tr class="bad"><td><b>Scoring</b></td><td><b>Zero points on either rubric.</b> UNICRI's adoptability is about the <em>platform</em> switching on, not the expert's phone. ACAPS concept criteria do not reward a second client. And §06/§09 of the product review already found the two fatal risks are claim-narrowing, not feature count.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>The two-hour PWA path (Benchmark only)</h3>
+  <div class="flow">
+    <div class="step"><div class="who">20 min · build</div><h4>Manifest</h4><p><code>manifest.json</code> with name, icons, <code>display: standalone</code>, theme colour, and a start URL that goes straight to today's card. Add the link tag. Done.</p></div>
+    <div class="step"><div class="who">45 min · build</div><h4>Service worker</h4><p>Cache the shell so the card opens instantly and works on a bad connection — which matters, because these are experts in field offices. This is the whole reason to do it.</p></div>
+    <div class="step"><div class="who">30 min · build</div><h4>Push, with a fallback</h4><p>Web push via the service worker. <b>State the constraint plainly:</b> on iOS, push only works for PWAs that have been added to the home screen, and the permission prompt can only be triggered by a tap. So ship the email fallback on day one and treat push as an upgrade.</p></div>
+    <div class="step term"><div class="who">25 min · build</div><h4>Install prompt at the right moment</h4><p>Never on first load. Offer it <em>after</em> the expert's second completed card — the point at which they have proven they'll come back. An install prompt before value is a bounce.</p></div>
+  </div>
+
+  <h3>And for Doorway, spend that time on mobile web instead</h3>
+  <p>The gate will be seen on a phone far more often than on a desktop — forum traffic is majority mobile. Almost every team will demo a desktop modal. Three cheap things that will be visible in a demo:</p>
+  <ul>
+    <li><b>A real phone in the pitch.</b> Load the mock forum on a handset, trigger the gate, and show it fitting one screen. Ten seconds, and it says "we thought about the actual user" more clearly than any slide.</li>
+    <li><b>Thumb reach.</b> The one action button must be in the lower third, above 44px, with the dismissal small and deliberate. Getting this wrong turns a gate into an obstacle.</li>
+    <li><b>One screen, no scroll, at 320 px wide.</b> If the gate needs scrolling, the message is too long — which is a copy problem the gate will expose for free.</li>
+  </ul>
+
+  <div class="callout evidence">
+    <span class="lab">The decision, stated once</span>
+    <p style="margin:0"><b>One codebase. Web for both. Manifest plus service worker for Benchmark only — two hours, not two days. No native app, and say why if asked: the intervention lives on someone else's website, and ninety seconds lives on a phone but not in an app store.</b></p>
+  </div>
+</section>
+
+<!-- ===================================================== 07 -->
+<section id="s7">
+  <div class="sec-head"><div class="sec-num">07</div><h2>What changes today, in order</h2></div>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:6%">#</th><th style="width:34%">Action</th><th style="width:12%">Cost</th><th>Why now</th></tr></thead>
+    <tbody>
+      <tr class="hi"><td class="num">1</td><td><b>Ask Nurmi three questions</b> — 4.5% definition, the 2018→2024 decline, the two-out-of-three theorem</td><td>20 min</td><td>He is on site or on the Discord Q&amp;A. One of the four numbers he gives you may be the best slide in the deck.</td></tr>
+      <tr class="hi"><td class="num">2</td><td><b>Download the Zenodo survey</b> and see whether one chart falls out of it</td><td>45 min</td><td>A chart computed by you, with a stated limitation, beats a cited statistic.</td></tr>
+      <tr><td class="num">3</td><td><b>Add the Declaration screen to Benchmark's scoping</b> — or cut it deliberately</td><td>Scope only</td><td>It changes the information architecture and the pitch. Decide before the build, not after.</td></tr>
+      <tr><td class="num">4</td><td><b>Build notification type 4 first</b> — "your dissent was acted on"</td><td>60–90 min</td><td>It is the cheapest feature that makes the strongest promise, and it is demoable with two clicks.</td></tr>
+      <tr><td class="num">5</td><td><b>Add the manifest and service worker</b>, if and only if the core flow works</td><td>2 h</td><td>Strictly after. A PWA on top of a broken flow is a well-packaged broken flow.</td></tr>
+      <tr class="bad"><td class="num">6</td><td><b>Do not build an app, and do not build an LLM</b></td><td>—</td><td>One is forbidden by the brief, the other earns nothing and costs a day.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout blue">
+    <span class="lab">The one sentence that ties all three answers together</span>
+    <p style="margin:0">All three questions are the same question: <b>where does the intelligence go?</b> Not into a model that profiles a person, not into an app that duplicates a website, and not into a notification that fires for its own sake. It goes into the <em>routing</em> — which statement reaches which expert, which message reaches which person, and which decision was made because somebody objected. Every answer above is a decision to keep the intelligence in the plumbing rather than in a score.</p>
+  </div>
+</section>
+
+<footer>
+  <p style="max-width:74ch"><b>Three questions · 6 November 2026.</b> Companion to <code>unicri-research.html</code>, <code>PRODUCT-review.html</code> and <code>market-landscape.html</code>.</p>
+  <h4 style="margin-bottom:6px">Sources added in this pass</h4>
+  <ul class="srcs">
+    <li><b>Nurmi, J., Paju, A., Arroyo, D., Scanlan, J. &amp; Patsakis, C. (2026).</b> Illicit Search Behavior and Responses to Filtering and Deterrence on Tor: Evidence from Ahmia. SSRN 6329359, posted 5 Mar 2026, 52 pp. <b>Preprint, not peer reviewed.</b> 171,262,465 queries / 132,778,744 sessions, 2018–2024; 27.2% → 6.0%; 4.5% of sessions redirected; 6,050 services / 47,116 domains / 35,546 verified; the two-out-of-three theorem.</li>
+    <li><b>Zenodo dataset</b> — "An analysis of a survey for child sexual abuse material seekers on Tor (N = 11,470)", published 4 Jan 2024, <code>doi.org/10.5281/zenodo.10457587</code>. <code>protocol_exchange.zip</code>, 108.7 kB, <code>survey_data.csv</code> 2.3 MB.</li>
+    <li><b>Nurmi et al. (2024), Sci Rep 14:7849 — data availability statement, read in full.</b> Three datasets; only the questionnaire released; the search logs withheld because re-identification is judged feasible. Session reconstruction method: HTTP referer plus a five-minute assumption, no IP, no cookie.</li>
+    <li><b>Grady, M.D., Levenson, J.S., Mesias, G., Kavanagh, S. &amp; Charles, J. (2019).</b> "I can't talk about that": stigma and fear as barriers to preventive services for minor-attracted persons. <i>Stigma and Health</i> 4:400 — noted in the 2024 paper's reference list, and directly relevant to the "help" word problem.</li>
+  </ul>
+  <p style="max-width:74ch;margin-bottom:0"><b>What I could not verify:</b> whether the 4.5% redirect figure counts clicks or automatic redirects, and whether the 2018→2024 decline is robust to the filter expansions of 2023. Both are questions for Nurmi rather than for the literature, because he is the only person who knows.</p>
+</footer>
+
+</div>
+</body>
+</html>
