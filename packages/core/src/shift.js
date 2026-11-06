@@ -60,12 +60,17 @@ export function bucketOf(n) {
  */
 export function pick(state = {}, cfg = DEFAULT_CONFIG, now = Date.now(), opts = {}) {
   if (opts.storageBlocked) {
+    // Without localStorage we cannot track exposure count, so we cannot
+    // escalate or go quiet. Returning the legal gate on every visit would
+    // show the heaviest intervention to privacy-conscious users (private
+    // mode) forever. Show a card/harm instead — still an intervention, but
+    // not a criminal-law claim repeated indefinitely.
     return {
       state: 'DEGRADED',
-      format: 'gate',
-      family: cfg.families.gate,
+      format: 'card',
+      family: cfg.families.card,
       bucket: '1',
-      reason: 'storage unavailable — fall back to first-exposure behaviour',
+      reason: 'storage unavailable — card instead of the legal gate',
     };
   }
 
@@ -100,13 +105,20 @@ export function pick(state = {}, cfg = DEFAULT_CONFIG, now = Date.now(), opts = 
 /** Advance local state after an exposure. Never transmitted. */
 export function advance(state = {}, variant, now = Date.now()) {
   const seen = Array.isArray(state.seen) ? state.seen.slice(-4) : [];
-  if (variant) seen.push(variant);
-  return { n: (state.n || 0) + 1, last: now, seen };
+  let filtered = seen;
+  if (variant) {
+    // Dedupe so the rotation window never traps on a single variant.
+    filtered = seen.filter((v) => v !== variant);
+    filtered.push(variant);
+  }
+  return { n: (state.n || 0) + 1, last: now, seen: filtered };
 }
 
 /** Choose the variant id for a family, avoiding the last few already seen. */
 export function variantFor(family, seen = []) {
   const pool = [`${family}-01`, `${family}-02`, `${family}-03`];
   const fresh = pool.filter((v) => !seen.includes(v));
-  return (fresh.length ? fresh : pool)[0];
+  if (fresh.length) return fresh[0];
+  // All variants are in the recent window; rotate by returning the oldest seen.
+  return seen[0] || pool[0];
 }
