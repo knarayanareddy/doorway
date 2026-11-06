@@ -15,18 +15,6 @@ const STORAGE_KEY = 'doorway:v1';
 /* presentation lives in packages/shared/card.js */
 
 const copy = {
-  legal: {
-    nl: [
-      { h: 'Dit is strafbaar', b: 'Sinds 1 juli 2024 valt dit onder artikel 252 van het Wetboek van Strafrecht. Zoeken en bekijken is strafbaar. Een veroordeling betekent een strafblad, een taakstraf tot 240 uur en een proeftijd die tot tien jaar kan duren.' },
-      { h: 'Dit is strafbaar', b: 'Artikel 252 van het Wetboek van Strafrecht: opzettelijk zoeken naar of bekijken van dit materiaal is een misdrijf. De maximale taakstraf is 240 uur, en een strafblad blijft staan.' },
-      { h: 'Dit is strafbaar', b: 'Sinds 1 juli 2024 is dit een misdrijf in Nederland. Het Openbaar Ministerie vervolgt het, en de straffen zijn in 2024 verhoogd. Wat je nu doet, is strafbaar.' },
-    ],
-    en: [
-      { h: 'This is a criminal offence', b: 'Since 1 July 2024 this falls under article 252 of the Dutch Criminal Code. Searching for and viewing this material is an offence. A conviction means a criminal record, up to 240 hours of community service, and a probation period of up to ten years.' },
-      { h: 'This is a criminal offence', b: 'Article 252 of the Dutch Criminal Code: deliberately searching for or viewing this material is a crime. The maximum community service order is 240 hours and a criminal record is permanent.' },
-      { h: 'This is a criminal offence', b: 'Since 1 July 2024 this is a criminal offence in the Netherlands, and the public prosecutor does pursue it. Sentences were raised in 2024. What you are doing now is criminal.' },
-    ],
-  },
   harm: {
     nl: [
       { h: 'Elke foto is een kind', b: 'Elke afbeelding laat misbruik van een echt kind zien, en elke keer dat ernaar wordt gezocht, is er vraag naar meer.' },
@@ -65,6 +53,72 @@ const copy = {
   },
 };
 
+/**
+ * The statute is jurisdiction-specific. We only ship a verified citation for
+ * the Netherlands (article 252 Sr, in force 1 July 2024). Asserting it to a
+ * person in Germany, Britain or Finland would be a false legal claim made to
+ * someone in crisis. Outside NL the card states no offence at all and leads
+ * with help — it stays a warning, it stops being a legal claim.
+ *
+ * Do not add foreign statutes without a named source in routes.nl.json.
+ */
+export function legalCopy(country) {
+  if (country === 'NL') {
+    return {
+      nl: [
+        { h: 'Dit is strafbaar', b: 'Sinds 1 juli 2024 valt dit onder artikel 252 van het Wetboek van Strafrecht. Zoeken en bekijken is strafbaar. Een veroordeling betekent een strafblad, een taakstraf tot 240 uur en een proeftijd die tot tien jaar kan duren.' },
+        { h: 'Dit is strafbaar', b: 'Artikel 252 van het Wetboek van Strafrecht: opzettelijk zoeken naar of bekijken van dit materiaal is een misdrijf. De maximale taakstraf is 240 uur, en een strafblad blijft staan.' },
+        { h: 'Dit is strafbaar', b: 'Sinds 1 juli 2024 is dit een misdrijf in Nederland. Het Openbaar Ministerie vervolgt het, en de straffen zijn in 2024 verhoogd. Wat je nu doet, is strafbaar.' },
+      ],
+      en: [
+        { h: 'This is a criminal offence', b: 'Since 1 July 2024 this falls under article 252 of the Dutch Criminal Code. Searching for and viewing this material is an offence. A conviction means a criminal record, up to 240 hours of community service, and a probation period of up to ten years.' },
+        { h: 'This is a criminal offence', b: 'Article 252 of the Dutch Criminal Code: deliberately searching for or viewing this material is a crime. The maximum community service order is 240 hours and a criminal record is permanent.' },
+        { h: 'This is a criminal offence', b: 'Since 1 July 2024 this is a criminal offence in the Netherlands, and the public prosecutor does pursue it. Sentences were raised in 2024. What you are doing now is criminal.' },
+      ],
+    };
+  }
+  // Elsewhere: same gravity, no legal claim. States what the material is and
+  // that help exists — never what a foreign court would do.
+  return {
+    nl: [
+      { h: 'Dit materiaal is misbruik van een kind', b: 'Elke afbeelding die je bekijkt, is een opname van echt misbruik. Er is hulp voor wie wil stoppen, en je hoeft je naam niet te geven.' },
+      { h: 'Dit materiaal is misbruik van een kind', b: 'Achter elke afbeelding staat een kind dat misbruikt is. Stoppen kan, met hulp, en anoniem als je dat wil.' },
+      { h: 'Dit materiaal is misbruik van een kind', b: 'Wat je bekijkt, is een opname van misbruik van een echt kind. Er is hulp die werkt, ook als je nog niets hebt toegegeven.' },
+    ],
+    en: [
+      { h: 'This material records the abuse of a child', b: 'Every image you view is a recording of real abuse. There is help for anyone who wants to stop, and you do not have to give your name.' },
+      { h: 'This material records the abuse of a child', b: 'Behind every image is a child who was abused. Stopping is possible, with help, and anonymously if you prefer.' },
+      { h: 'This material records the abuse of a child', b: 'What you are viewing is a recording of a real child being abused. There is help that works, even if you have not admitted anything yet.' },
+    ],
+  };
+}
+
+/**
+ * The footnote must describe the service the button actually opens. It may only
+ * promise confidentiality when the route carries a verified `conf` basis, which
+ * is the same condition assertHonest() enforces for human routes.
+ */
+export function footnoteFor(route, L) {
+  if (!route) {
+    return L === 'nl'
+      ? 'Er is hulp. Je hoeft je naam niet te geven.'
+      : 'There is help. You do not have to give your name.';
+  }
+  if (route.capacity === 'selfhelp' || route.channel === 'selfhelp') {
+    return L === 'nl'
+      ? 'Zelfhulp, gratis en zonder account.'
+      : 'Self-help, free and without an account.';
+  }
+  if (!route.conf || /verify|todo|unknown/i.test(route.conf)) {
+    return L === 'nl'
+      ? 'Hulp, gratis en anoniem.'
+      : 'Help, free and anonymous.';
+  }
+  return L === 'nl'
+    ? 'Hulp, gratis en vertrouwelijk.'
+    : 'Help, free and confidential.';
+}
+
 
 /** The copy index encoded in a variant id like "legal-02" — 0 when absent. */
 export function variantIndex(variantId) {
@@ -80,7 +134,7 @@ export function createDoorway({ config, routes, endpoint, lang, country, onEvent
   let countryCode = typeof country === 'string' ? country.toUpperCase() : null;
   const setCountry = (c) => { if (typeof c === 'string' && c.length === 2) countryCode = c.toUpperCase(); };
   const base = (langTag.split('-')[0] || 'en').toLowerCase();
-  const L = copy.legal[base] ? base : 'en';
+  const L = /\b(nl|en)\b/.test(base) ? base : 'en';
 
   const readState = () => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
@@ -92,7 +146,9 @@ export function createDoorway({ config, routes, endpoint, lang, country, onEvent
   };
 
   function present(decision, variantId) {
-    const family = copy[decision.family] || copy.legal;
+    const family = decision.family === 'legal'
+      ? legalCopy(countryCode)
+      : copy[decision.family];
     const need = decision.format === 'chat' ? 'human' : 'any';
     const { route } = resolve(langTag, routes, { need, country: countryCode });
     const variants = family[L] || family.en;
@@ -113,12 +169,10 @@ export function createDoorway({ config, routes, endpoint, lang, country, onEvent
         label: L === 'nl' ? 'Ik zoek iets anders' : 'I am here for something else',
         kind: 'secondary',
       },
-      footnote: L === 'nl'
-        ? 'Hulp via de preventielijn. Wat je deelt blijft vertrouwelijk.'
-        : 'Help is via the prevention line. What you share stays confidential.',
+      footnote: footnoteFor(route, L),
     });
 
-    return mount(descriptor, {
+    return { ...mount(descriptor, {
       onOutcome: ({ outcome }) => {
         // card.js speaks in actions (primary/secondary/dismiss); the plug-in
         // contract speaks in outcomes. This is the only translation point.
@@ -134,7 +188,7 @@ export function createDoorway({ config, routes, endpoint, lang, country, onEvent
           onEvent({ outcome, format: decision.format, family: decision.family, routeId: route?.id });
         }
       },
-    });
+    }), routeId: route?.id ?? null };
   }
 
   /**
@@ -157,19 +211,32 @@ export function createDoorway({ config, routes, endpoint, lang, country, onEvent
   let active = null;
 
   function trigger({ type = 'search' } = {}) {
-    if (active?.host?.isConnected) return active;
+    if (active?.el?.isConnected) return active;
     const st = readState();
     const blocked = st.__blocked === true;
     const decision = pick(st, config, Date.now(), { storageBlocked: blocked });
     const variant = variantFor(decision.family, st.seen || []);
     active = present(decision, variant);
+    const routeId = active?.routeId ?? null;
 
     writeState(advance(blocked ? {} : st, variant, Date.now()));
 
-    const emit = onEvent || ((e) => {
+    const onDecision = (mapped) => {
+      if (typeof onEvent === 'function') {
+        onEvent({ outcome: mapped, format: decision.format, family: decision.family, routeId });
+        return;
+      }
       if (!endpoint) return;
-      const payload = { i: endpoint.install, v: variant, f: e.format, t: type, o: e.outcome, r: e.routeId || 'none', e: decision.bucket, b: new Date().getHours() };
-      const res = build(payload);
+      const res = build({
+        i: endpoint.install,
+        v: variant,
+        f: decision.format,
+        t: type,
+        o: mapped,
+        r: routeId || 'xx-none',
+        e: decision.bucket,
+        b: new Date().getHours(),
+      });
       if (!res.ok) return;                       // never send an invalid payload
       fetch(endpoint.url, {
         method: 'POST',
@@ -179,8 +246,8 @@ export function createDoorway({ config, routes, endpoint, lang, country, onEvent
         credentials: 'omit',
         referrerPolicy: 'no-referrer',
       }).catch(() => { /* lost count beats a buffered identifier */ });
-    });
-    active.onEvent = emit;
+    };
+    outcomeSink = onDecision;
     return active;
   }
 

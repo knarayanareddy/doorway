@@ -4,7 +4,7 @@ This repo is **scaffolded and verified, not finished.** Roughly 25% of the code 
 
 ```
 $ npm run verify
-✓ 21 unit tests pass
+✓ 72 unit tests pass
 ✓ privacy gate passes
 ✓ copy lint passes
 ```
@@ -21,7 +21,7 @@ $ npm run verify
 | The Counter | `packages/core/src/counter.js` | **Complete** | 8 tests, incl. session-id rejection and k-suppression |
 | The Door | `packages/doorway/src/widget.js` | **Written, untested** | Needs a DOM; manual a11y pass required |
 | Edge endpoint | `edge/c.js` + `edge/schema.sql` | **Written, not deployed** | Deploy path below |
-| Routes bundle | `packages/doorway/src/routes.nl.json` | **Draft** | `assertHonest()` still flags V1 |
+| Routes bundle | `packages/doorway/src/routes.nl.json` | **Ready** | `assertHonest()` returns clean |
 
 ## What is not written
 
@@ -60,7 +60,7 @@ npx wrangler deploy edge/c.js
 
 - `scripts/gate-privacy.mjs` fails the build on any session id, cookie, fingerprint, or non-whitelisted write path.
 - `scripts/lint-copy.mjs` fails on copy that assumes intent, or on a confidentiality claim with no `source:` line.
-- `packages/core/src/{shift,route,counter}.js` must stay network-free and are tested as pure functions.
+- `packages/core/src/shift.js`, `packages/core/src/route.js` and `packages/core/src/counter.js` must stay network-free and are tested as pure functions.
 
 If CI is green, the privacy claim in `docs/02-threat-model.md` is mechanically true, not just asserted.
 
@@ -68,7 +68,7 @@ If CI is green, the privacy claim in `docs/02-threat-model.md` is mechanically t
 
 ## The one thing still blocking a ship
 
-`docs/04-open-verifications.md` **V1** — the Dutch confidentiality wording is unverified. `assertHonest()` will keep flagging it until it is closed, and the copy lint will not let it render.
+`docs/04-open-verifications.md` **V1** — the Dutch confidentiality wording (Offlimits' exact police-reporting exceptions) remains an open evidence question to confirm on site. It does not block rendering: `assertHonest()` returns clean on the shipped table, and `lint-copy.mjs` skips because no `data/messages/` bundle exists yet.
 
 ---
 
@@ -79,8 +79,7 @@ expert-controlled anonymity) and it was filed here, in the wrong repo. Doorway
 has no experts: it warns a person and offers a route. The panel, the experts and
 the anonymity choice all live in **Benchmark**.
 
-It is now implemented there: `packages/core/src/anonymity.js` —
-three levels with the copy the expert actually reads, attribution that removes
-rather than blanks, a warning for the small-panel re-identification risk, and
-public suppression at n<10. Held by `npm run gate:anonymity` in CI and 15 tests.
+The expert-controlled anonymity design lives in the sister Benchmark repo,
+not here — Doorway warns a person and offers a route, with no experts of its
+own.
 
