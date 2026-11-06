@@ -134,6 +134,11 @@ export function attach({ doc, doorway, routes, onCounter } = {}) {
     // Hand the decision to the widget, which owns the Shift's state, the
     // language resolution and the mounting. The adapter supplies only what the
     // contract gives us and what the host asks for.
+    // Tell the widget which country this trigger came from BEFORE it resolves a
+    // route. `country` is a required field of the contract and we were dropping
+    // it, which routed a German-speaking user to a UK number.
+    if (typeof doorway.setCountry === 'function') doorway.setCountry(t.country);
+
     doorway.onOutcome((contractOutcome) => finish(contractOutcome));
     const { decision, variant } = doorway.step();
 
@@ -145,7 +150,7 @@ export function attach({ doc, doorway, routes, onCounter } = {}) {
             shown: true,
             variantId: variant,
             outcome,
-            helpServiceId: outcome === 'clicked_help' ? resolve(t.language, routes)?.route?.id ?? null : null,
+            helpServiceId: outcome === 'clicked_help' ? resolve(t.language, routes, { country: t.country })?.route?.id ?? null : null,
             durationMs: 0, // measured by the host, not by us — we do not run timers on the page
             timestamp: new Date().toISOString(),
           },

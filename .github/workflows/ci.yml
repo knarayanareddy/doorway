@@ -13,6 +13,8 @@ jobs:
         run: node scripts/check-spine.mjs
       - name: Unit tests
         run: node --test packages/shared/core.test.js packages/doorway/test/
+      - name: Safety check (organiser SAFETY.md rules)
+        run: node scripts/check-safety.mjs
       - name: Privacy gate
         run: node scripts/gate-privacy.mjs
       - name: Copy lint

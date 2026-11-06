@@ -2,10 +2,10 @@
 
 A free, self-serve install that turns on the detection tools a small platform would never find, puts a gate in front of the search rather than a banner beside it, changes shape every time it fires, and hands the person to the right help service in the right language — without the platform, or anyone else, learning who they are.
 
-**Status: runnable scaffold, not a product.** The pure core, the shared spine, the privacy gates, the plug-in adapter and 55 tests are real and green. The interface layer is not built — see `BUILD.md` for exactly what exists and what does not, and `docs/03-the-gap-to-real.md` for what stands between this and a product.
+**Status: runnable scaffold, not a product.** The pure core, the shared spine, the privacy gates, the plug-in adapter and 62 tests are real and green. The interface layer is not built — see `BUILD.md` for exactly what exists and what does not, and `docs/03-the-gap-to-real.md` for what stands between this and a product.
 
 ```bash
-npm run verify     # 55 tests, spine check, safety check, privacy gate, copy lint — all green
+npm run verify     # 62 tests, spine check, safety check, privacy gate, copy lint — all green
 npm run e2e        # the mock platform in a real browser (needs Chromium)
 ```
 

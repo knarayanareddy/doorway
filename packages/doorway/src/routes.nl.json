@@ -15,7 +15,11 @@
     "phone": "0800 266 64 36",
     "url": "https://offlimits.nl/?src=doorway",
     "conf": "Anonymous and free. Callers do not need to identify themselves. Offlimits states that nothing is reported to law enforcement; the general Dutch duty to report acute danger does not extend to anonymous helpline conversations (as stated by Offlimits / organisers' legal-confidentiality data). Confirm wording on site — docs/04 V1.",
-    "confBasis": "offlimits-service-guarantee"
+    "confBasis": "offlimits-service-guarantee",
+    "countries": [
+     "NL",
+     "BE"
+    ]
    },
    "alternatives": [
     {
@@ -26,7 +30,11 @@
      "languages": [
       "nl"
      ],
-     "url": "https://stoppenismogelijk.eu/?src=doorway"
+     "url": "https://stoppenismogelijk.eu/?src=doorway",
+     "countries": [
+      "NL",
+      "BE"
+     ]
     }
    ]
   },
@@ -44,7 +52,8 @@
      "fr",
      "es"
     ],
-    "url": "https://www.redirection.fi/?src=doorway"
+    "url": "https://www.redirection.fi/?src=doorway",
+    "countries": []
    },
    "alternatives": [
     {
@@ -58,9 +67,31 @@
      "phone": "0808 1000 900",
      "url": "https://www.stopitnow.org.uk/?src=doorway",
      "conf": "Confidential helpline run by the Lucy Faithfull Foundation. Confirm current wording on site — docs/04 V1.",
-     "confBasis": "service-published"
+     "confBasis": "service-published",
+     "countries": [
+      "GB",
+      "IE"
+     ]
     }
    ]
+  },
+  "de": {
+   "default": {
+    "id": "de-kein-taeter",
+    "name": "Kein Täter werden / Dunkelfeld",
+    "url": "https://www.kein-taeter-werden.de/?src=doorway",
+    "channel": "phone",
+    "capacity": "human",
+    "countries": [
+     "DE"
+    ],
+    "languages": [
+     "de"
+    ],
+    "conf": "Free, confidential prevention programme for people who are attracted to children and want help before anything happens. Treatment is confidential; the programme states it does not report participants to police. Confirm wording on site - docs/04 V1.",
+    "confBasis": "programme-published"
+   },
+   "alternatives": []
   }
  },
  "selfHelpAlways": [

@@ -72,8 +72,13 @@ export function variantIndex(variantId) {
   return m ? Math.max(0, Number(m[1]) - 1) : 0;
 }
 
-export function createDoorway({ config, routes, endpoint, lang, onEvent } = {}) {
+export function createDoorway({ config, routes, endpoint, lang, country, onEvent } = {}) {
   const langTag = lang || navigator.language || 'en';
+  // `country` comes from the platform's trigger event and is a REQUIRED field
+  // of PLUGIN_CONTRACT.md. It filters which help service is offered; it never
+  // overrides language. See route.js.
+  let countryCode = typeof country === 'string' ? country.toUpperCase() : null;
+  const setCountry = (c) => { if (typeof c === 'string' && c.length === 2) countryCode = c.toUpperCase(); };
   const base = (langTag.split('-')[0] || 'en').toLowerCase();
   const L = copy.legal[base] ? base : 'en';
 
@@ -89,7 +94,7 @@ export function createDoorway({ config, routes, endpoint, lang, onEvent } = {}) 
   function present(decision, variantId) {
     const family = copy[decision.family] || copy.legal;
     const need = decision.format === 'chat' ? 'human' : 'any';
-    const { route } = resolve(langTag, routes, { need });
+    const { route } = resolve(langTag, routes, { need, country: countryCode });
     const variants = family[L] || family.en;
     const t = variants[variantIndex(variantId)] || variants[0];
 
@@ -145,7 +150,8 @@ export function createDoorway({ config, routes, endpoint, lang, onEvent } = {}) 
     const variant = variantFor(decision.family, st.seen || []);
     const handle = present(decision, variant);
     writeState(advance(blocked ? {} : st, variant, Date.now()));
-    return { decision, variant, handle };
+    return {
+    setCountry, decision, variant, handle };
   }
 
   let active = null;

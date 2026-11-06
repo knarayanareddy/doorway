@@ -230,3 +230,34 @@ anti-nagging rule working. Section E of the e2e asserts that exact sequence, so
 it is a stated behaviour rather than a found defect. Acceptance test #3 holds
 when "consecutive" means what it means in use — a returning person, not a
 pentest.
+
+
+---
+
+## Found by reading the contract against the code (6 Nov, second pass)
+
+`contract/PLUGIN_CONTRACT.md` lists `country` as a **required** field of every
+trigger event, ISO 3166-1 alpha-2. Our adapter normalised it, stored it, and then
+never used it: `route.js` resolved on language alone.
+
+That is not a cosmetic gap. A German-speaking user in Germany was offered
+`uk-stopitnow` — a UK phone number — because `de` had no entry and the chain fell
+through to `en`. Verified in a browser, then fixed.
+
+The fix is in four places and each one matters:
+
+- **`route.js`** — `normaliseCountry`, `servesCountry`, and a four-step
+  degradation ladder (in-country service → self-help in your language →
+  out-of-country service *labelled as such* → nothing). The last step is
+  deliberate: a wrong number is worse than no number.
+- **`routes.nl.json`** — Germany added. `kein-taeter-werden` was in the
+  organisers' own `data/help-services.json` and we had never wired it.
+- **`widget.js`** — `setCountry()` so the adapter can set it per trigger.
+- **`sbis-adapter.js`** — passes `t.country` before resolving.
+
+Country filters; it never overrides language. A Turkish speaker in the
+Netherlands still does not get a Dutch-only line, and a test holds that.
+
+Seven new tests. The lesson generalises: **a contract field that is read and then
+ignored is more dangerous than one that is missing**, because the code looks
+correct at every level.
