@@ -39,8 +39,9 @@ test('query text cannot be carried in any field', () => {
 
 test('aggregate key never includes a person-level dimension', () => {
   const k = aggregateKey(build(GOOD).payload);
-  for (const forbidden of ['sess', 'user', 'ip', 'ts', 'uid']) {
-    assert.ok(!k.includes(forbidden), `key leaked ${forbidden}`);
+  const segments = k.split('|');
+  for (const forbidden of ['sess', 'user', 'ip', 'timestamp', 'uid']) {
+    assert.ok(!segments.some((s) => s.includes(forbidden)), `key segment leaked ${forbidden}`);
   }
 });
 

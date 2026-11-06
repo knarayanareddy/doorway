@@ -141,7 +141,7 @@ export function assertHonest(routes) {
   const walk = (r, where) => {
     if (!r) return;
     if (r.channel !== 'selfhelp' && !r.conf) problems.push(`${where}: human route with no confidentiality statement`);
-    if (r.conf && /verify|todo|unknown/i.test(r.conf)) problems.push(`${where}: confidentiality unverified — do not render`);
+    if (r.conf && /verify|todo|unknown|confirm|site/i.test(r.conf)) problems.push(`${where}: confidentiality unverified — do not render`);
   };
   for (const [lang, entry] of Object.entries(routes.byLanguage || {})) {
     walk(entry.default, `${lang}/default`);

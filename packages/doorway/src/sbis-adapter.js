@@ -44,7 +44,7 @@ export function mapTrigger(event = {}) {
   return {
     severity,
     type,
-    country: typeof event.country === 'string' ? event.country.toUpperCase() : 'NL',
+    country: typeof event.country === 'string' ? event.country.toUpperCase() : null,
     language: typeof event.language === 'string' ? event.language : 'en',
     // An interstitial is only warranted at medium and above.
     interrupt: severity !== 'low',
@@ -84,7 +84,7 @@ export function outcomeFor(contractOutcome) {
  * @param {string} outcome one of the contract's five
  * @param {Date} now
  */
-export function toCounterPayload(t, format, family, variant, outcome, now = new Date()) {
+export function toCounterPayload(t, format, family, variant, outcome, routeId, bucket, now = new Date()) {
   const allowedTypes = { search: 'search', chat: 'chat', navigation: 'nav' };
   const raw = {
     i: 'inst_placeholder', // replaced by caller with the real install id
@@ -92,8 +92,8 @@ export function toCounterPayload(t, format, family, variant, outcome, now = new 
     f: format,
     t: allowedTypes[t.type] || 'search',
     o: outcome,
-    r: `${(t.language || 'en').split('-')[0]}-${(t.country || 'NL').toLowerCase()}`,
-    e: '1',
+    r: routeId || 'xx-none',
+    e: bucket || '1',
     b: now.getHours(),
   };
   const { ok, errors, payload } = buildCounter(raw);
@@ -157,7 +157,7 @@ export function attach({ doc, doorway, routes, onCounter } = {}) {
           },
         })
       );
-      const c = toCounterPayload(t, decision.format, decision.family, variant, outcome);
+      const c = toCounterPayload(t, decision.format, decision.family, variant, outcome, shownRouteId, decision.bucket);
       if (c.ok && typeof onCounter === 'function') onCounter(c.payload);
     }
 

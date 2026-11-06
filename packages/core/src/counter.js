@@ -33,7 +33,7 @@ export function build(input = {}) {
 
 /** Deterministic aggregate key. Nothing here identifies a person. */
 export function aggregateKey(p) {
-  return [p.i, p.v, p.f, p.t, p.e, p.b].join('|');
+  return [p.i, p.v, p.f, p.t, p.e, p.b, p.o, p.r].join('|');
 }
 
 /** k-anonymity: cells below k are suppressed before display. */
