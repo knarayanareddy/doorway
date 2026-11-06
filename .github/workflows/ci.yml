@@ -1,0 +1,19 @@
+name: verify
+on: [push, pull_request]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Shared spine integrity
+        run: node scripts/check-spine.mjs
+      - name: Unit tests
+        run: node --test packages/shared/core.test.js packages/doorway/test/
+      - name: Privacy gate
+        run: node scripts/gate-privacy.mjs
+      - name: Copy lint
+        run: node scripts/lint-copy.mjs
