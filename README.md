@@ -38,7 +38,7 @@ npm run e2e        # the mock platform in a real browser (needs Chromium)
 
 1. A non-developer can install it in under fifteen minutes, on camera, without documentation.
 2. The network panel shows eight fields and zero cookies.
-3. Five consecutive triggers produce five visibly different responses — **verified**: five spaced exposures yield `gate/legal-01`, `gate/legal-02`, `card/harm-01`, `card/harm-02`, `chat/control-01` in a real browser. Five triggers two seconds apart collapse to the quiet form, which is the anti-nagging rule doing its job; `npm run e2e` asserts both.
+3. Five spaced triggers produce five visibly different responses (a burst inside the doubling interval collapses to gate, quiet, quiet, quiet, quiet by design) — **verified**: five spaced exposures yield `gate/legal-01`, `gate/legal-02`, `card/harm-01`, `card/harm-02`, `chat/control-01` in a real browser; `npm run e2e` asserts both.
 4. The confidentiality copy cites a source you can name.
 5. Somebody can answer "does it work?" without flinching. The answer is *not proven, and nobody's is.*
 

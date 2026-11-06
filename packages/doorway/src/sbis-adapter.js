@@ -19,7 +19,6 @@
  * forwarded here would fail loudly. The contract's own privacy rules are
  * satisfied by construction rather than by promise.
  */
-import { resolve } from '../../core/src/route.js';
 import { build as buildCounter } from '../../core/src/counter.js';
 
 export const TRIGGER_EVENT = 'sbis:trigger';
@@ -140,7 +139,9 @@ export function attach({ doc, doorway, routes, onCounter } = {}) {
     if (typeof doorway.setCountry === 'function') doorway.setCountry(t.country);
 
     doorway.onOutcome((contractOutcome) => finish(contractOutcome));
-    const { decision, variant } = doorway.step();
+    const shown = doorway.step();
+    const { decision, variant } = shown;
+    const shownRouteId = shown.handle?.routeId ?? null;
 
     function finish(contractOutcome) {
       const outcome = outcomeFor(contractOutcome);
@@ -150,7 +151,7 @@ export function attach({ doc, doorway, routes, onCounter } = {}) {
             shown: true,
             variantId: variant,
             outcome,
-            helpServiceId: outcome === 'clicked_help' ? resolve(t.language, routes, { country: t.country })?.route?.id ?? null : null,
+            helpServiceId: outcome === 'clicked_help' ? shownRouteId : null,
             durationMs: 0, // measured by the host, not by us — we do not run timers on the page
             timestamp: new Date().toISOString(),
           },

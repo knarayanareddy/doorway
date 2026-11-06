@@ -23,7 +23,7 @@ Copied: 6 November 2026, from `main`
 | `vendor/contract/schemas/message-blocks.schema.json` | ″ | ″ | **no** |
 | `mock-platform/index.html` | `mock-platform/index.html` | ″ | **2 lines** — see below |
 | `mock-platform/platform.js` | `mock-platform/platform.js` | ″ | **no** |
-| `mock-platform/search.html` | `mock-platform/search.html` | ″ | **no** |
+| `mock-platform/search.html` | `mock-platform/search.html` | ″ | **yes** — 2 lines, the documented module swap (see vendor/README.md Provenance) |
 | `mock-platform/style.css` | `mock-platform/style.css` | ″ | **no** |
 | `mock-platform/fake-triggers.json` | `mock-platform/fake-triggers.json` | ″ | **no** |
 | `mock-platform/demo-standin.css` | *(does not exist upstream)* | ″ | **new file, empty** |

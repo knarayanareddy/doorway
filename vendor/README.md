@@ -42,3 +42,9 @@ deliberately answers with nothing at all.
 Copied 6 November 2026. If the upstream files change, re-copy them and note the
 date here rather than patching them locally — a locally patched vendored file is
 the one thing that makes this directory worse than not having it.
+
+Deliberate modifications (vendored files are otherwise pristine upstream):
+
+- `mock-platform/search.html` — 2 lines, both the documented module swap:
+  - line 8: `<link rel="stylesheet" href="/starter-widget/widget.css">` → `/mock-platform/style.css` (the starter stylesheet is not vendored and would 404)
+  - line 64: `<script type="module" src="/starter-widget/widget.js"></script>` → `/packages/doorway/src/sbis-adapter-entry.js` (Doorway replaces the starter widget, matching the two-line swap already made in index.html)
