@@ -33,7 +33,9 @@
     "status": "node scripts/status.mjs",
     "smoke:workerd": "node scripts/run-smoke-workerd.mjs",
     "e2e:chromium": "npm run build:e2e && playwright test --project=chromium",
-    "verify:wordpress": "scripts/wp-verify.sh"
+    "verify:wordpress": "scripts/wp-verify.sh",
+    "e2e:prototype": "playwright test -c playwright.prototype.config.js",
+    "build:prototype": "npm --prefix prototype run build"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
