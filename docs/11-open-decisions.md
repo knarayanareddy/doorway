@@ -1,5 +1,7 @@
 # Decisions the levelled-up design needs before it can ship
 
+> **Update, 7 Nov:** each item below now also exists as a switched-off, tested **lab** (`docs/13-labs.md`; `npm run demo:labs` to see them). Building them did not make the decisions: they are still open, and the recommendations here stand. The labs found two accessibility bugs in the shared card, both fixed, and showed that Escape cannot trigger quick exit.
+
 The prototype (`prototype/`) and the Door now share one core. Three parts of the design are live in the real Door: the shape sequence, the Glass Door and the Hallway (`12-shapes-and-glass-door.md`). The rest is parked behind decisions that are not engineering: they trade safety against safety, or need a person with the right expertise. Each is written so it can be decided in one sitting.
 
 ## D1 · Quick exit

@@ -62,6 +62,10 @@ A second reviewer produced a prototype (`Doorway levelled up`) with a stronger i
 - **Fixed in the prototype** (now in `prototype/`, importing the real core): third-party fonts removed; no hard-coded legal or confidentiality claims; routes only from the verified bundle and the allow-list (the Helpwanted link is gone); the seven-field contract; no quiet-right-after-exposure; the Wave has no free text and keeps nothing beyond the tab; the Verdict text re-baselined.
 - **Parked behind decisions** (`docs/11-open-decisions.md`): quick exit (cannot navigate the host from a sandbox), holding results (conflicts with treating the host as an adversary), the Fork's self-identification, the Wave's clinical review, and a verified youth route.
 
+## Fourth pass: the parked decisions, built as labs
+
+The five parked decisions now exist as switched-off, tested labs with mock data (`docs/13-labs.md`): quick exit, the platform-side hold-results pattern, the Fork, the Wave and the youth-route gate. **Built, not adopted**: each still waits on the decision in `docs/11`. They are accepted only by an edge that names them, so a labs Door on a production edge loses its events visibly. The Desk gained a per-shape table with secondary suppression. `validate.js` and `loop.js` were removed as unused. Two accessibility bugs in the shared card were found and fixed (focus lost when a timer button hides itself; Escape not delivered after a click in Safari). See `docs/14-maritime.md` for whether Maritime would help (verification yes, production no, Safari no).
+
 ## New open items this work surfaced
 
 - **V15 — real Safari and mobile.** The suite now runs in Chromium, Firefox and WebKit, but Playwright's WebKit is not Safari. Safari's Intelligent Tracking Prevention may restrict third-party `localStorage` in ways it does not; in the worst case the Door cannot keep state, and the DEGRADED path (card, not gate) applies. Needs a pass on real Safari (macOS and iOS).
