@@ -16,6 +16,7 @@ function rows(tbody, items) {
   }
 }
 const show = (n) => (n === null || n === undefined ? 'hidden (under k)' : String(n));
+const SHAPES = { gate: 'Gate (what is this?)', card: 'Card (why it matters)', hallway: 'Hallway (before you reach out)', door: 'Open door (still open?)', quiet: 'Quiet line', fork: 'Fork (labs)', wave: 'Wave (labs)' };
 
 async function load() {
   $('err').textContent = '';
@@ -29,6 +30,10 @@ async function load() {
     ? `Fewer than ${s.k} exposures in this period, so nothing is shown.`
     : `${s.exposures} exposures. Help clicks: ${ct.rate === null ? 'hidden (' + ct.note + ')' : `${ct.clicked} of ${ct.shown} (${(ct.rate * 100).toFixed(1)}%)${ct.note ? ', ' + ct.note : ''}`}.`;
   rows($('outcomes').tBodies[0], s.outcomes.map((c) => ({ values: [c.outcome, show(c.count)] })));
+  const byFormat = Array.isArray(j.byFormat) ? j.byFormat : [];
+  rows($('shapes').tBodies[0], byFormat.length === 0
+    ? [{ values: ['No data in this period.'] }]
+    : byFormat.map((f) => ({ values: [SHAPES[f.format] ?? String(f.format), show(f.exposures), show(f.clicked), f.rate === null || f.rate === undefined ? 'hidden (under k)' : `${(f.rate * 100).toFixed(1)}% (${f.clicked} of ${f.exposures})`] })));
   const flaggedBy = Object.fromEntries((s.flaggedDays || []).map((f) => [f.day, f.reasons.join('; ')]));
   rows($('days-table').tBodies[0], j.days.map((d) => ({ cls: d.flagged ? 'flag' : '', values: [d.day, show(d.exposures), d.flagged ? 'unauthenticated: ' + flaggedBy[d.day] : ''] })));
   $('dropped').textContent = j.droppedEvents ? `${j.droppedEvents} events could not be sent, so the counts above may be low.` : 'None reported.';

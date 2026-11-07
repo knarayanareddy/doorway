@@ -234,3 +234,106 @@ body {
   color: var(--kk-text-muted);
   text-align: center;
 }
+
+/* Hold-results (demo) — set by platform.js on ?hold=1 or <body data-hold>.
+   The thread list is hidden behind a blur until the Door settles. */
+.dw-held .thread-list {
+  filter: blur(6px);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Labs demo (mock-platform/labs.html only) ─────────────────────────────── */
+
+.labs-banner {
+  background: #1a1a1a;
+  color: #fff;
+  text-align: center;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.labs-wrap {
+  max-width: var(--kk-max-width);
+  margin: 24px auto 0;
+  padding: 0 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.labs-card {
+  background: var(--kk-surface);
+  border: 1px solid var(--kk-border);
+  border-radius: var(--kk-radius);
+  padding: 16px;
+  min-width: 0;
+}
+
+.labs-card h2 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.labs-card p {
+  font-size: 13px;
+  color: var(--kk-text-muted);
+  margin-bottom: 8px;
+}
+
+.labs-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.labs-btn {
+  padding: 6px 12px;
+  background: var(--kk-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--kk-radius);
+  cursor: pointer;
+  font-size: 13px;
+  min-height: 36px;
+}
+
+.labs-btn:hover { background: var(--kk-accent-hover); }
+
+.labs-btn:focus-visible,
+.labs-card a:focus-visible {
+  outline: 3px solid #1a4fa0;
+  outline-offset: 2px;
+}
+
+.labs-card a {
+  color: var(--kk-accent);
+  font-weight: 600;
+}
+
+.labs-log {
+  list-style: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  max-height: 180px;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  background: #fafaf7;
+  border: 1px solid var(--kk-border);
+  border-radius: var(--kk-radius);
+  padding: 8px;
+}
+
+.labs-log li { margin-bottom: 4px; }
+
+.labs-counter {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 480px) {
+  .labs-wrap { padding: 0 12px; }
+  .labs-btn { flex: 1 1 calc(50% - 8px); }
+}
