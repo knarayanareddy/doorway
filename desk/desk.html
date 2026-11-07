@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Doorway Desk</title>
+<style>
+  body{font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;max-width:46rem;margin:2rem auto;padding:0 1rem;color:#1b1a18}
+  h1{font-size:1.4rem} h2{font-size:1.1rem;margin-top:2rem}
+  .label{background:#fff4d6;border:1px solid #e0c36a;padding:.6rem .8rem;border-radius:6px;font-weight:600}
+  label{display:block;margin:.6rem 0 .2rem} input,select,button{font:inherit;padding:.45rem .6rem}
+  table{border-collapse:collapse;width:100%} td,th{border-bottom:1px solid #ddd;padding:.35rem .5rem;text-align:left}
+  .sup{color:#6d665e;font-style:italic} .flag{background:#fde8e8} .note{color:#6d665e;font-size:.9rem}
+</style>
+</head>
+<body>
+<h1>Doorway Desk</h1>
+<p class="note">For platform administrators. It shows aggregate counts only: there is no list of people anywhere behind this page.</p>
+
+<form id="login">
+  <label for="inst">Install id</label><input id="inst" autocomplete="off" placeholder="inst_xxxxxx" required>
+  <label for="tok">Desk token</label><input id="tok" type="password" autocomplete="off" required>
+  <label for="days">Period</label>
+  <select id="days"><option value="7">7 days</option><option value="30" selected>30 days</option><option value="90">90 days</option></select>
+  <p><button type="submit">Show numbers</button></p>
+</form>
+<p id="err" role="alert"></p>
+
+<section id="out" hidden>
+  <p class="label" id="label"></p>
+  <h2>Exposures and outcomes</h2>
+  <p id="headline"></p>
+  <table id="outcomes"><thead><tr><th>Outcome</th><th>Count</th></tr></thead><tbody></tbody></table>
+  <h2>Days</h2>
+  <table id="days-table"><thead><tr><th>Day</th><th>Exposures</th><th></th></tr></thead><tbody></tbody></table>
+  <p class="note">Flagged days are shown, labelled, and left out of the headline rate. Cells under k are hidden so a single visit cannot be recovered.</p>
+  <h2>Events the Door could not send</h2>
+  <p id="dropped"></p>
+  <h2>Mistaken warnings (false positives)</h2>
+  <table id="reports"><thead><tr><th>Reason</th><th>Count</th></tr></thead><tbody></tbody></table>
+  <form id="report">
+    <label for="reason">Report a mistaken warning (no search text, no time finer than a day)</label>
+    <select id="reason"></select>
+    <select id="rtype"><option value="search">search</option><option value="chat">chat</option><option value="nav">navigation</option></select>
+    <button type="submit">Send report</button> <span id="rmsg" role="status"></span>
+  </form>
+</section>
+<script src="/desk.js"></script>
+</body>
+</html>
