@@ -42,8 +42,6 @@ function writeCount(n: number) {
   }
 }
 
-let consumedPreview: number | null = null;
-
 export function DemoPage() {
   const s = useStore();
   const [lang] = useState(forumLang);
@@ -102,16 +100,6 @@ export function DemoPage() {
     },
     [],
   );
-
-  // Preview requests (store.requestPreview): open that shape once the loader is ready. Nothing calls requestPreview
-  // at present: the Review page that sent them has been removed. Each request is consumed once per page, so coming
-  // back to this tab later does not open it again.
-  useEffect(() => {
-    if (ready && s.previewRequest && s.previewRequest.nonce !== consumedPreview) {
-      consumedPreview = s.previewRequest.nonce;
-      open(s.previewRequest.shape);
-    }
-  }, [ready, s.previewRequest, open]);
 
   const onSearch = (q: string) => {
     // The PLATFORM decides a search is a trigger. Doorway only hears the kind ("search"), never the text.

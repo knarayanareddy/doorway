@@ -14,8 +14,8 @@ import { buildCard, mount } from '../../shared/card.js';
 import { copyFor, attributionFor, footnoteFor, variantIndex, langOf, LABELS, DOOR } from './copy.js';
 import { createSender } from './send.js';
 import { glassSection, hallwaySections, doorPanel } from './panels.js';
-import { configFor, labsFormats, quickExit, readWavePlan, saveWavePlan, clearWavePlan } from './labs.js';
-import { FORK, WAVE, QUICK, QUICK_HINT, BACK } from './copy-labs.js';
+import { configFor, labsFormats, quickExit, quickExitUrl, readWavePlan, saveWavePlan, clearWavePlan } from './labs.js';
+import { FORK, WAVE, QUICK, QUICK_HINT, QUICK_FAILED, QUICK_OPEN, BACK } from './copy-labs.js';
 
 export { variantIndex, footnoteFor };
 
@@ -87,8 +87,15 @@ export function createDoorway({
     // at the moment they decide whether to trust it.
     const glass = () => glassSection({ lang: L, preview, localCount, onWipe, extraLocal: labs.includes('wave') ? WAVE.localNote[L] : null });
     // Quick exit (lab): a fixed neutral destination chosen by the Door, never by the host.
+    // If the browser refuses the navigation, the card stays open and offers the same neutral site as a plain link,
+    // and nothing is reported as left_page (the person has not left).
+    const quickFailed = () => ({ view: {
+      headline: QUICK_FAILED[L], body: '', tertiary: null, sections: [],
+      primary: { label: QUICK_OPEN[L], kind: 'primary', outcome: 'continued', onSelect: () => openHelp(quickExitUrl(L)) },
+      secondary: { label: BACK[L], kind: 'secondary', outcome: 'dismissed' },
+    } });
     const quit = () => (labs.includes('quick-exit') ? [{ placement: 'top', blocks: [
-      { type: 'action', id: 'quit', label: QUICK[L], tone: 'danger', closes: true, outcome: 'left_page', onSelect: () => quickExit(w, L) },
+      { type: 'action', id: 'quit', label: QUICK[L], tone: 'danger', closes: true, outcome: 'left_page', onSelect: () => (quickExit(w, L) ? null : quickFailed()) },
       { type: 'text', text: QUICK_HINT[L] },
     ] }] : []);
     const tag = () => [];

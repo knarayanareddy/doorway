@@ -210,8 +210,12 @@ export function mount(d0, { onOutcome, doc = globalThis.document } = {}) {
       if (!b) return;
       // The action runs first: it may navigate the host (quick exit) or open help, and finish() can settle the
       // Door, after which the loader removes this frame and a navigation it started could be cancelled.
-      if (b.closes) { try { if (b.onSelect) b.onSelect(); } finally { finish('section:' + b.id, b); } }
-      else answer(b.onSelect ? b.onSelect() : null, t);
+      // A closing action whose handler returns a view stays open and shows that view (a quick exit the browser refused).
+      if (b.closes) {
+        let r = null;
+        try { r = b.onSelect ? b.onSelect() : null; } finally { if (!(r && r.view)) finish('section:' + b.id, b); }
+        if (r && r.view) answer(r, t);
+      } else answer(b.onSelect ? b.onSelect() : null, t);
     } else if (t.dataset.choice) {
       const b = findBlock(t.dataset.choice);
       const o = b && (b.options || []).find((x) => x.id === t.dataset.opt);

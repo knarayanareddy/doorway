@@ -137,9 +137,6 @@ async function minuteBump(env, k, minute, t = now()) {
   }
   return row.n;
 }
-async function minuteRead(env, k) {
-  return (await env.DB.prepare(`SELECT n FROM rate WHERE k = ?`).bind(k).first())?.n || 0;
-}
 /**
  * Read-side limits (Desk and status). Keys start with their own letter (f:, r:, s:) so they
  * never share a counter with the write limiter's m: rows. Ids that do not exist all share one
@@ -317,14 +314,14 @@ async function deskPage(request, env, path, type) {
 async function agg(request, url, env) {
   const id = url.searchParams.get('i') || '';
   const minute = minuteOf(now());
-  // Ten failed Bearer attempts in a minute lock the install (or the shared unknown bucket) out for the rest
-  // of that minute, checked BEFORE the token, so a correct token cannot be used to keep guessing.
-  const known = await getInstall(env, id);
-  const failKey = `f:${known ? known.id : UNKNOWN_BUCKET}:${minute}`;
-  if ((await minuteRead(env, failKey)) >= DESK_FAILS_PER_MIN) return tooMany();
+  // Install ids are public, so failures must never lock the moderator out. The token is checked FIRST: a correct
+  // token is never refused by the failure counter. Only a wrong or missing token counts against the install's
+  // failure bucket (or the shared unknown bucket for junk ids), and past DESK_FAILS_PER_MIN those are answered 429.
   const install = await authedInstall(request, env, id);
   if (!install) {
-    await minuteBump(env, failKey, minute);
+    const known = await getInstall(env, id);
+    const failKey = `f:${known ? known.id : UNKNOWN_BUCKET}:${minute}`;
+    if ((await minuteBump(env, failKey, minute)) > DESK_FAILS_PER_MIN) return tooMany();
     return json({ error: 'unauthorised' }, 401);
   }
   if ((await minuteBump(env, `r:${install.id}:${minute}`, minute)) > DESK_READS_PER_MIN) return tooMany();

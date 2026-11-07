@@ -376,29 +376,43 @@ const deskWith = (token, id = 'inst_abc123') =>
   worker.fetch(new Request(`https://door.test/v1/agg?i=${id}`, { headers: { authorization: `Bearer ${token}` } }), env);
 const statusOf = (id) => worker.fetch(new Request('https://door.test/v1/status?i=' + id), env);
 
-test('desk: ten wrong tokens in a minute lock the install out, and the right token is refused too', withClock(async () => {
-  for (let i = 0; i < 10; i++) assert.equal((await deskWith('wrong' + i)).status, 401);
-  const blocked = await desk();
-  assert.equal(blocked.status, 429, 'the eleventh request is refused even with the right token');
+// Install ids are public, so an attacker can send wrong tokens for any install. The failure counter throttles only
+// those wrong requests; the correct token is checked first and is never refused by it (a lockout here would let
+// anyone who knows an install id keep the moderator out).
+test('desk: fifty wrong tokens in a minute get 401 then 429, and the right token in the same minute is still 200', withClock(async () => {
+  const statuses = [];
+  for (let i = 0; i < 50; i++) statuses.push((await deskWith('wrong' + i)).status);
+  assert.deepEqual(statuses.slice(0, 10), Array(10).fill(401), 'the first ten wrong tokens are plain 401s');
+  assert.deepEqual([...new Set(statuses.slice(10))], [429], 'then every wrong token is 429');
+  const blocked = await deskWith('wrong-again');
+  assert.equal(blocked.status, 429);
   assert.deepEqual(await blocked.json(), { error: 'too many attempts' });
   assert.equal(blocked.headers.get('retry-after'), '30', 'seconds to the next minute');
+  assert.equal((await desk()).status, 200, 'the moderator with the correct token is not locked out');
 }));
 
-test('desk: the lockout ends with the minute, and the count starts again', withClock(async () => {
+test('desk: a missing token counts as a failure too, and the right token still passes once throttled', withClock(async () => {
+  for (let i = 0; i < 10; i++) assert.equal((await worker.fetch(new Request('https://door.test/v1/agg?i=inst_abc123'), env)).status, 401);
+  assert.equal((await worker.fetch(new Request('https://door.test/v1/agg?i=inst_abc123'), env)).status, 429);
+  assert.equal((await desk()).status, 200);
+}));
+
+test('desk: the throttle ends with the minute, and the count starts again', withClock(async () => {
   for (let i = 0; i < 10; i++) await deskWith('wrong' + i);
-  assert.equal((await desk()).status, 429);
+  assert.equal((await deskWith('wrong-x')).status, 429);
   mock.timers.setTime(Date.parse('2026-11-07T10:01:00Z'));
-  assert.equal((await desk()).status, 200, 'a new minute');
-  for (let i = 0; i < 9; i++) await deskWith('wrong' + i);
-  assert.equal((await desk()).status, 200, 'the earlier ten do not carry over; nine more fails are under the limit');
+  assert.equal((await deskWith('wrong-y')).status, 401, 'a new minute');
+  for (let i = 0; i < 8; i++) await deskWith('wrong' + i);
+  assert.equal((await deskWith('wrong-z')).status, 401, 'the earlier ten do not carry over; nine fails are under the limit');
 }));
 
-test('desk: a lockout on one install does not touch another', withClock(async () => {
+test('desk: failures on one install do not throttle another', withClock(async () => {
   env.DB.raw.prepare(`INSERT INTO installs (id, domain, verified_at, verify_token, desk_token_hash)
                       VALUES ('inst_other1','other.test','2026-11-01T00:00:00Z','tokx',?)`).run(await sha256hex('other-secret'));
   for (let i = 0; i < 10; i++) await deskWith('wrong' + i);
-  assert.equal((await desk()).status, 429);
+  assert.equal((await deskWith('wrong-x')).status, 429);
   assert.equal((await deskWith('other-secret', 'inst_other1')).status, 200);
+  assert.equal((await deskWith('wrong-x', 'inst_other1')).status, 401, 'the other install has its own failure bucket');
 }));
 
 test('desk: 60 successful reads a minute, then the same 429 and Retry-After', withClock(async () => {
@@ -417,10 +431,11 @@ test('desk: unknown install ids share one bucket, so the rate table does not gro
   assert.equal((await desk()).status, 200, 'real installs are not locked out by junk ids');
 }));
 
-test('desk and writes use separate counters: a Desk lockout does not block the Door, and the write limit is unchanged', withClock(async () => {
+test('desk and writes use separate counters: a Desk throttle does not block the Door, and the write limit is unchanged', withClock(async () => {
   await setup({ rate: 2 });
   for (let i = 0; i < 10; i++) await deskWith('wrong' + i);
-  assert.equal((await desk()).status, 429);
+  assert.equal((await deskWith('wrong-x')).status, 429);
+  assert.equal((await desk()).status, 200, 'the Desk token still passes');
   assert.equal((await post('/v1/c', GOOD)).status, 204, 'writes still have their own budget');
   assert.equal((await post('/v1/c', GOOD)).status, 204);
   assert.equal((await post('/v1/c', GOOD)).status, 429, 'the write limit (2 a minute) is unchanged');

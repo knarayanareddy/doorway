@@ -19,11 +19,12 @@
     "lint:copy": "node scripts/lint-copy.mjs",
     "check:routes": "node scripts/check-routes.mjs",
     "check:prod-key": "node scripts/check-prod-key.mjs",
+    "check:deploy": "node scripts/check-deploy-config.mjs",
     "scan:secrets": "node scripts/scan-secrets.mjs",
     "check:pilot": "node scripts/check-routes.mjs --pilot",
     "check:shared": "node scripts/check-shared.mjs",
     "check:fingerprint-log": "node scripts/check-fingerprint-log.mjs",
-    "lint:prototype": "eslint --no-ignore --max-warnings=0 prototype/e2e",
+    "lint:prototype": "eslint --max-warnings=0 prototype/e2e prototype/src",
     "check": "node scripts/check-safety.mjs",
     "build": "node scripts/build.mjs",
     "demo": "DEMO_ROUTES=1 DOOR_ORIGIN=http://127.0.0.1:8788 node scripts/dev.mjs",
@@ -51,6 +52,7 @@
     "@playwright/test": "^1.65.0",
     "eslint": "^9.39.5",
     "globals": "^17.14.0",
+    "typescript-eslint": "^8.72.1",
     "wrangler": "^4.158.0"
   },
   "dependencies": {

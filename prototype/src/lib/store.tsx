@@ -1,5 +1,4 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
-import type { Shape } from "./shapes";
 
 export type Tab = "demo" | "desk";
 
@@ -11,21 +10,14 @@ function readTab(): Tab {
 }
 
 interface Ctx {
-  exited: boolean;
-  quickExit: () => void;
-  returnFromExit: () => void;
   tab: Tab;
   setTab: (t: Tab) => void;
-  previewRequest: { shape: Shape; nonce: number } | null;
-  requestPreview: (s: Shape) => void;
 }
 
 const StoreCtx = createContext<Ctx | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [exited, setExited] = useState(false);
   const [tab, setTabState] = useState<Tab>(readTab);
-  const [previewRequest, setPreview] = useState<Ctx["previewRequest"]>(null);
 
   const setTab = useCallback((t: Tab) => {
     setTabState(t);
@@ -34,18 +26,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     else u.searchParams.set("tab", TAB_PARAM[t]);
     window.history.replaceState(null, "", u);
   }, []);
-  const quickExit = useCallback(() => setExited(true), []);
-  const returnFromExit = useCallback(() => setExited(false), []);
-  const requestPreview = useCallback((shape: Shape) => {
-    setTab("demo");
-    setPreview({ shape, nonce: Date.now() });
-    window.scrollTo({ top: 0 });
-  }, [setTab]);
-
-  const value = useMemo<Ctx>(
-    () => ({ exited, quickExit, returnFromExit, tab, setTab, previewRequest, requestPreview }),
-    [exited, quickExit, returnFromExit, tab, setTab, previewRequest, requestPreview],
-  );
+  const value = useMemo<Ctx>(() => ({ tab, setTab }), [tab, setTab]);
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
 }
 

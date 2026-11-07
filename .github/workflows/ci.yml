@@ -36,7 +36,7 @@ jobs:
           fi
           echo "$out"
           grep -q 'refused for DOORWAY_PRODUCTION=1' <<< "$out" || { echo 'guard exited non-zero for another reason' >&2; exit 1; }
-      - name: "Prototype e2e specs, linted (its TypeScript is not: no TypeScript parser is installed)"
+      - name: "Prototype e2e specs and TypeScript, linted (typescript-eslint)"
         run: npm run lint:prototype
       - name: Real Workers runtime (workerd + local D1), no account needed
         run: npm run smoke:workerd
@@ -137,6 +137,18 @@ jobs:
           echo "status $code"
           if [ "$code" != "200" ]; then cat "$body"; echo; echo '/v1/agg did not answer 200' >&2; exit 1; fi
           grep -q 'byFormat' "$body" || { cat "$body"; echo; echo 'no byFormat in /v1/agg' >&2; exit 1; }
+      # The platform serves the loader from its own build, which bakes in the Door origin the job passed. The
+      # loader is fetched cross-origin by host pages, so it must answer with access-control-allow-origin: *.
+      - name: "Platform loader: GET /dist/latest/doorway.min.js is 200, CORS open, and names the Door origin"
+        run: |
+          headers=$(mktemp)
+          body=$(mktemp)
+          code=$(curl -sS --max-time 10 -D "$headers" -o "$body" -w '%{http_code}' \
+            'http://127.0.0.1:8802/dist/latest/doorway.min.js')
+          echo "status $code"
+          if [ "$code" != "200" ]; then cat "$headers"; echo '/dist/latest/doorway.min.js did not answer 200' >&2; exit 1; fi
+          tr -d '\r' < "$headers" | grep -qi '^access-control-allow-origin: \*$' || { cat "$headers"; echo 'no access-control-allow-origin: *' >&2; exit 1; }
+          grep -qF 'http://127.0.0.1:8801' "$body" || { echo 'the loader does not name the Door origin http://127.0.0.1:8801' >&2; exit 1; }
       - name: Container logs (on failure)
         if: failure()
         run: docker logs door; docker logs platform
