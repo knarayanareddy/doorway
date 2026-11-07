@@ -11,7 +11,8 @@
  * Coverage: the visitor-path rules apply to shipped code (packages/doorway/src,
  * packages/core/src, packages/shared, edge/c.js). Tests and tooling get the rules
  * that still make sense for them, with named per-file exceptions below. prototype/
- * is ignored here until it is ready: `npm run lint:prototype` lints its e2e specs.
+ * is NOT linted by this config (it is ignored here, and no TypeScript parser is installed). Only its e2e specs are
+ * linted, by `npm run lint:prototype`. Its TypeScript is type-checked by `npm --prefix prototype run typecheck` instead.
  */
 import js from '@eslint/js';
 import globals from 'globals';

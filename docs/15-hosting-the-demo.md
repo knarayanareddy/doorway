@@ -89,6 +89,8 @@ maritime env set doorway-platform ROLE=platform DOOR_ORIGIN=https://<door-id>.mt
 # 3. open https://<platform-id>.mtm.sh/app/   (the app; `/` redirects there)
 ```
 
+After PR #6 is merged, use main.
+
 Until step 2 the server exits with a clear message listing what is missing, so the first boot of each agent is expected to fail.
 
 ## Things to expect

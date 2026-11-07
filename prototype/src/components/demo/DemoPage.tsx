@@ -103,8 +103,9 @@ export function DemoPage() {
     [],
   );
 
-  // Preview requests from the Review page (Verdict): open that shape once the loader is ready. Each request is
-  // consumed once per page, so coming back to this tab later does not open it again.
+  // Preview requests (store.requestPreview): open that shape once the loader is ready. Nothing calls requestPreview
+  // at present: the Review page that sent them has been removed. Each request is consumed once per page, so coming
+  // back to this tab later does not open it again.
   useEffect(() => {
     if (ready && s.previewRequest && s.previewRequest.nonce !== consumedPreview) {
       consumedPreview = s.previewRequest.nonce;

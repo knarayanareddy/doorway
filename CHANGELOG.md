@@ -2,11 +2,15 @@
 
 All notable changes to Doorway. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [Semantic Versioning](https://semver.org/) while it is pre-1.0.
 
-Entries are taken from the git history (`git log`) and from `docs/07-review-response.md`. Nothing is listed that the history does not show. Items marked *working tree* are uncommitted at the time of writing.
+Entries are taken from the git history (`git log`) and from `docs/07-review-response.md`. Nothing is listed that the history does not show. Items marked *working tree, uncommitted* are not in any commit at the time of writing.
 
 ## [Unreleased]
 
-Branch `wip/one-app`. Not yet verified end to end: the commit message says the three-browser e2e run was not repeated on that snapshot.
+Branch `wip/one-app`, pull request #6 into `main`. Verification as reported for PR #6 (these results are not re-checked in this entry):
+
+- GitHub Actions: the `docker`, `wordpress`, `hosted` and `fingerprint-log` jobs passed.
+- GitHub Actions: the `verify` job failed once on a flaky labs quick-exit test in Chromium (the page ended on `about:blank`). That failure is under investigation and is not known to be fixed. The commit it ran on is not recorded here.
+- Local: the e2e suite on `main` passed 234 of 234.
 
 ### Added
 
@@ -20,22 +24,25 @@ Branch `wip/one-app`. Not yet verified end to end: the commit message says the t
 - Per-shape looks in the prototype: each shape has its own silhouette and layout, on one palette (commit `2d6e7ca`, `prototype/src/lib/shapes.ts`).
 - The prototype's Desk is split into a live view and a synthetic view with shared panels (commit `2d6e7ca`, `prototype/src/components/desk/`).
 - The demo install's limits are set to 600 requests a minute and 20,000 a day (commit `2d6e7ca`, `scripts/serve-demo.mjs`).
-- Docs: `README.md` and `INSTALL.md` rewritten. `INSTALL.md` gains a quickstart, a "what you do not have to do" list and a stopwatch protocol for install time. `docs/16-claims-ledger.md` added. (working tree)
-- The Review tab is removed from the app. The Verdict component is deleted (working tree).
+- Docs: `README.md` and `INSTALL.md` rewritten. `INSTALL.md` gains a quickstart, a "what you do not have to do" list and a stopwatch protocol for install time. `docs/16-claims-ledger.md` added.
+- The Review tab is removed from the app. The Verdict component is deleted.
 
 ### Fixed
 
-- The Door's explanation of what the module receives is corrected: a trigger kind (`search`, `chat`, `nav`), not a boolean (`docs/02`, `docs/01`) (working tree).
+- The Door's explanation of what the module receives is corrected: a trigger kind (`search`, `chat`, `nav`), not a boolean (`docs/02`, `docs/01`).
 
 ### Removed
 
-- The Review tab and its Verdict component (working tree).
+- The Review tab and its Verdict component.
 
-### CI (working tree, not yet committed)
+### CI
 
 - A prototype lint step (`npm run lint:prototype`).
 - The hosted e2e step is replaced by the demo Door panel e2e (`npm run e2e:demo`).
 - A check that a change to `packages/shared/.fingerprint.json` comes with a dated entry in `FINGERPRINT-LOG.md`.
+- (working tree, uncommitted) `verify` runs the secret scan (`npm run scan:secrets`) and the production-key guard (`npm run check:prod-key`). `npm test` includes `scripts/test/*.test.mjs`. CI runs the guard under `DOORWAY_PRODUCTION=1` and expects it to refuse.
+- (working tree, uncommitted) The Dockerfile base image is pinned by digest. The `docker` job checks that `GET /v1/agg` on the Door answers 200 with the demo token.
+- (working tree, uncommitted) The prototype's Desk loads no numbers until asked. The token starts empty; the demo button fills it.
 
 ## [0.2.0] - 2026-11-07
 

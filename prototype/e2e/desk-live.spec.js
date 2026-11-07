@@ -38,6 +38,12 @@ const openDesk = async (page) => {
   await expect(page.getByRole('heading', { name: 'The Desk' })).toBeVisible();
 };
 
+// The Desk loads nothing until asked: the token starts empty, and the demo button fills it and loads the numbers.
+const openDeskLoaded = async (page) => {
+  await openDesk(page);
+  await page.getByRole('button', { name: 'Use the demo token' }).click();
+};
+
 // The name cell starts with the label (Fork/Wave add a 'labs' tag). Anchored, because 'researcher' contains 'search'.
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const rowFor = (page, label) => page.getByRole('row').filter({ has: page.getByRole('cell', { name: new RegExp(`^${escapeRe(label)}`) }) });
@@ -57,7 +63,7 @@ const expectRow = async (page, label, { exposures, clicked, rate }) => {
 
 test('live numbers match a direct call to the Door (headline, shape, trigger, wording)', async ({ page, request }) => {
   const direct = await directAgg(request);
-  await openDesk(page);
+  await openDeskLoaded(page);
 
   await expect(page.getByTestId('stat-exposures')).toHaveText(String(direct.summary.exposures));
   const ct = direct.summary.clickThrough;
@@ -80,7 +86,7 @@ test('suppressed cells read as hidden, never as 0', async ({ page, request }) =>
   const direct = await directAgg(request);
   const suppressed = direct.byFormat.filter((f) => f.clicked === null);
   expect(suppressed.length).toBeGreaterThan(0);
-  await openDesk(page);
+  await openDeskLoaded(page);
   for (const f of suppressed) {
     const cell = rowFor(page, LABEL[f.format]).getByRole('cell').nth(2);
     await expect(cell).toHaveText(HIDDEN);
@@ -95,7 +101,7 @@ test('the days table highlights the flagged days and names the reasons', async (
   const direct = await directAgg(request);
   const flagged = direct.days.filter((d) => d.flagged);
   expect(flagged.length).toBe(2);
-  await openDesk(page);
+  await openDeskLoaded(page);
   await expect(page.getByTestId('flagged-day')).toHaveCount(flagged.length);
   for (const d of flagged) {
     const reasons = direct.summary.flaggedDays.find((f) => f.day === d.day).reasons.join('; ');
@@ -104,7 +110,7 @@ test('the days table highlights the flagged days and names the reasons', async (
 });
 
 test('the adoption ladder is honest: Level 3 of 3 measured, two rungs not measured and not ticked', async ({ page }) => {
-  await openDesk(page);
+  await openDeskLoaded(page);
   await expect(page.getByRole('heading', { name: 'Level 3 of 3 measured' })).toBeVisible();
   await expect(page.getByTestId('badge-level')).toHaveText('Doorway · Level 3 of 3 measured');
 
@@ -136,14 +142,14 @@ test('a wrong token is refused in plain words, and no numbers are shown', async 
 
 test('the Door being down says so in plain words, without a stack trace', async ({ page }) => {
   await page.route('**/__desk/agg**', (route) => route.abort());
-  await openDesk(page);
+  await openDeskLoaded(page);
   await expect(page.getByRole('alert')).toContainText('the demo servers are not running: npm run demo:app');
   await expect(page.getByRole('alert')).not.toContainText('TypeError');
 });
 
 test('a 502 from the proxy gets the same plain message', async ({ page }) => {
   await page.route('**/__desk/agg**', (route) => route.fulfill({ status: 502, contentType: 'application/json', body: '{"error":"door unreachable"}' }));
-  await openDesk(page);
+  await openDeskLoaded(page);
   await expect(page.getByRole('alert')).toContainText('the demo servers are not running: npm run demo:app');
 });
 
@@ -158,7 +164,7 @@ test('an older Door without some keys shows "not reported", and does not crash',
     delete j.falsePositiveReports;
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(j) });
   });
-  await openDesk(page);
+  await openDeskLoaded(page);
   await expect(page.getByTestId('stat-exposures')).toBeVisible();
   await expect(page.getByText('not reported by this Door', { exact: false }).first()).toBeVisible();
   await expect(page.getByText('not reported by this Door.', { exact: true })).toHaveCount(4);
@@ -176,7 +182,18 @@ test('synthetic mode is labelled SYNTHETIC and shows no live numbers', async ({ 
   await expect(page.getByText('Live from this browser')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Clear demo counts' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Live demo install' }).click();
+  await page.getByRole('button', { name: 'Use the demo token' }).click();
   await expect(page.getByTestId('stat-exposures')).toBeVisible();
+});
+
+test('nothing loads until asked: the token starts empty and no Desk request leaves before a click', async ({ page }) => {
+  const agg = [];
+  page.on('request', (r) => { if (r.url().includes('/__desk/agg')) agg.push(r.url()); });
+  await openDesk(page);
+  await expect(page.getByLabel('Desk token')).toHaveValue('');
+  await expect(page.getByText('Demo install: the demo token is desk-demo-token (public on purpose)')).toBeVisible();
+  await expect(page.getByTestId('stat-exposures')).toHaveCount(0);
+  expect(agg).toEqual([]);
 });
 
 test('no request leaves for another origin, and the token never reaches the URL or storage', async ({ page, baseURL }) => {
@@ -187,6 +204,7 @@ test('no request leaves for another origin, and the token never reaches the URL 
     if (r.url().includes('/__desk/agg')) auth.push(r.headers().authorization ?? '');
   });
   await openDesk(page);
+  await page.getByLabel('Desk token').fill(TOKEN);
   await page.getByRole('button', { name: 'Show numbers' }).click();
   await expect(page.getByTestId('stat-exposures')).toBeVisible();
 
@@ -202,7 +220,7 @@ test('no request leaves for another origin, and the token never reaches the URL 
 });
 
 test('screenshot of the live Desk, full page', async ({ page }, testInfo) => {
-  await openDesk(page);
+  await openDeskLoaded(page);
   await expect(page.getByTestId('stat-exposures')).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('desk-live-full.png'), fullPage: true });
 });

@@ -10,9 +10,11 @@
 #   - ca-certificates installed (slim images lack them)
 #   - the command is a real program, never "sh -c ..." (the micro-VM init flattens the quoting)
 
+# Base image pinned by digest: the multi-arch index of node:24-slim, read from the registry on 2026-11-07. Refresh on purpose.
+
 # Stage 1: build the prototype app. It imports the real core from packages/ (the @repo alias in
 # prototype/vite.config.ts), so packages/ is copied too. Only its index.html is kept, in the runtime stage.
-FROM node:24-slim AS app
+FROM node:24-slim@sha256:01d566e8d94d8c619591d78652babfccd3c6992a3dffa9ed5ab39e11cf6c70e9 AS app
 WORKDIR /app
 COPY prototype/package.json prototype/package-lock.json ./prototype/
 RUN npm --prefix prototype ci
@@ -21,7 +23,7 @@ COPY prototype ./prototype
 RUN npm --prefix prototype run build
 
 # Stage 2: the runtime.
-FROM node:24-slim
+FROM node:24-slim@sha256:01d566e8d94d8c619591d78652babfccd3c6992a3dffa9ed5ab39e11cf6c70e9
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ca-certificates \

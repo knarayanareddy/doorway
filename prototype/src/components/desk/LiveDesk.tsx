@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useRef, useState, type ReactNode } from "react";
 import { Check, Circle, Layers, Lock, ShieldCheck } from "lucide-react";
 import { Btn, DoorLogo, Tag } from "../ui";
 import { cn } from "../../utils/cn";
@@ -18,33 +18,32 @@ import {
 } from "../../lib/liveDesk";
 import { BreakdownTable, InstallCard, SectionHead, StudyCard, type TableRow } from "./parts";
 
-/** The demo install and its public demo token, prefilled. Both are editable and kept in memory only. */
+/** The demo install is prefilled. The token is never prefilled: the person types it or uses the demo button. Both stay in memory only. */
 const DEMO_INSTALL = "inst_demo001";
 const DEMO_TOKEN = "desk-demo-token";
 
-type View = { phase: "loading" } | { phase: "error"; message: string } | { phase: "ok"; agg: DeskAgg };
+type View = { phase: "idle" } | { phase: "loading" } | { phase: "error"; message: string } | { phase: "ok"; agg: DeskAgg };
 
-/** Live numbers from the real Door, through /__desk/agg on this origin. */
+/** Live numbers from the real Door, through /__desk/agg on this origin. Nothing loads until the person asks for it. */
 export function LiveDesk() {
   const [install, setInstall] = useState(DEMO_INSTALL);
-  const [token, setToken] = useState(DEMO_TOKEN);
+  const [token, setToken] = useState("");
   const [days, setDays] = useState(30);
-  const [view, setView] = useState<View>({ phase: "loading" });
+  const [view, setView] = useState<View>({ phase: "idle" });
   /** Only the newest request may write the view: an older answer that arrives late is dropped. */
   const seq = useRef(0);
 
   const run = useCallback(async (i: string, t: string, d: number) => {
     const mine = ++seq.current;
+    if (!t) {
+      setView({ phase: "error", message: "Enter the Desk token, or use the demo token." });
+      return;
+    }
     setView({ phase: "loading" });
     const r = await loadAgg(i, t, d);
     if (mine !== seq.current) return;
     setView(r.ok ? { phase: "ok", agg: r.agg } : { phase: "error", message: r.message });
   }, []);
-
-  // Load once when the tab opens, with the prefilled install and token.
-  useEffect(() => {
-    void run(DEMO_INSTALL, DEMO_TOKEN, 30);
-  }, [run]);
 
   const inputCls = "mt-1 w-full rounded-lg bg-paper px-3 py-2 font-mono text-sm text-ink ring-1 ring-line focus:outline-none focus:ring-lamp";
 
@@ -77,7 +76,8 @@ export function LiveDesk() {
               onChange={(e) => {
                 const d = Number(e.target.value);
                 setDays(d);
-                void run(install.trim(), token, d);
+                // Re-run only when the person has already asked for numbers in this tab.
+                if (view.phase !== "idle") void run(install.trim(), token, d);
               }}
             >
               <option value={7}>Last 7 days</option>
@@ -86,6 +86,13 @@ export function LiveDesk() {
           </label>
           <Btn type="submit" variant="ink" className="!py-2">Show numbers</Btn>
         </form>
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-[13px] text-ink-soft">
+          <span>Demo install: the demo token is desk-demo-token (public on purpose)</span>
+          <Btn type="button" className="!py-1.5 !text-[13px]" onClick={() => { setToken(DEMO_TOKEN); void run(install.trim(), DEMO_TOKEN, days); }}>
+            Use the demo token
+          </Btn>
+        </div>
+        {view.phase === "idle" && <p className="mt-3 text-sm text-ink-soft">Nothing is loaded yet. Press Show numbers, or use the demo token.</p>}
         {view.phase === "loading" && <p role="status" className="mt-3 text-sm text-ink-soft">Loading the Door&apos;s numbers…</p>}
         {view.phase === "error" && <p role="alert" className="mt-3 rounded-lg bg-clay-soft px-3 py-2 text-sm text-clay">{view.message}</p>}
       </section>

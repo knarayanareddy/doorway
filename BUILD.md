@@ -31,7 +31,7 @@ Numbers in a README drift; this file carries none. `npm run status` prints the l
 - A deployed edge. The Worker has been run for real only locally: on `node:sqlite` in the unit tests, and on workerd with a local D1 via `npm run smoke:workerd`. Neither is Cloudflare's D1 service; a first deploy may still surface differences.
 - The 15-minute non-developer install, recorded. The artifact exists; the test with a person does not. That needs a person on camera.
 - A named human reviewer for false-positive reports (`docs/10-false-positive-review.md`).
-- A production signing key. The pinned key is a dev key. Generate and pin a production key with `scripts/gen-prod-key.mjs`; `npm run check:prod-key` refuses the dev key with `DOORWAY_PRODUCTION=1`, but it is not yet part of `verify` or `build`. See `SECURITY.md`.
+- A production signing key. The pinned key is a dev key. Generate and pin a production key with `scripts/gen-prod-key.mjs`; `npm run check:prod-key` is part of `verify`, and CI checks that it refuses the dev key under `DOORWAY_PRODUCTION=1`. `scripts/build.mjs` refuses the dev key only when `DOORWAY_PRODUCTION=1` is set, so a production build must set it. See `SECURITY.md`.
 - Trigger sources. Doorway is the response layer; see `docs/08-trigger-adapters.md`.
 - Everything that needs an outside party: see `docs/07-review-response.md`.
 
