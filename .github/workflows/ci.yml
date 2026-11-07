@@ -25,7 +25,7 @@ jobs:
         run: npm run verify
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: End-to-end (the evidence layer: hostile host, network record, installer errors, Desk)
+      - name: "End-to-end (the evidence layer - hostile host, network record, installer errors, Desk)"
         run: npm run e2e
       - uses: actions/upload-artifact@v4
         if: failure()
