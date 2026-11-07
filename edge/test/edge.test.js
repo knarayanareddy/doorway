@@ -161,6 +161,19 @@ test('desk: small cells are suppressed, with secondary suppression so they canno
   assert.equal(j.summary.clickThrough.rate, null);
 });
 
+const dayAgo = (n) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
+
+test('desk: one hidden small day cannot be recovered by subtracting the visible days from the total', async () => {
+  seed(dayAgo(3), 'dismissed', 40); seed(dayAgo(2), 'dismissed', 25); seed(dayAgo(1), 'dismissed', 4);
+  const j = await (await desk()).json();
+  const unflagged = j.days.filter((d) => !d.flagged);
+  const hidden = unflagged.filter((d) => d.exposures === null);
+  assert.ok(hidden.length >= 2, 'a lone hidden day needs a second hidden day');
+  const visibleSum = unflagged.reduce((a, d) => a + (d.exposures ?? 0), 0);
+  const leaked = j.summary.exposures - visibleSum;
+  assert.ok(leaked >= j.summary.k, 'what subtraction recovers is at least k, not the small day');
+});
+
 test('desk: an anomalous day is flagged, shown, and excluded from the headline', async () => {
   seed(yesterday(), 'dismissed', 80); seed(yesterday(), 'clicked_help', 10);
   seed(today(), 'clicked_help', 90); seed(today(), 'dismissed', 10);
@@ -235,4 +248,133 @@ test('status tells an installer exactly what is wrong', async () => {
 
 test('there is no endpoint that is not handled (H6): arrivals and trigger packs do not exist', async () => {
   for (const p of ['/v1/arrivals', '/v1/packs']) assert.equal((await post(p, {})).status, 404);
+});
+
+// ── labs: reserved shapes ──────────────────────────────────────────────────
+const FORK = { ...GOOD, f: 'fork', v: 'harm-01', e: '2' };
+const WAVE = { ...GOOD, f: 'wave', v: 'control-01', e: '3' };
+
+test('labs: a production edge (no LABS_FORMATS) rejects fork and wave, so a labs Door cannot pollute the aggregates', async () => {
+  for (const body of [FORK, WAVE]) {
+    const r = await post('/v1/c', body);
+    assert.equal(r.status, 400);
+    assert.match(JSON.stringify(await r.json()), /invalid f/);
+  }
+  assert.equal(rows('SELECT * FROM agg').length, 0);
+});
+
+test('labs: an edge that names the formats accepts exactly those, and only those', async () => {
+  env.LABS_FORMATS = 'fork';
+  assert.equal((await post('/v1/c', FORK)).status, 204);
+  assert.equal((await post('/v1/c', WAVE)).status, 400, 'wave was not named');
+  assert.equal((await post('/v1/c', { ...GOOD, f: 'blur' })).status, 400, 'an arbitrary format is never accepted');
+  env.LABS_FORMATS = 'fork,wave,quick-exit,card';
+  assert.equal((await post('/v1/c', WAVE)).status, 204);
+  assert.deepEqual(rows('SELECT format FROM agg ORDER BY format').map((r) => r.format), ['fork', 'wave']);
+});
+
+test('desk: per-shape table counts everyone, hides small cells, and leaves flagged days out', async () => {
+  const add = (day, format, outcome, count) => env.DB.raw.prepare(`INSERT INTO agg (key, day, install, variant, format, trigger, bucket, outcome, route, count)
+    VALUES (?, ?, 'inst_abc123', 'legal-01', ?, 'search', '1', ?, 'nl-offlimits', ?)`).run(`k|${day}|${format}|${outcome}`, day, format, outcome, count);
+  const y = yesterday();
+  add(y, 'gate', 'clicked_help', 15); add(y, 'gate', 'left_page', 60); add(y, 'gate', 'dismissed', 25);
+  add(y, 'hallway', 'clicked_help', 22); add(y, 'hallway', 'continued', 78);
+  add(y, 'fork', 'clicked_help', 1); add(y, 'fork', 'dismissed', 12);
+  add(today(), 'gate', 'clicked_help', 90); add(today(), 'gate', 'dismissed', 10);
+  const j = await (await desk()).json();
+  const by = Object.fromEntries(j.byFormat.map((f) => [f.format, f]));
+  assert.equal(by.gate.exposures, 100, 'the forged day is excluded, left_page is included');
+  assert.equal(by.fork.clicked, null, 'a single help click is hidden');
+  assert.equal(by.gate.clicked, null, 'and the smallest visible click count goes with it, so the fork cannot be derived from a total');
+  assert.equal(by.hallway.clicked, 22);
+  assert.equal(by.fork.rate, null);
+  assert.match(j.label, /unauthenticated/);
+  assert.deepEqual(j.byFormat.map((f) => f.format), ['gate', 'fork', 'hallway']);
+});
+
+// ── Desk breakdowns: triggers, routes, escalation, wording arms ────────────
+let seq = 0;
+const put = (day, outcome, count, { format = 'gate', trigger = 'search', bucket = '1', route = 'nl-offlimits', variant = 'legal-01' } = {}) =>
+  env.DB.raw.prepare(`INSERT INTO agg (key, day, install, variant, format, trigger, bucket, outcome, route, count)
+    VALUES (?, ?, 'inst_abc123', ?, ?, ?, ?, ?, ?, ?)`).run(`b|${++seq}`, day, variant, format, trigger, bucket, outcome, route, count);
+
+test('desk breakdowns: triggers are counted over every exposure, and a small trigger hides its neighbour too', async () => {
+  const y = yesterday();
+  put(y, 'clicked_help', 10, { trigger: 'search' }); put(y, 'dismissed', 30, { trigger: 'search' });
+  put(y, 'continued', 20, { trigger: 'chat' }); put(y, 'clicked_help', 5, { trigger: 'chat' });
+  put(y, 'left_page', 3, { trigger: 'nav' }); put(y, 'clicked_help', 1, { trigger: 'nav' });
+  const j = await (await desk()).json();
+  assert.deepEqual(j.byTrigger.map((t) => t.key), ['search', 'chat', 'nav']);
+  assert.deepEqual(Object.keys(j.byTrigger[0]).sort(), ['clicked', 'exposures', 'key', 'rate', 'suppressed']);
+  const t = Object.fromEntries(j.byTrigger.map((x) => [x.key, x]));
+  assert.deepEqual(t.search, { key: 'search', exposures: 40, clicked: 10, rate: 0.25, suppressed: false });
+  assert.equal(t.nav.exposures, null, 'under k');
+  assert.equal(t.nav.clicked, null);
+  assert.equal(t.chat.exposures, null, 'secondary: the smallest visible trigger goes with it, so nav cannot be subtracted');
+  assert.equal(t.chat.clicked, null);
+  assert.equal(t.chat.rate, null);
+  assert.equal(t.chat.suppressed, true);
+});
+
+test('desk breakdowns: escalation is keyed 1 to 4 and 5+, and xx-none is returned as its own route key', async () => {
+  const y = yesterday();
+  put(y, 'dismissed', 60, { bucket: '1' }); put(y, 'continued', 30, { bucket: '2' });
+  put(y, 'clicked_help', 2, { bucket: '3' }); put(y, 'clicked_help', 15, { bucket: '5+' });
+  const j = await (await desk()).json();
+  assert.deepEqual(j.byEscalation.map((e) => e.key), ['1', '2', '3', '5+']);
+  const e = Object.fromEntries(j.byEscalation.map((x) => [x.key, x]));
+  assert.equal(e['1'].exposures, 60);
+  assert.equal(e['2'].exposures, 30);
+  assert.equal(e['3'].exposures, null, 'a single click under k');
+  assert.equal(e['5+'].exposures, null, 'the smallest visible step goes with it');
+});
+
+test('desk breakdowns: xx-none is returned as its own route key (the Desk words it as no route shown)', async () => {
+  put(yesterday(), 'dismissed', 50, { route: 'nl-offlimits' }); put(yesterday(), 'clicked_help', 12, { route: 'xx-none' });
+  const j = await (await desk()).json();
+  assert.deepEqual(j.byRoute.map((r) => r.key), ['nl-offlimits', 'xx-none']);
+  // nl-offlimits has no help clicks (hidden), so the smallest visible click cell goes too: xx-none's clicks are secondary-suppressed.
+  assert.deepEqual(j.byRoute.find((r) => r.key === 'xx-none'), { key: 'xx-none', exposures: 12, clicked: null, rate: null, suppressed: true });
+});
+
+test('desk breakdowns: flagged days are left out of every breakdown, as they are left out of byFormat', async () => {
+  put(yesterday(), 'dismissed', 60, { trigger: 'search', route: 'nl-offlimits', bucket: '1', variant: 'legal-01' });
+  put(yesterday(), 'clicked_help', 10, { trigger: 'search', route: 'nl-offlimits', bucket: '1', variant: 'legal-01' });
+  put(today(), 'clicked_help', 90, { trigger: 'nav', route: 'fi-redirection', bucket: '5+', variant: 'control-01' });
+  put(today(), 'dismissed', 10, { trigger: 'nav', route: 'fi-redirection', bucket: '5+', variant: 'control-01' });
+  const j = await (await desk()).json();
+  assert.equal(j.summary.exposures, 70, 'headline already excludes the flagged day');
+  assert.deepEqual(j.byTrigger.map((t) => t.key), ['search']);
+  assert.deepEqual(j.byRoute.map((r) => r.key), ['nl-offlimits']);
+  assert.deepEqual(j.byEscalation.map((e) => e.key), ['1']);
+  assert.deepEqual(j.variantArms.map((a) => a.key), ['other']);
+  assert.equal(j.byTrigger[0].exposures, 70);
+});
+
+test('desk breakdowns: control-family wording is its own arm, and a small arm hides the other too', async () => {
+  const y = yesterday();
+  put(y, 'dismissed', 80, { variant: 'legal-01' }); put(y, 'clicked_help', 8, { variant: 'legal-01' });
+  put(y, 'clicked_help', 3, { variant: 'control-02', format: 'hallway', bucket: '3' });
+  const j = await (await desk()).json();
+  assert.deepEqual(j.variantArms.map((a) => a.key), ['control', 'other']);
+  const a = Object.fromEntries(j.variantArms.map((x) => [x.key, x]));
+  assert.equal(a.control.exposures, null, 'under k');
+  assert.equal(a.control.clicked, null);
+  assert.equal(a.other.exposures, null, 'secondary suppression: the other arm cannot be read back from the total');
+  assert.equal(a.other.suppressed, true);
+  assert.equal(j.summary.exposures, 91, 'the headline still counts every unflagged exposure');
+});
+
+test('desk response: no key names an hour, a session, a user, a person or an address', async () => {
+  put(yesterday(), 'clicked_help', 12); put(yesterday(), 'dismissed', 40, { trigger: 'chat', variant: 'control-01', format: 'door', bucket: '5+', route: 'xx-none' });
+  put(today(), 'dismissed', 5);
+  await post('/v1/heartbeat', { i: 'inst_abc123', v: '0.2.0', d: 2 });
+  const body = await (await desk()).json();
+  const keys = [];
+  (function walk(v) {
+    if (Array.isArray(v)) v.forEach(walk);
+    else if (v && typeof v === 'object') for (const k of Object.keys(v)) { keys.push(k); walk(v[k]); }
+  })(body);
+  assert.ok(keys.includes('byTrigger') && keys.includes('byRoute') && keys.includes('byEscalation') && keys.includes('variantArms'));
+  assert.deepEqual(keys.filter((k) => /hour|session|user|person|ip/i.test(k)), []);
 });

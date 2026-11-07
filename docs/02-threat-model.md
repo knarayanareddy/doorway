@@ -88,6 +88,8 @@ Not negotiable, not even for a screenshot.
 - `localStorage["doorway:v1"]` and the counter `POST` live inside the frame. Browsers partition third-party storage per top-level site, which is the scope the Shift wants.
 - The seam is `postMessage` with a fixed vocabulary: host → door `{trigger: true, type}`, door → host `{ready: true}` and `{settled: true}`. No outcome, route, variant, format or count ever crosses. `type` is the trigger *kind*, never the query.
 - The Door page is served with `frame-ancestors` set to the install's own domain, so a different site cannot embed it, and with `default-src 'none'; connect-src 'self'` so the browser refuses any other network call from it.
+- The iframe is granted exactly one extra permission, `clipboard-write`, so that the Hallway's "copy this sentence" button works; nothing else (no top navigation, no camera, no geolocation).
+- Every shape carries a Glass Door panel that shows the person the exact object being sent, what never is, and what stays on the device. It says plainly that the server can see a network address when the browser connects (R10); it does not claim otherwise.
 - The link to the help service opens detached (`rel="noreferrer noopener"`), so the host's URL (which may carry the query) is not sent as `Referer`.
 
 **Evidence, not assertion.** `test/e2e/host-adversary.spec.js` runs a hostile host page that wraps `fetch`, XHR, `sendBeacon`, `Storage`, `postMessage` and a DOM observer, tries to read the frame every way it can, and asserts it learned nothing beyond `{ready}` and `{settled}`. `test/e2e/network.spec.js` records every request the Door makes.

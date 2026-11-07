@@ -1,12 +1,10 @@
 {
-  "note": "sha256 of each file in this directory, committed so CI can prove this copy has not drifted from the other repo's copy.",
+  "note": "sha256 of each file in this directory, committed so CI catches an accidental edit.",
   "files": {
-    "README.md": "10408c66548315bc0b450d6387e1a01e67e1d2062e8defbf9ace0e1140ae5a12",
+    "README.md": "a1ea7a82308273023fbccc5447fb12cf307d3b1e74644e13d97683fb111f6664",
     "a11y.js": "8a3925f7da739a296af9bb5606ed10bf05974cce99393d09ace7281dc718bc93",
-    "card.js": "a7fb7fca378f7ff3c4763426f024b9204f254a76ff38163ab4a1d7f31cfd38fb",
-    "core.test.js": "9de6de8f57d3ce42b43f1fdbee816b1dc731bde5d041db003f0f98ca9849ce9e",
-    "index.js": "b62d7f4fef182b68f662762079b5a46f4f022f661796d973fc59f612e6ecc64f",
-    "loop.js": "315d13ac3c54db86a2cf76504680273654cdbb631a0b8afe3b7e0f5a6cac5d28",
-    "validate.js": "c2451d7504c1b27671484c8899229e72edab6c08f5c6c9cac5b6111a4f13cd06"
+    "card.js": "bcc7c10bb4eb5427bc63d31b72bb4c9379e5a33e69f74b8c6d7939a7ec366b23",
+    "core.test.js": "83f323ee7d9f9e6eec70e46222ddb67c869666b1aa32282821c0b1af326c5e17",
+    "index.js": "344354e2c8b3638d1c35ba0e4f254fe71efe0fed3f39d645ec9acb06c564fa30"
   }
 }

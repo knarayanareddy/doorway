@@ -27,7 +27,9 @@ Two things that looked like Safari bugs were not: Safari does not Tab to buttons
 
 ## Discourse
 
-The generated `head_tag.html` is a single tag in the standard theme-component location and carries the right SRI hash (`install.spec.js`). It has **not** been run in Discourse, which needs Docker, Postgres and Redis. Treat it as unverified.
+Run in a real Discourse on 7 November 2026, on a Maritime sandbox (`docs/14`): Discourse's own installer, Doorway added as a theme component with the tag in `head_tag`, Discourse's Content-Security-Policy on. The loader ran, the Door opened as a cross-origin frame and closed, and the Desk's count rose by exactly one with the seven-field payload. This found one real bug (a loader host must send CORS headers; fixed and documented).
+
+**Not covered:** Chromium only, the component was created with a Rails runner rather than the admin screens, a forum with real themes, plugins or a CDN in front, and Discourse's other CSP settings.
 
 ## What cannot be verified by a machine
 

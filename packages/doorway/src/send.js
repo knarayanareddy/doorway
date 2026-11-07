@@ -11,7 +11,7 @@
 import { build, buildHeartbeat, buildReport } from '../../core/src/counter.js';
 import { VERSION } from './version.js';
 
-export function createSender({ origin = '', fetchImpl = globalThis.fetch, beaconImpl = globalThis.navigator?.sendBeacon?.bind(globalThis.navigator), onDrop = () => {} } = {}) {
+export function createSender({ origin = '', extraFormats = [], fetchImpl = globalThis.fetch, beaconImpl = globalThis.navigator?.sendBeacon?.bind(globalThis.navigator), onDrop = () => {} } = {}) {
   const post = (path, payload) =>
     fetchImpl(origin + path, {
       method: 'POST',
@@ -32,7 +32,7 @@ export function createSender({ origin = '', fetchImpl = globalThis.fetch, beacon
      * @returns {Promise<boolean>} true when the event was accepted (or, for a beacon, queued).
      */
     async event(raw, { unloading = false } = {}) {
-      const res = build(raw);
+      const res = build(raw, { extraFormats });
       if (!res.ok) { onDrop('invalid', res.errors); return false; }
       if (unloading && beaconImpl) {
         try {

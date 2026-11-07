@@ -50,12 +50,40 @@ function fireTrigger(trigger, source) {
   });
 
   console.log('[platform] Trigger fired:', event.detail);
+  if (shouldHold()) {
+    setHeld(true);
+    holdTimer = setTimeout(() => setHeld(false), HOLD_SAFETY_MS);
+  }
   document.body.dispatchEvent(event);
+}
+
+// --- Hold-results (demo) ---
+// On ?hold=1 or <body data-hold>, the forum hides its thread list behind a blur
+// while the Door is up. The platform always reveals after the Door settles: the
+// Door never tells the platform what the person chose. The timeout guarantees
+// results cannot stay hidden if the result event never arrives.
+const HOLD_SAFETY_MS = 8000;
+let holdTimer = null;
+
+function shouldHold() {
+  return document.body.hasAttribute('data-hold') ||
+    new URLSearchParams(window.location.search).get('hold') === '1';
+}
+
+function setHeld(on) {
+  clearTimeout(holdTimer);
+  holdTimer = null;
+  const main = document.querySelector('.main-content');
+  if (!main) return;
+  main.classList.toggle('dw-held', on);
+  if (on) main.setAttribute('aria-busy', 'true');
+  else main.removeAttribute('aria-busy');
 }
 
 // Listen for results from the module
 document.body.addEventListener('sbis:result', (e) => {
   console.log('[platform] Module result:', e.detail);
+  setHeld(false);
 });
 
 // --- Search form ---

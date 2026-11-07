@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kletskoek Forum — Labs demo</title>
+  <link rel="stylesheet" href="/mock-platform/style.css">
+  <link rel="stylesheet" href="./demo-standin.css">
+</head>
+<body data-hold>
+  <div class="labs-banner" role="note">
+    LABS DEMO — mock data only. Fork, Wave and Quick exit are reserved shapes: built and tested, not shipped (docs/11).
+  </div>
+
+  <div class="demo-banner">
+    ⚠ Demo environment — uses fake trigger terms only. See <a href="https://github.com/Hackathon-for-Good-The-Hague/HFG8-UNICRI-Stop-Before-It-Starts/blob/main/SAFETY.md">SAFETY.md</a>
+  </div>
+
+  <header class="site-header">
+    <div class="site-header-inner">
+      <div class="site-title">
+        Kletskoek Forum
+        <small>De gezelligste hoek van het internet</small>
+      </div>
+      <form class="search-form" id="search-form" action="/mock-platform/search.html" method="get">
+        <input
+          class="search-input"
+          type="search"
+          name="q"
+          id="search-input"
+          placeholder="Zoek op het forum..."
+          aria-label="Search the forum"
+          autocomplete="off"
+        >
+        <button class="search-btn" type="submit">Zoek</button>
+      </form>
+    </div>
+  </header>
+
+  <div class="labs-wrap">
+    <p class="labs-card">
+      This page plays the platform. It is treated as hostile: it can log everything it can reach, and it still learns only that the Door closed.
+    </p>
+
+    <section class="labs-card" aria-labelledby="control-heading" id="control-panel">
+      <h2 id="control-heading">Labs control panel</h2>
+      <p id="widget-status" role="status">Checking whether the widget loaded…</p>
+      <div class="labs-buttons">
+        <button type="button" class="labs-btn" data-action="normal">Fire a trigger (normal sequence)</button>
+      </div>
+      <p>Preview shapes:</p>
+      <div class="labs-buttons">
+        <button type="button" class="labs-btn" data-preview="gate">gate</button>
+        <button type="button" class="labs-btn" data-preview="card">card</button>
+        <button type="button" class="labs-btn" data-preview="fork">fork</button>
+        <button type="button" class="labs-btn" data-preview="wave">wave</button>
+        <button type="button" class="labs-btn" data-preview="hallway">hallway</button>
+        <button type="button" class="labs-btn" data-preview="door">door</button>
+        <button type="button" class="labs-btn" data-preview="quiet">quiet</button>
+      </div>
+      <p>The Desk: <a href="http://127.0.0.1:8788/desk">Open the Desk (demo token: desk-demo-token)</a></p>
+      <p>To watch the Door escalate through its five shapes by pressing one button, open <a href="/mock-platform/escalate.html">the escalation demo</a>.</p>
+    </section>
+
+    <section class="labs-card" aria-labelledby="told-heading">
+      <h2 id="told-heading">What this page was told</h2>
+      <ol class="labs-log" id="told-log" role="log" aria-live="polite"></ol>
+    </section>
+
+    <section class="labs-card" aria-labelledby="observe-heading">
+      <h2 id="observe-heading">What this page could observe about the visitor</h2>
+      <p class="labs-counter" id="observed-count" aria-live="polite">Requests/storage reads observed from the Door: 0</p>
+      <ol class="labs-log" id="observed-log" role="log" aria-live="polite"></ol>
+    </section>
+  </div>
+
+  <main class="main-content">
+    <section class="thread-list">
+      <h2>Recente berichten</h2>
+
+      <div class="thread">
+        <a class="thread-title" href="#">Beste stamppot recepten voor de winter</a>
+        <div class="thread-meta">geplaatst door <strong>KokKarel</strong> · 14 reacties · 2 uur geleden</div>
+      </div>
+
+      <div class="thread">
+        <a class="thread-title" href="#">Ajax of Feyenoord — de eeuwige discussie</a>
+        <div class="thread-meta">geplaatst door <strong>VoetbalFan010</strong> · 42 reacties · 5 uur geleden</div>
+      </div>
+
+      <div class="thread">
+        <a class="thread-title" href="#">Tips voor fietsen in de regen</a>
+        <div class="thread-meta">geplaatst door <strong>RegenRijder</strong> · 8 reacties · 1 dag geleden</div>
+      </div>
+
+      <div class="thread">
+        <a class="thread-title" href="#">Heeft iemand ervaring met thuiswerken en katten?</a>
+        <div class="thread-meta">geplaatst door <strong>KattenMens</strong> · 23 reacties · 1 dag geleden</div>
+      </div>
+
+      <div class="thread">
+        <a class="thread-title" href="#">Mooiste wandelroutes in Drenthe</a>
+        <div class="thread-meta">geplaatst door <strong>WandelWillem</strong> · 11 reacties · 2 dagen geleden</div>
+      </div>
+
+      <div class="thread">
+        <a class="thread-title" href="#">Boekclub: wat lezen we in december?</a>
+        <div class="thread-meta">geplaatst door <strong>LeesLisa</strong> · 6 reacties · 3 dagen geleden</div>
+      </div>
+    </section>
+
+    <aside class="chat-panel">
+      <h2>💬 Live chat</h2>
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-message"><span class="author">KokKarel:</span> Iemand al boerenkool gemaakt dit seizoen?</div>
+        <div class="chat-message"><span class="author">RegenRijder:</span> Wat een weer vandaag! 🌧️</div>
+        <div class="chat-message"><span class="author">LeesLisa:</span> Heeft iemand het nieuwe boek van Griet Op de Beeck al gelezen?</div>
+      </div>
+      <div class="chat-input-area">
+        <input
+          class="chat-input"
+          type="text"
+          id="chat-input"
+          placeholder="Typ een bericht..."
+          aria-label="Type a chat message"
+        >
+        <button class="chat-send" id="chat-send">Stuur</button>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="site-footer">
+    Kletskoek Forum is een fictief platform voor Hackathon for Good #8.
+    Dit is geen echt forum. Alle berichten en gebruikers zijn verzonnen.
+  </footer>
+
+  <!-- Platform trigger logic -->
+  <script type="module" src="/mock-platform/platform.js"></script>
+
+  <!--
+    Labs demo wiring. Runs before the loader (which is deferred), so the
+    observer wrappers below are in place before the loader captures fetch.
+    The wrappers always call through to the originals.
+  -->
+  <script>
+    (function () {
+      var told = document.getElementById('told-log');
+      var observedLog = document.getElementById('observed-log');
+      var counter = document.getElementById('observed-count');
+      var status = document.getElementById('widget-status');
+      var observed = 0;
+
+      function stamp() { return new Date().toISOString().slice(11, 23); }
+
+      function addLine(list, text) {
+        var li = document.createElement('li');
+        li.textContent = stamp() + ' ' + text;
+        list.appendChild(li);
+        list.scrollTop = list.scrollHeight;
+      }
+
+      function tell(text) { addLine(told, text); }
+
+      // Calls made by this page's own demo (not the Door) are not logged.
+      function isOwn(url) {
+        var u = String(url);
+        return u.indexOf('fake-triggers.json') !== -1 || u.indexOf('/desk') !== -1;
+      }
+
+      function observe(kind, detail) {
+        observed += 1;
+        counter.textContent = 'Requests/storage reads observed from the Door: ' + observed;
+        addLine(observedLog, kind + ' ' + detail);
+      }
+
+      // --- Observation wrappers (call through to the originals) ---
+      if (window.fetch) {
+        var origFetch = window.fetch;
+        window.fetch = function (input, init) {
+          var url = typeof input === 'string' ? input : (input && input.url) || String(input);
+          if (!isOwn(url)) observe('fetch', url);
+          return origFetch.apply(this, arguments);
+        };
+      }
+
+      var xhrOpen = XMLHttpRequest.prototype.open;
+      var xhrSend = XMLHttpRequest.prototype.send;
+      XMLHttpRequest.prototype.open = function (method, url) {
+        this.__dwUrl = String(url);
+        return xhrOpen.apply(this, arguments);
+      };
+      XMLHttpRequest.prototype.send = function () {
+        if (!isOwn(this.__dwUrl)) observe('xhr', this.__dwUrl);
+        return xhrSend.apply(this, arguments);
+      };
+
+      if (navigator.sendBeacon) {
+        var origBeacon = navigator.sendBeacon;
+        navigator.sendBeacon = function (url) {
+          if (!isOwn(url)) observe('beacon', String(url));
+          return origBeacon.apply(navigator, arguments);
+        };
+      }
+
+      // Keys only: values are never logged.
+      var origGet = Storage.prototype.getItem;
+      var origSet = Storage.prototype.setItem;
+      Storage.prototype.getItem = function (key) {
+        observe('storage read', String(key));
+        return origGet.apply(this, arguments);
+      };
+      Storage.prototype.setItem = function (key) {
+        observe('storage write', String(key));
+        return origSet.apply(this, arguments);
+      };
+
+      // --- Results the page is told about ---
+      document.body.addEventListener('sbis:result', function (e) {
+        tell('sbis:result ' + JSON.stringify(e.detail));
+      });
+
+      // --- Widget presence and the control panel ---
+      function widgetReady() { return !!window.doorway && typeof window.doorway.trigger === 'function'; }
+
+      function reportStatus() {
+        status.textContent = widgetReady()
+          ? 'Widget loaded.'
+          : 'Widget not loaded: window.doorway is undefined. Check the loader script path.';
+      }
+
+      document.addEventListener('DOMContentLoaded', reportStatus);
+      reportStatus();
+
+      document.getElementById('control-panel').addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-preview], button[data-action="normal"]');
+        if (!btn) return;
+        if (!widgetReady()) {
+          reportStatus();
+          return;
+        }
+        var label;
+        var promise;
+        if (btn.hasAttribute('data-preview')) {
+          label = 'window.doorway.trigger("search", { preview: "' + btn.getAttribute('data-preview') + '" })';
+          promise = window.doorway.trigger('search', { preview: btn.getAttribute('data-preview') });
+        } else {
+          label = 'window.doorway.trigger("search")';
+          promise = window.doorway.trigger('search');
+        }
+        Promise.resolve(promise).then(function () {
+          tell(label + ' resolved: settled — nothing else');
+        }, function () {
+          tell(label + ' rejected: nothing else');
+        });
+      });
+    })();
+  </script>
+
+  <!-- Starter widget — teams: replace this one line with your own module -->
+  <script src="/dist/latest/doorway.min.js" data-install="inst_demo001" data-country="NL" data-legal-jurisdiction="NL" data-labs="fork,wave,quick-exit,preview" data-wave-seconds="15" data-trigger-event="doorway:flag" defer></script>
+</body>
+</html>

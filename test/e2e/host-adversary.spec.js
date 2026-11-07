@@ -29,7 +29,7 @@ async function run(page, request, click) {
 test('host-adversary: the host learns that the door opened and closed, and nothing else', async ({ page, request, context }) => {
   await stubHelpSites(context);
   const { probe, captured } = await run(page, request, async (p) => {
-    const popup = p.waitForEvent('popup');
+    const popup = p.context().waitForEvent('page');
     await act(p, 'primary').click();
     await popup.then((x) => x.close()).catch(() => {});
   });

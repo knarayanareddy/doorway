@@ -12,7 +12,7 @@ test('first exposure gates with a LEGAL message', () => {
   assert.equal(r.family, 'legal', 'entry endpoint must be legal — Prichard 2022 OR 2.99, 2024 OR 5.02');
 });
 
-test('sequence escalates gate -> card -> chat and changes family at each step', () => {
+test('sequence escalates gate -> card -> hallway -> hallway -> door, one shape per question', () => {
   let st = {};
   let now = T0;
   const out = [];
@@ -22,7 +22,7 @@ test('sequence escalates gate -> card -> chat and changes family at each step', 
     st = advance(st, `${r.family}-01`, now);
     now += 100 * H; // well outside the interval
   }
-  assert.deepEqual(out, ['gate:legal', 'gate:legal', 'card:harm', 'card:harm', 'chat:control']);
+  assert.deepEqual(out, ['gate:legal', 'card:harm', 'hallway:control', 'hallway:control', 'door:control']);
 });
 
 test('five exposures produce five buckets, capped at 5+', () => {
@@ -112,7 +112,7 @@ test('acceptance #3 guard: five triggers two seconds apart cannot be five respon
     forms.push(`${d.format}/${d.family}`);
     st = advance(st, null, t0 + i * 2000, { keepClock: d.keepClock });
   }
-  assert.deepEqual(forms, ['gate/legal', 'card/legal', 'card/harm', 'card/harm', 'chat/control']);
+  assert.deepEqual(forms, ['gate/legal', 'card/harm', 'hallway/control', 'hallway/control', 'door/control']);
   assert.equal(st.last, t0, 'the clock stayed at the first exposure');
 });
 
@@ -142,7 +142,7 @@ test('a daily user who has acted is still not nagged', () => {
   const acted = { n: 6, last: now - 20 * H, acted: now - 20 * H };
   assert.equal(pick(acted, DEFAULT_CONFIG, now).format, 'quiet',
     '20h after they acted is inside the 72h quiet window');
-  assert.equal(pick({ n: 6, last: now - 80 * H, acted: now - 80 * H }, DEFAULT_CONFIG, now).format, 'chat',
+  assert.equal(pick({ n: 6, last: now - 80 * H, acted: now - 80 * H }, DEFAULT_CONFIG, now).format, 'door',
     'past the window the persistent form returns');
   const windows = [3, 10, 50].map((n) => intervalFor(n));
   assert.deepEqual(windows, [72, 72, 72]);

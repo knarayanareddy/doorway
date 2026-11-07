@@ -13,6 +13,7 @@
 import { isRenderableConfidence, isHuman } from '../../core/src/route.js';
 import { legalRecordFor } from '../../core/src/legal.js';
 import { LEGAL_RECORDS } from './legal-records.js';
+import { labsStrings } from './copy-labs.js';
 
 export const LANGS = Object.freeze(['nl', 'en', 'de']);
 export const langOf = (tag) => {
@@ -132,6 +133,111 @@ export const CONTROL = {
   },
 };
 
+/**
+ * The Hallway — "what happens if I reach out?". Rehearse the contact before making it.
+ * Nothing here says anything about a service's confidentiality or hours; those appear only
+ * through the verified-record predicates (panels.js).
+ */
+export const HALLWAY = {
+  nl: [
+    { h: 'Voordat je contact opneemt', b: 'Veel mensen haken af bij het onbekende. Hier staat wat je kunt verwachten, en een eerste zin.' },
+    { h: 'Je hebt geen verhaal nodig', b: 'Je kunt beginnen met één zin. Jij bepaalt hoe ver je gaat.' },
+    { h: 'Contact kan klein beginnen', b: 'Een eerste bericht mag uit een paar woorden bestaan. Je kunt het rustig voorbereiden.' },
+  ],
+  en: [
+    { h: 'Before you reach out', b: 'Many people stop at the unknown. Here is what to expect, and a first sentence you can use.' },
+    { h: 'You do not need a story', b: 'You can begin with one sentence. You decide how far to take it.' },
+    { h: 'Contact can start small', b: 'A first message can be a few words. You can prepare it at your own pace.' },
+  ],
+  de: [
+    { h: 'Bevor du Kontakt aufnimmst', b: 'Viele Menschen scheuen das Unbekannte. Hier steht, was dich erwartet, und ein erster Satz.' },
+    { h: 'Du brauchst keine Geschichte', b: 'Du kannst mit einem Satz beginnen. Du entscheidest, wie weit du gehst.' },
+    { h: 'Kontakt kann klein anfangen', b: 'Eine erste Nachricht darf aus wenigen Wörtern bestehen. Du kannst sie in Ruhe vorbereiten.' },
+  ],
+};
+
+/** First sentences a person can copy. They are options, never assumptions about the visitor. */
+export const HALLWAY_PHRASES = {
+  heading: { nl: 'Als een van deze klopt, kun je hem kopiëren', en: 'If one of these is true, you can copy it', de: 'Wenn einer davon stimmt, kannst du ihn kopieren' },
+  items: {
+    nl: ['Ik weet niet waar ik moet beginnen.', 'Ik heb dingen bekeken die ik niet had moeten bekijken.', 'Ik maak me zorgen over mezelf.'],
+    en: ['I do not know where to start.', 'I looked at things I should not have.', 'I am worried about myself.'],
+    de: ['Ich weiß nicht, wo ich anfangen soll.', 'Ich habe Dinge angesehen, die ich nicht hätte ansehen sollen.', 'Ich mache mir Sorgen um mich selbst.'],
+  },
+  copy: { nl: 'Kopieer', en: 'Copy', de: 'Kopieren' },
+  copied: { nl: 'Gekopieerd', en: 'Copied', de: 'Kopiert' },
+};
+
+export const HALLWAY_FAQ = {
+  privacyQ: { nl: 'Wat zegt de dienst zelf over privacy?', en: 'What does the service itself say about privacy?', de: 'Was sagt der Dienst selbst zum Datenschutz?' },
+  privacyBy: {
+    nl: (who, date) => `Bevestigd door ${who} op ${date}.`,
+    en: (who, date) => `Confirmed by ${who} on ${date}.`,
+    de: (who, date) => `Bestätigt von ${who} am ${date}.`,
+  },
+  nocallQ: { nl: 'Ik durf niet te bellen', en: 'I do not dare to call', de: 'Ich traue mich nicht anzurufen' },
+  nocallA: {
+    nl: 'Er is ook een zelfhulpprogramma online. Daarvoor hoef je met niemand te praten.',
+    en: 'There is also a self-help programme online. For that, you do not need to talk to anyone.',
+    de: 'Es gibt auch ein Selbsthilfeprogramm online. Dafür musst du mit niemandem sprechen.',
+  },
+  altLabel: { nl: 'Begin liever met zelfhulp', en: 'Start with self-help instead', de: 'Beginne lieber mit Selbsthilfe' },
+  openUntil: { nl: (t) => `Nu open, tot ${t}`, en: (t) => `Open now, until ${t}`, de: (t) => `Jetzt geöffnet, bis ${t}` },
+  closedOpens: { nl: (t) => `Nu gesloten, opent om ${t}`, en: (t) => `Closed now, opens at ${t}`, de: (t) => `Jetzt geschlossen, öffnet um ${t}` },
+  closedTip: { nl: 'De lijn is dicht. Je kunt nu met zelfhulp beginnen.', en: 'The line is closed. You can start with self-help now.', de: 'Die Leitung ist geschlossen. Du kannst jetzt mit Selbsthilfe beginnen.' },
+};
+
+/**
+ * The Glass Door — the person can check what the Door sends, at the moment they decide
+ * whether to trust it. These strings describe DOORWAY's own data handling (which the panel
+ * itself lets the person verify), not any service's confidentiality, so the claim lint
+ * exempts them; every other lint rule still applies.
+ */
+export const GLASS = {
+  label: { nl: 'Wat verstuurt dit?', en: 'What does this send?', de: 'Was sendet das?' },
+  lead: {
+    nl: 'Alles hieronder kun je controleren. Dit is precies wat de browser verstuurt als je iets doet.',
+    en: 'Everything below can be checked. This is exactly what the browser sends when you act.',
+    de: 'Alles hier kannst du prüfen. Das ist genau, was der Browser sendet, wenn du etwas tust.',
+  },
+  leavesHeading: { nl: 'Verlaat jouw browser', en: 'Leaves your browser', de: 'Verlässt deinen Browser' },
+  pending: { nl: 'wordt pas ingevuld als je iets kiest', en: 'filled in only when you act', de: 'wird erst ausgefüllt, wenn du etwas tust' },
+  fields: {
+    i: { nl: 'Welke site dit heeft geïnstalleerd, niet wie jij bent.', en: 'Which site installed this, not who you are.', de: 'Welche Website das eingebaut hat, nicht wer du bist.' },
+    v: { nl: 'Welke tekstvariant je zag.', en: 'Which wording you saw.', de: 'Welche Textvariante du gesehen hast.' },
+    f: { nl: 'Welke vorm je zag.', en: 'Which shape you saw.', de: 'Welche Form du gesehen hast.' },
+    t: { nl: 'De soort trigger (zoeken, chat, navigatie), nooit de tekst.', en: 'The kind of trigger (search, chat, navigation), never the text.', de: 'Die Art des Auslösers (Suche, Chat, Navigation), nie der Text.' },
+    o: { nl: 'Wat je deed.', en: 'What you did.', de: 'Was du getan hast.' },
+    r: { nl: 'Welke hulproute je te zien kreeg.', en: 'Which help service was shown.', de: 'Welcher Hilfsdienst angezeigt wurde.' },
+    e: { nl: 'Een emmer (1, 2, 3, 4, 5+), geen exact aantal.', en: 'A bucket (1, 2, 3, 4, 5+), not an exact count.', de: 'Ein Bereich (1, 2, 3, 4, 5+), keine genaue Zahl.' },
+  },
+  neverHeading: { nl: 'Wordt nooit verstuurd', en: 'Never sent', de: 'Wird nie gesendet' },
+  never: {
+    nl: ['Wat je typte of zocht.', 'Je naam, e-mailadres of een account.', 'Een nummer dat je van bezoek naar bezoek volgt.', 'De exacte tijd of het exacte aantal keren.'],
+    en: ['What you typed or searched.', 'Your name, email or any account.', 'An identifier that follows you from one visit to the next.', 'The exact time, or the exact number of times.'],
+    de: ['Was du getippt oder gesucht hast.', 'Dein Name, deine E-Mail oder ein Konto.', 'Eine Kennung, die dir von Besuch zu Besuch folgt.', 'Die genaue Uhrzeit oder die genaue Anzahl.'],
+  },
+  honest: {
+    nl: 'Zoals bij elke website ziet de server je netwerkadres als je verbindt. Het wordt niet bij deze cijfers opgeslagen: de tabel heeft er geen kolom voor.',
+    en: 'Like any website, the server can see your network address when you connect. It is not stored with these numbers: the table has no column for it.',
+    de: 'Wie bei jeder Website sieht der Server deine Netzwerkadresse beim Verbinden. Sie wird nicht bei diesen Zahlen gespeichert: Die Tabelle hat keine Spalte dafür.',
+  },
+  localHeading: { nl: 'Blijft op dit apparaat', en: 'Stays on this device', de: 'Bleibt auf diesem Gerät' },
+  local: {
+    nl: (n) => `Dit apparaat onthoudt alleen hoe vaak dit hier verscheen (${n}), wanneer voor het laatst en welke teksten je zag. Ook of je iets deed. Het wordt nergens verstuurd.`,
+    en: (n) => `This device remembers only how many times this appeared here (${n}), when it last did and which wordings you saw. Also whether you acted. It is never sent.`,
+    de: (n) => `Dieses Gerät merkt sich nur, wie oft das hier erschien (${n}), wann zuletzt und welche Texte du sahst. Auch, ob du etwas getan hast. Es wird nie gesendet.`,
+  },
+  wipe: { nl: 'Wis wat dit apparaat onthoudt', en: 'Wipe what this device remembers', de: 'Lösche, was dieses Gerät sich merkt' },
+  wiped: { nl: 'Gewist.', en: 'Wiped.', de: 'Gelöscht.' },
+  verifyHeading: { nl: 'Controleer het zelf', en: 'Check it yourself', de: 'Prüfe es selbst' },
+  verify: {
+    nl: 'Open de ontwikkelaarstools van je browser, kies Netwerk en vergelijk. Je ziet dezelfde zeven velden.',
+    en: 'Open your browser developer tools, choose Network and compare. You will see the same seven fields.',
+    de: 'Öffne die Entwicklertools deines Browsers, wähle Netzwerk und vergleiche. Du siehst dieselben sieben Felder.',
+  },
+};
+
 /** The quiet pill (review M2): short, and neutral about who the help is for. */
 export const QUIET = {
   nl: [{ h: 'Hulp is er.', b: '' }, { h: 'Hulp blijft beschikbaar.', b: '' }, { h: 'Er is steun als je die wilt.', b: '' }],
@@ -156,6 +262,8 @@ export const controlKind = (route) => {
 export function copyFor({ format, family, lang, route = null, legalJurisdiction = null, now = Date.now(), legalRecords = LEGAL_RECORDS }) {
   const L = langOf(lang);
   if (format === 'quiet') return QUIET[L];
+  if (format === 'hallway') return HALLWAY[L];
+  if (format === 'door') return CONTROL[controlKind(route)][L];
   if (family === 'legal') {
     const rec = legalRecordFor(legalJurisdiction, legalRecords, now);
     return (rec ? rec.copy : NEUTRAL_LEGAL)[L] || NEUTRAL_LEGAL[L];
@@ -168,6 +276,7 @@ export const LABELS = {
   primary: { nl: 'Bekijk hulp', en: 'See help', de: 'Hilfe ansehen' },
   close: { nl: 'Sluiten', en: 'Close', de: 'Schließen' },
   // A one-click, content-free report (review H4). It never asks who the visitor is.
+  closeDialog: { nl: 'Dialoog sluiten', en: 'Close dialog', de: 'Dialog schließen' },
   report: { nl: 'Deze waarschuwing is onterecht', en: 'This warning was a mistake', de: 'Diese Warnung war ein Irrtum' },
   // Equal in weight to the primary action: a person who is here for something
   // else must be able to leave without hunting for the exit (review H4).
@@ -221,11 +330,19 @@ export function allStrings() {
     else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) walk(x, `${path}.${k}`);
   };
   walk(HARM, 'HARM'); walk(NEUTRAL_LEGAL, 'NEUTRAL_LEGAL'); walk(CONTROL, 'CONTROL');
-  walk(QUIET, 'QUIET'); walk(LABELS, 'LABELS');
+  walk(QUIET, 'QUIET'); walk(LABELS, 'LABELS'); walk(HALLWAY, 'HALLWAY');
+  walk(HALLWAY_PHRASES, 'HALLWAY_PHRASES');
+  for (const k of ['privacyQ', 'nocallQ', 'nocallA', 'altLabel', 'closedTip']) walk(HALLWAY_FAQ[k], 'HALLWAY_FAQ.' + k);
+  for (const [k, v] of Object.entries(GLASS)) {
+    if (typeof v === 'object' && v && !Array.isArray(v) && Object.values(v).some((x) => typeof x === 'function')) {
+      for (const L of LANGS) out.push({ path: `GLASS.${k}.${L}`, text: v[L](3) });
+    } else walk(v, 'GLASS.' + k);
+  }
   for (const L of LANGS) {
     out.push({ path: `attribution.${L}`, text: attributionFor({ name: 'X' }, L) });
     for (const kind of ['selfhelp', 'programme']) out.push({ path: `footnote.${kind}.${L}`, text: footnoteFor({ channel: kind }, L) });
     out.push({ path: `footnote.neutral.${L}`, text: footnoteFor({ channel: 'phone' }, L) });
   }
+  out.push(...labsStrings());
   return out;
 }

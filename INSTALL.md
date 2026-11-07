@@ -33,13 +33,15 @@ document.dispatchEvent(new CustomEvent('doorway:flag', { detail: { type: 'search
 
 The Door origin is built into the file. It cannot be overridden by an attribute.
 
+**Whoever serves `doorway.min.js` must send `Access-Control-Allow-Origin: *`.** With `integrity` and `crossorigin="anonymous"` the browser fetches the file with CORS, and without that header it blocks the script silently apart from a console error. Most CDNs and object stores need CORS switched on explicitly; check with `curl -sI <url> | grep -i access-control`. Self-hosting on your own domain avoids it, because the request is then same-origin.
+
 ## 2. WordPress
 
 `npm run build` generates `dist/wordpress/doorway/doorway.php` with the SRI hash filled in. Upload it as a plugin, activate it, then **Settings > Doorway** and paste your install id. Your moderation plugin fires `doorway:flag`. *Run in a real WordPress 7.1 in Chromium, Firefox and WebKit (`docs/09-cms-verification.md`); not yet tried on a hosted WordPress or with a caching plugin.*
 
 ## 3. Discourse
 
-Add `dist/discourse/common/head_tag.html` to a theme component and replace `inst_xxxxxx` with your install id. *Not yet run inside a real Discourse.*
+Create a theme component (Admin, Customize, Themes, Install, Create new, type Component), paste the contents of `dist/discourse/common/head_tag.html` into its **Common, `</head>`** field with your install id, and add the component to your active theme. If the loader is not on your own domain, its host must send `Access-Control-Allow-Origin: *` (see above). *Run in a real Discourse with its Content-Security-Policy on (`docs/09`), in Chromium, with the component created by script rather than these screens.*
 
 ## 4. UNICRI plug-in contract
 
@@ -68,6 +70,10 @@ The Door will only load on the exact domain registered for the install (`frame-a
 ## 7. The numbers
 
 `https://door.example.org/desk` — enter your install id and Desk token. Every figure is labelled *self-reported by the install's page, unauthenticated*; cells under 10 are hidden. The Desk also shows how many events the Door could not send, and a form to report a mistaken warning (no search text, no time finer than a day).
+
+The Desk also breaks the same counts down by trigger (search, chat, navigation), by help route (a route shown as *no route shown* means the warning offered no link), by escalation step (1 to 5 or more), and by control wording. The control wording is the copy that offers the way out, not a group that saw no warning. It has a one-page adoption ladder that ticks only what the counts prove. Two rungs (routes current, Glass Door audited) are listed as not measured by the Desk.
+
+The Desk has no hour-of-day view and no badge for a level. A "what this dashboard cannot tell you" box says what the counts can not show.
 
 ## 8. Running your own edge
 

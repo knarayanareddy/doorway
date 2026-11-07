@@ -23,9 +23,11 @@ const loader = createLoader({
   install: ds.install,
   country: ds.country,
   legalJurisdiction: ds.legalJurisdiction,
+  labs: ds.labs,
+  waveSeconds: ds.waveSeconds,
 });
 
-window.doorway = Object.freeze({ trigger: (type) => loader.trigger(type) });
+window.doorway = Object.freeze({ trigger: (type, opts) => loader.trigger(type, opts) });
 
 if (ds.triggerEvent) {
   document.addEventListener(ds.triggerEvent, (e) => loader.trigger(e?.detail?.type));

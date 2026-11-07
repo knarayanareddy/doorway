@@ -6,10 +6,13 @@
  * Those omissions are the entire privacy argument.
  */
 
+/** Shapes the Door can show. `fork` and `wave` are reserved: accepted only via build(..., {extraFormats}). */
+export const FORMATS = Object.freeze(['gate', 'card', 'hallway', 'door', 'quiet']);
+
 export const ALLOWED = Object.freeze({
   i: (v) => typeof v === 'string' && /^inst_[a-z0-9]{6,}$/.test(v),
   v: (v) => typeof v === 'string' && /^(legal|harm|control)-\d{2}$/.test(v),
-  f: (v) => ['gate', 'card', 'chat', 'quiet'].includes(v),
+  f: (v) => FORMATS.includes(v),
   t: (v) => ['search', 'chat', 'nav'].includes(v),
   o: (v) => ['clicked_help', 'left_page', 'dismissed', 'continued', 'timeout'].includes(v),
   r: (v) => typeof v === 'string' && /^[a-z]{2}-[a-z0-9-]{2,}$/.test(v),
@@ -36,15 +39,19 @@ export function normaliseType(raw) {
   }
 }
 
-/** Whitelist build. Unknown or extra keys are rejected, not stripped. */
-export function build(input = {}) {
+/**
+ * Whitelist build. Unknown or extra keys are rejected, not stripped.
+ * `extraFormats` exists only for prototypes of reserved shapes; the shipped Door and the
+ * edge never pass it, so the edge keeps rejecting them.
+ */
+export function build(input = {}, { extraFormats = [] } = {}) {
   const errors = [];
   for (const k of Object.keys(input)) {
     if (!(k in ALLOWED)) errors.push(`unknown field: ${k}`);
   }
   for (const [k, ok] of Object.entries(ALLOWED)) {
     if (input[k] === undefined) errors.push(`missing field: ${k}`);
-    else if (!ok(input[k])) errors.push(`invalid ${k}: ${String(input[k]).slice(0, 40)}`);
+    else if (!ok(input[k]) && !(k === 'f' && extraFormats.includes(input[k]))) errors.push(`invalid ${k}: ${String(input[k]).slice(0, 40)}`);
   }
   if (errors.length) return { ok: false, errors };
   return { ok: true, payload: Object.fromEntries(FIELDS.map((k) => [k, input[k]])) };
@@ -172,3 +179,54 @@ function buildFrom(spec, input = {}) {
 }
 export const buildHeartbeat = (input) => buildFrom(HEARTBEAT, input);
 export const buildReport = (input) => buildFrom(REPORT, input);
+
+
+/**
+ * Per-shape read model for the Desk. Like deskSummary it hides cells under k, and it also hides
+ * the smallest remaining visible cell when exactly one is hidden (secondary suppression), for both
+ * exposures and help clicks, so a hidden value cannot be recovered by subtracting from a total.
+ * Rates are always over every exposure of that shape.
+ */
+const SHAPE_ORDER = ['gate', 'card', 'fork', 'wave', 'hallway', 'door', 'quiet'];
+function hidden(values, k) {
+  const h = values.map((v) => v < k);
+  if (h.filter(Boolean).length === 1) {
+    let best = -1;
+    values.forEach((v, i) => { if (!h[i] && (best < 0 || v < values[best])) best = i; });
+    if (best >= 0) h[best] = true;
+  }
+  return h;
+}
+/**
+ * Breaks rows down by `key` (rows are {key, outcome, count}). Same suppression for every
+ * breakdown. `order` lists the known keys in display order; unknown keys follow in row order.
+ */
+export function deskBreakdown(rows, { k = 10, order = [] } = {}) {
+  const by = new Map();
+  for (const r of rows) {
+    const f = by.get(r.key) || { total: 0, clicked: 0 };
+    f.total += r.count;
+    if (r.outcome === 'clicked_help') f.clicked += r.count;
+    by.set(r.key, f);
+  }
+  const rank = (n) => (order.indexOf(n) + 1 || 99);
+  const names = [...by.keys()].sort((a, b) => rank(a) - rank(b));
+  const hideExp = hidden(names.map((n) => by.get(n).total), k);
+  const hideClk = hidden(names.map((n) => by.get(n).clicked), k);
+  return names.map((key, i) => {
+    const f = by.get(key);
+    const exposures = hideExp[i] ? null : f.total;
+    const clicked = hideClk[i] ? null : f.clicked;
+    return { key, exposures, clicked, rate: exposures !== null && clicked !== null ? f.clicked / f.total : null, suppressed: exposures === null || clicked === null };
+  });
+}
+
+export const TRIGGER_ORDER = ['search', 'chat', 'nav'];
+export const ESCALATION_ORDER = ['1', '2', '3', '4', '5+'];
+/** Variant ids are `legal-NN`, `harm-NN` or `control-NN`. `control` is the copy family that offers the exit, not a holdout group. */
+export const variantArm = (v) => (String(v).startsWith('control-') ? 'control' : 'other');
+
+export function deskByFormat(rows, { k = 10 } = {}) {
+  return deskBreakdown(rows.map((r) => ({ ...r, key: r.format })), { k, order: SHAPE_ORDER })
+    .map(({ key, ...rest }) => ({ format: key, ...rest }));
+}

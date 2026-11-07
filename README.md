@@ -8,9 +8,10 @@ A free, self-serve **response layer** for small platforms. When the platform's o
 
 ```bash
 npm ci
-npm run verify     # spine, safety, ESLint privacy tripwire, unit + edge tests, signed routes, privacy gate, copy lint, docs
+npm run verify     # shared modules, safety, ESLint privacy tripwire, unit + edge tests, signed routes, privacy gate, copy lint, docs
 npm run e2e        # real Chromium: hostile host page, network record, installer errors, Desk (needs: npx playwright install chromium)
 npm run demo       # mock platform on :8789, the real edge Worker on :8788
+# labs, mock data: http://127.0.0.1:8789/mock-platform/escalate.html (Fork and Wave are unreviewed)
 ```
 
 ---
@@ -19,7 +20,7 @@ npm run demo       # mock platform on :8789, the real edge Worker on :8788
 
 | # | Document | What it is | Read time |
 |---|---|---|---|
-| 1 | [`DOORWAY-blueprint.html`](DOORWAY-blueprint.html) | **The build blueprint.** Architecture, schemas, the Shift state machine, install paths, repo tree, hour-by-hour build order, acceptance tests, rubric map, kill list, pitch script. Sections 03–06, 11–17 are UNICRI-specific; 00–02 and 07–10 are the shared spine. | 45 min |
+| 1 | [`DOORWAY-blueprint.html`](DOORWAY-blueprint.html) | **The build blueprint.** Architecture, schemas, the Shift state machine, install paths, repo tree, hour-by-hour build order, acceptance tests, rubric map, kill list, pitch script. Sections 03–06, 11–17 are Doorway-specific; 00–02 and 07–10 are general background written when this was planned alongside a second challenge, and can be skipped. The blueprint is a historical spec: where it differs from the code, the code and `docs/07-review-response.md` win. | 45 min |
 | 2 | [`research/unicri-research.html`](research/unicri-research.html) | **The evidence dossier.** Nineteen primary sources read in full, six deployments, eleven adjacent fields, eight scored directions. Sections 01–11 are the evidence; §12 compares the two challenges; §13 is the source list. | 40 min |
 | 3 | [`research/03-dataset-ping-app.html`](research/03-dataset-ping-app.html) | The Nurmi dataset question, what is and isn't released, why not to train an LLM on it, and the app-versus-PWA decision. | 12 min |
 | 4 | [`docs/05-adoption-review.md`](docs/05-adoption-review.md) | **What competitors do better and what we borrow.** Three adoptions, two partials, four refusals, and one correction to our own message ordering. | 12 min |
