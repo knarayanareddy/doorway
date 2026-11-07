@@ -40,12 +40,12 @@ test('a confidentiality claim renders only with every field of the record', () =
 test('the shipped routes carry no verified confidentiality record, so none is rendered', () => {
   for (const r of everyRoute) {
     assert.equal(isRenderableConfidence(r, NOW), false, `${r.id} must not render a claim until a named person at the service confirms it`);
-    for (const L of LANGS) assert.doesNotMatch(footnoteFor(r, L, NOW), /confiden|anonym|anoniem|vertrau|vertrouwelijk/i);
+    for (const L of LANGS) assert.doesNotMatch(footnoteFor(r, L, NOW), /confiden|anonym|anoniem|vertraulich|vertrouwelijk/i);
   }
 });
 
 test('no string the visitor can read makes a confidentiality or anonymity claim', () => {
-  const CLAIM = /confiden|anonym|anoniem|vertrau|vertrouwelijk|\bname\b|\bnaam\b|\bnamen\b|not (?:be )?reported|police|politie|polizei/i;
+  const CLAIM = /confiden|anonym|anoniem|vertraulich|vertrouwelijk|\bname\b|\bnaam\b|\bnamen\b|not (?:be )?reported|police|politie|polizei/i;
   // GLASS describes Doorway's own data handling (the panel lets the person verify it), not a service's confidentiality.
   for (const { path, text } of allStrings().filter((s) => !s.path.startsWith('GLASS'))) assert.doesNotMatch(text, CLAIM, `${path}: "${text}"`);
 });

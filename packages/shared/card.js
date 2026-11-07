@@ -9,7 +9,7 @@
  * is verified manually (keyboard-only pass, screen-reader pass, 320px).
  */
 
-export const VARIANTS = Object.freeze(['gate', 'blur', 'card', 'chat', 'hallway', 'door', 'quiet']);
+export const VARIANTS = Object.freeze(['gate', 'blur', 'card', 'chat', 'hallway', 'door', 'fork', 'wave', 'quiet']);
 export const ACTION_KINDS = Object.freeze(['primary', 'secondary', 'dismiss', 'tertiary']);
 
 /**
@@ -24,7 +24,18 @@ export const ACTION_KINDS = Object.freeze(['primary', 'secondary', 'dismiss', 't
  *           | { type:'action', id, label, closes?, onSelect? }
  *   placement = 'content' (between the body and the actions, default) | 'footer'
  */
-export const BLOCK_TYPES = Object.freeze(['text', 'heading', 'list', 'fields', 'phrases', 'action']);
+export const BLOCK_TYPES = Object.freeze(['text', 'heading', 'list', 'fields', 'phrases', 'action', 'choice', 'timer']);
+
+/*
+ * More block types:
+ *   { type:'choice', id, label?, options:[{id,label}], selected?, onSelect(optionId) }
+ *   { type:'timer',  id, seconds, startLabel, remaining(secondsLeft), phases:[{until, label}], doneText, onDone? }
+ * A handler (action.onSelect, choice.onSelect, timer.onDone) may return
+ *   { view: { headline, body, primary, secondary?, tertiary?, sections? } }   replace the card's content
+ *   { message }                                                              say something next to the control
+ * `primary`, `secondary` and `tertiary` may carry `outcome` (one of the contract outcomes), which is
+ * passed to onOutcome as `hint` so a view can say what its action means.
+ */
 
 export function buildCard({
   variant = 'card',
@@ -77,6 +88,20 @@ export function validate(d = {}) {
         ids.add(b.id);
         if (typeof b.label !== 'string' || !b.label.trim()) errors.push('action block needs a label');
       }
+      if (b.type === 'choice') {
+        if (!b.id || !/^[a-z0-9-]{1,24}$/.test(b.id)) errors.push('choice block needs a simple id');
+        if (ids.has(b.id)) errors.push('duplicate id: ' + b.id);
+        ids.add(b.id);
+        if (!(Array.isArray(b.options) && b.options.length >= 1 && b.options.length <= 8)) errors.push('choice block needs 1-8 options');
+        else for (const o of b.options) if (!o || !/^[a-z0-9-]{1,24}$/.test(o.id) || typeof o.label !== 'string' || !o.label.trim()) errors.push('choice option needs an id and a label');
+      }
+      if (b.type === 'timer') {
+        if (!b.id || !/^[a-z0-9-]{1,24}$/.test(b.id)) errors.push('timer block needs a simple id');
+        if (ids.has(b.id)) errors.push('duplicate id: ' + b.id);
+        ids.add(b.id);
+        if (!(Number.isInteger(b.seconds) && b.seconds >= 5 && b.seconds <= 300)) errors.push('timer seconds must be an integer from 5 to 300');
+        if (typeof b.startLabel !== 'string' || !b.startLabel.trim()) errors.push('timer needs a startLabel');
+      }
       if (b.type === 'list' && !Array.isArray(b.items)) errors.push('list block needs items');
       if (b.type === 'phrases' && !(Array.isArray(b.items) && b.items.length)) errors.push('phrases block needs items');
       if (b.type === 'fields' && !(Array.isArray(b.rows) && b.rows.length)) errors.push('fields block needs rows');
@@ -90,7 +115,8 @@ export function validate(d = {}) {
  * Mount into a shadow root so a host page's CSS cannot break the card and the
  * card cannot break the host. Returns { el, close, outcome }.
  */
-export function mount(d, { onOutcome, doc = globalThis.document } = {}) {
+export function mount(d0, { onOutcome, doc = globalThis.document } = {}) {
+  let d = d0;
   const host = doc.createElement('div');
   host.setAttribute('data-core-card', d.variant);
   doc.body.appendChild(host);
@@ -112,34 +138,60 @@ export function mount(d, { onOutcome, doc = globalThis.document } = {}) {
   const primary = root.querySelector('[data-act="primary"]');
   const prev = doc.activeElement;
   let outcome = 'timeout';
+  let action = null;
+  const timers = new Set();
+  const stopTimers = () => { timers.forEach(clearInterval); timers.clear(); };
 
+  let closed = false;
+  // Escape is listened for on the document, not inside the card: Safari does not focus a button when it is
+  // clicked, so after a click the keyboard focus is on the page body and a handler inside the card never sees the key.
+  const onDocKey = (e) => { if (e.key === 'Escape') finish('dismiss'); };
+  doc.addEventListener('keydown', onDocKey);
   const close = () => {
+    if (closed) return;
+    closed = true;
+    doc.removeEventListener('keydown', onDocKey);
+    stopTimers();
     host.remove();
     if (prev && prev.focus) prev.focus();
-    if (onOutcome) onOutcome({ outcome, variant: d.variant });
+    if (onOutcome) onOutcome({ outcome, variant: d.variant, hint: (action && action.outcome) || null, action });
   };
-  const finish = (o) => { if (outcome === 'timeout') outcome = o; close(); };
+  const finish = (o, a = null) => { if (outcome === 'timeout') { outcome = o; action = a; } close(); };
 
-  // Report BEFORE acting. A primary action is usually a navigation, and a
-  // navigation that unloads the page swallows both the outcome callback and the
-  // counter beacon — which silently deletes the one number the whole product is
-  // measured on. The order here is load-bearing, not stylistic.
-  const p = root.querySelector('[data-act="primary"]');
-  if (p) p.addEventListener('click', () => { finish('primary'); if (d.primary.onSelect) d.primary.onSelect(); });
-  const s = root.querySelector('[data-act="secondary"]');
-  if (s) s.addEventListener('click', () => { finish('secondary'); if (d.secondary.onSelect) d.secondary.onSelect(); });
-  const t3 = root.querySelector('[data-act="tertiary"]');
-  if (t3) t3.addEventListener('click', () => { finish('tertiary'); if (d.tertiary.onSelect) d.tertiary.onSelect(); });
-  const x = root.querySelector('[data-act="dismiss"]');
-  if (x) x.addEventListener('click', () => finish('dismiss'));
+  // Replace the card's content in place (the Fork's paths). The shadow root, the focus trap and the
+  // delegated handlers stay; timers from the old view stop.
+  const setView = (patch) => {
+    stopTimers();
+    d = buildCard({ ...d, ...patch });
+    wrap.innerHTML = render(d);
+    const f = root.querySelector('[data-act="primary"]') || focusables()[0];
+    if (f) f.focus();
+  };
 
-  // Sections: disclosures, copy buttons and action blocks.
-  const actions = new Map();
-  for (const sec of d.sections || []) for (const b of (sec.disclosure ? sec.disclosure.blocks : sec.blocks)) if (b.type === 'action') actions.set(b.id, b);
+  const findBlock = (id) => {
+    for (const sec of d.sections || []) for (const b of (sec.disclosure ? sec.disclosure.blocks : sec.blocks)) if (b.id === id) return b;
+    return null;
+  };
+  const answer = (r, t) => {
+    if (r && r.view) { setView(r.view); return; }
+    const status = t.closest('.ar, .ch') && t.closest('.ar, .ch').querySelector('.astat');
+    if (status) status.textContent = (r && r.message) || '';
+  };
+
+  // One delegated handler. Report BEFORE acting: a primary action is usually a navigation, and a
+  // navigation that unloads the page swallows both the outcome callback and the counter beacon,
+  // which silently deletes the one number the whole product is measured on. The order is load-bearing.
   root.addEventListener('click', (e) => {
     const t = e.target.closest ? e.target.closest('button') : null;
     if (!t) return;
-    if (t.dataset.disc) {
+    const act = t.dataset.act;
+    if (act === 'primary' || act === 'secondary' || act === 'tertiary') {
+      const a = d[act];
+      finish(act, a);
+      if (a && a.onSelect) a.onSelect();
+    } else if (act === 'dismiss') {
+      finish('dismiss');
+    } else if (t.dataset.disc) {
       const body = root.getElementById ? root.getElementById(t.dataset.disc) : root.querySelector('#' + t.dataset.disc);
       const open = t.getAttribute('aria-expanded') === 'true';
       t.setAttribute('aria-expanded', open ? 'false' : 'true');
@@ -150,19 +202,53 @@ export function mount(d, { onOutcome, doc = globalThis.document } = {}) {
       t.textContent = t.dataset.done || original;
       setTimeout(() => { t.textContent = original; }, 1800);
     } else if (t.dataset.sect) {
-      const b = actions.get(t.dataset.sect);
+      const b = findBlock(t.dataset.sect);
       if (!b) return;
-      if (b.closes) { finish('section:' + b.id); if (b.onSelect) b.onSelect(); }
-      else {
-        const r = b.onSelect ? b.onSelect() : null;
-        const status = t.parentElement && t.parentElement.querySelector('.astat');
-        if (status) status.textContent = (r && r.message) || '';
-      }
+      if (b.closes) { finish('section:' + b.id, b); if (b.onSelect) b.onSelect(); }
+      else answer(b.onSelect ? b.onSelect() : null, t);
+    } else if (t.dataset.choice) {
+      const b = findBlock(t.dataset.choice);
+      const o = b && (b.options || []).find((x) => x.id === t.dataset.opt);
+      if (!o) return;
+      const r = b.onSelect ? b.onSelect(o.id) : null;
+      if (!(r && r.view)) t.parentElement.querySelectorAll('.cb').forEach((x) => x.setAttribute('aria-pressed', x === t ? 'true' : 'false'));
+      answer(r, t);
+    } else if (t.dataset.timer) {
+      const b = findBlock(t.dataset.timer);
+      if (!b) return;
+      const box = t.closest('.tm');
+      const bar = box.querySelector('progress');
+      const label = box.querySelector('.tl');
+      const phase = box.querySelector('.tp');
+      const done = box.querySelector('.td');
+      const total = b.seconds;
+      let left = total;
+      // The button the person just pressed is about to disappear. Move focus to the status line first,
+      // otherwise focus falls out of the card and Escape and Tab stop working for keyboard users.
+      phase.setAttribute('tabindex', '-1');
+      t.hidden = true;
+      phase.focus();
+      const paint = () => {
+        const frac = (total - left) / total;
+        bar.value = total - left;
+        label.textContent = b.remaining ? b.remaining(left) : String(left);
+        const ph = (b.phases || []).find((x) => frac < x.until) || (b.phases || [])[(b.phases || []).length - 1];
+        if (ph) phase.textContent = ph.label;
+      };
+      paint();
+      const id = setInterval(() => {
+        left -= 1;
+        if (left > 0) { paint(); return; }
+        clearInterval(id); timers.delete(id);
+        bar.value = total; label.textContent = ''; phase.textContent = '';
+        done.textContent = b.doneText || '';
+        if (b.onDone) answer(b.onDone(), t);
+      }, 1000);
+      timers.add(id);
     }
   });
 
   root.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { finish('dismiss'); return; }
     if (e.key !== 'Tab') return;
     const list = focusables();
     if (list.length === 0) return;
@@ -226,7 +312,13 @@ function renderBlock(b) {
     case 'fields': return '<dl class="bf">' + b.rows.map((r) => '<div><dt><code>' + esc(r.k) + '</code></dt><dd>' + esc(r.v) + (r.note ? '<small>' + esc(r.note) + '</small>' : '') + '</dd></div>').join('') + '</dl>';
     case 'phrases': return '<ul class="ph">' + b.items.map((i) =>
       '<li><span>' + esc(i) + '</span><button class="cp" data-copy-text="' + esc(i) + '" data-label="' + esc(b.copyLabel || 'Copy') + '" data-done="' + esc(b.copiedLabel || '') + '">' + esc(b.copyLabel || 'Copy') + '</button></li>').join('') + '</ul>';
-    case 'action': return '<div class="ar"><button class="sa" data-sect="' + esc(b.id) + '">' + esc(b.label) + '</button><span class="astat" role="status" aria-live="polite"></span></div>';
+    case 'choice': return '<div class="ch">' + (b.label ? '<p class="bt">' + esc(b.label) + '</p>' : '') + '<div class="co">' +
+      b.options.map((o) => '<button class="cb" data-choice="' + esc(b.id) + '" data-opt="' + esc(o.id) + '" aria-pressed="' + (b.selected === o.id ? 'true' : 'false') + '">' + esc(o.label) + '</button>').join('') +
+      '</div><span class="astat" role="status" aria-live="polite"></span></div>';
+    case 'timer': return '<div class="tm"><button class="sa" data-timer="' + esc(b.id) + '">' + esc(b.startLabel) + '</button>' +
+      '<progress class="tpg" max="' + b.seconds + '" value="0" aria-hidden="true"></progress>' +
+      '<div class="tl" aria-hidden="true"></div><div class="tp" role="status" aria-live="polite"></div><div class="td" role="status" aria-live="polite"></div></div>';
+    case 'action': return '<div class="ar"><button class="sa' + (b.tone === 'danger' ? ' danger' : '') + '" data-sect="' + esc(b.id) + '">' + esc(b.label) + '</button><span class="astat" role="status" aria-live="polite"></span></div>';
     default: return '';
   }
 }
@@ -253,11 +345,12 @@ function render(d) {
     ? '<div class="bar"><span class="attr">' + esc(d.attribution) + '</span>' +
       '<button class="x" data-act="dismiss" aria-label="' + esc(d.closeLabel || 'Close dialog') + '">\u00d7</button></div>'
     : '<div class="bar"><span></span><button class="x" data-act="dismiss" aria-label="' + esc(d.closeLabel || 'Close dialog') + '">\u00d7</button></div>';
+  const topSections = renderSections(d.sections, 'top');
   const sec = d.secondary ? '<button class="alt" data-act="secondary">' + esc(d.secondary.label) + '</button>' : '';
   const rep = d.tertiary ? '<button class="rep" data-act="tertiary">' + esc(d.tertiary.label) + '</button>' : '';
   const foot = d.footnote ? '<p class="conf">' + esc(d.footnote) + '</p>' : '';
   const labelledBy = d.headline ? ' aria-labelledby="doorway-card-title"' : '';
-  return '<div role="dialog" aria-modal="true"' + labelledBy + '>' + attr +
+  return '<div role="dialog" aria-modal="true"' + labelledBy + '>' + attr + topSections +
     (d.headline ? '<h2 id="doorway-card-title">' + esc(d.headline) + '</h2>' : '') +
     (d.body ? '<p>' + esc(d.body) + '</p>' : '') +
     renderSections(d.sections, 'content') +
@@ -296,7 +389,15 @@ const CSS = [
   '.bf code{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;color:#1f4e79}',
   '.ph{list-style:none;margin:0 0 10px;padding:0}.ph li{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:9px 10px;margin-bottom:6px;border:1px solid #d9d2c5;border-radius:9px;font-size:14px;color:#3d3934}',
   '.cp,.sa{background:none;border:1px solid #1f4e79;color:#1f4e79;border-radius:7px;font-size:13px;font-weight:600;padding:8px 10px;min-height:44px;cursor:pointer;white-space:nowrap}',
+  '.sa.danger{background:#b4573f;border-color:#b4573f;color:#fff}',
   '.ar{display:flex;gap:10px;align-items:center;margin:6px 0 10px;flex-wrap:wrap}.astat{font-size:12px;color:#6d665e}',
+  '.co{display:flex;flex-direction:column;gap:8px;margin:6px 0 8px}',
+  '.cb{display:block;width:100%;text-align:left;background:#fff;border:2px solid #d2cbc0;color:#1b1a18;border-radius:9px;font-size:15px;padding:12px 14px;min-height:48px;cursor:pointer}',
+  '.cb[aria-pressed="true"]{border-color:#1f4e79;background:#eef4fa;font-weight:650}',
+  '.cb:focus-visible{outline:3px solid #1b1a18;outline-offset:2px}',
+  '.tm{margin:6px 0 10px}.tpg{display:block;width:100%;height:10px;margin:10px 0 6px}',
+  '.tp:focus{outline:none}',
+  '.tl{font-size:13px;color:#6d665e;min-height:18px}.tp{font-size:15px;font-weight:650;color:#1b1a18;min-height:22px}.td{font-size:14px;color:#3d3934}',
   '.conf{font-size:12px;color:#6d665e;margin-top:14px;border-top:1px solid #e2ddd4;padding-top:11px}',
   '.quiet{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:#26241f;color:#f5f1e8;font-size:13px;padding:11px 16px;border-radius:999px;z-index:2147483000;max-width:92vw}',
   '@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}',

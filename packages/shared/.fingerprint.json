@@ -1,11 +1,10 @@
 {
   "note": "sha256 of each file in this directory, committed so CI catches an accidental edit.",
   "files": {
-    "README.md": "ffdc57998806f6f34ecc65ee3ececb24cee907d61af509ef44042d746de78753",
+    "README.md": "a1ea7a82308273023fbccc5447fb12cf307d3b1e74644e13d97683fb111f6664",
     "a11y.js": "8a3925f7da739a296af9bb5606ed10bf05974cce99393d09ace7281dc718bc93",
-    "card.js": "1912eecbf89aaeaf75f20738351a239b3b71fe47dffac4975ea8b8d9be706bec",
-    "core.test.js": "5559e667622b8d3b2e69dcc0c1ab43c568cc197e1ca1ef184c5e4bd545aedfdc",
-    "index.js": "7031e38321226763edd47af467d24fd9c9f385bca22684dc4db13c6a3bd554b9",
-    "validate.js": "c2451d7504c1b27671484c8899229e72edab6c08f5c6c9cac5b6111a4f13cd06"
+    "card.js": "bcc7c10bb4eb5427bc63d31b72bb4c9379e5a33e69f74b8c6d7939a7ec366b23",
+    "core.test.js": "83f323ee7d9f9e6eec70e46222ddb67c869666b1aa32282821c0b1af326c5e17",
+    "index.js": "344354e2c8b3638d1c35ba0e4f254fe71efe0fed3f39d645ec9acb06c564fa30"
   }
 }

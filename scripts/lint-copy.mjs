@@ -25,7 +25,7 @@ const ASSUMES_INTENT = [
   /\bje (?:zocht|zoekt|zoekt naar)\b/i, /\bu zocht\b/i, /\bwe zagen dat\b/i,
   /\bdu (?:suchst|hast gesucht|suchtest)\b/i, /\bwir haben (?:gesehen|bemerkt)\b/i,
 ];
-const CLAIM = /confiden|anonym|anoniem|vertrau|vertrouwelijk|\bname\b|\bnaam\b|\bnamen\b|not (?:be )?reported|police|politie|polizei|strafregister|criminal record|strafblad/i;
+const CLAIM = /confiden|anonym|anoniem|vertraulich|vertrouwelijk|\bname\b|\bnaam\b|\bnamen\b|not (?:be )?reported|police|politie|polizei|strafregister|criminal record|strafblad/i;
 const UNIT = /\d+\s*(?:hours?|years?|months?|uur|uren|jaar|jaren|maanden?|stunden?|jahre?n?|monate?n?)\b/i;
 
 const problems = [];
