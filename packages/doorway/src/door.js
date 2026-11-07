@@ -12,6 +12,7 @@
 import { createDoorway } from './widget.js';
 import { verifyBundle } from '../../core/src/bundle.js';
 import { normaliseType } from '../../core/src/counter.js';
+import { parseLabs, previewShape, waveSeconds } from './labs.js';
 import { PUBLIC_KEY_RAW_B64U } from './pubkey.js';
 import BUNDLE from './routes.nl.json';
 
@@ -19,6 +20,10 @@ const params = new URLSearchParams(location.search);
 const install = params.get('i') || '';
 const country = params.get('c') || undefined;
 const legalJurisdiction = params.get('j') || undefined;
+// Labs (labs.js): validated against a fixed list here as well as in the loader. Empty in the shipped Door.
+const labs = parseLabs(params.get('x'));
+const preview = previewShape(params.get('p'), labs);
+const waveSecs = waveSeconds(params.get('ws'));
 
 const b64u = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
 const toHost = (msg) => window.parent.postMessage(msg, '*'); // content-free; frame-ancestors limits who may embed
@@ -34,7 +39,7 @@ let doorway = null;
 const open = async (type) => {
   if (!/^inst_[a-z0-9]{6,}$/.test(install)) return toHost({ settled: true });
   const routes = await ready;
-  doorway ??= createDoorway({ routes, install, country, legalJurisdiction, onSettled: () => toHost({ settled: true }) });
+  doorway ??= createDoorway({ routes, install, country, legalJurisdiction, labs, preview, waveSecs, onSettled: () => toHost({ settled: true }) });
   doorway.trigger({ type });
   toHost({ ready: true });
 };

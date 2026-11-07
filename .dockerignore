@@ -1,0 +1,22 @@
+# Keep the build context small, and keep secrets out of it.
+.git
+.github
+.keys
+.env
+.env.*
+node_modules
+prototype
+organiser
+research
+vendor
+docs
+test
+test-results
+playwright-report
+dist
+*.md
+!packages/**/*.md
+DOORWAY-blueprint.html
+*.log
+.DS_Store
+dist-hosted

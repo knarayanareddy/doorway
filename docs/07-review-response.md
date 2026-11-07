@@ -54,10 +54,21 @@ Run, rather than assumed: Firefox and WebKit, the Worker on workerd with a local
 
 Still not possible without you: deploying (needs your Cloudflare account), the on-camera install (needs a person), Discourse (needs a heavier stack), and naming the false-positive reviewer.
 
+## Third pass: the levelled-up design
+
+A second reviewer produced a prototype (`Doorway levelled up`) with a stronger idea set and its own review. What was taken, what was fixed, and what is parked:
+
+- **Taken into the real Door:** one shape per exposure (gate, card, hallway, hallway, door) on top of `shift.js` with the H1 in-place escalation kept; the **Glass Door** (the exact payload, what never leaves, what stays local with a wipe button, an honest note about the network address); the **Hallway** (copyable first sentences, a self-help alternative counted against its own route, and a service's privacy wording and opening hours only through verified-record predicates). Tests: `panels.test.js`, `shapes.spec.js` in three browsers. `card.js` gained generic content sections and a focus trap that looks up its controls on each keypress.
+- **Fixed in the prototype** (now in `prototype/`, importing the real core): third-party fonts removed; no hard-coded legal or confidentiality claims; routes only from the verified bundle and the allow-list (the Helpwanted link is gone); the seven-field contract; no quiet-right-after-exposure; the Wave has no free text and keeps nothing beyond the tab; the Verdict text re-baselined.
+- **Parked behind decisions** (`docs/11-open-decisions.md`): quick exit (cannot navigate the host from a sandbox), holding results (conflicts with treating the host as an adversary), the Fork's self-identification, the Wave's clinical review, and a verified youth route.
+
+## Fourth pass: the parked decisions, built as labs
+
+The five parked decisions now exist as switched-off, tested labs with mock data (`docs/13-labs.md`): quick exit, the platform-side hold-results pattern, the Fork, the Wave and the youth-route gate. **Built, not adopted**: each still waits on the decision in `docs/11`. They are accepted only by an edge that names them, so a labs Door on a production edge loses its events visibly. The Desk gained a per-shape table with secondary suppression. `validate.js` and `loop.js` were removed as unused. Two accessibility bugs in the shared card were found and fixed (focus lost when a timer button hides itself; Escape not delivered after a click in Safari). See `docs/14-maritime.md` for whether Maritime would help (verification yes, production no, Safari no).
+
 ## New open items this work surfaced
 
 - **V15 — real Safari and mobile.** The suite now runs in Chromium, Firefox and WebKit, but Playwright's WebKit is not Safari. Safari's Intelligent Tracking Prevention may restrict third-party `localStorage` in ways it does not; in the worst case the Door cannot keep state, and the DEGRADED path (card, not gate) applies. Needs a pass on real Safari (macOS and iOS).
-- **Shared spine.** `packages/shared/card.js` changed (the exit button's weight). `check-spine --write` updated the fingerprint; the sister repo's copy must be updated too, or the "one spine" claim stops being true.
 - **Edge not deployed.** The Worker has run on `node:sqlite` (unit tests) and on workerd with a local D1 (`smoke:workerd`), never on Cloudflare's D1 service. A first deploy may still surface differences.
 - **Node ≥ 22.13** is now required to run the tests (`node:sqlite`).
 - **The quiet pill blocks the page for its few seconds**, because the frame is full-viewport for every format so that its size does not reveal the format. Noted in `docs/02` R9.

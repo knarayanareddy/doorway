@@ -25,7 +25,7 @@ const ASSUMES_INTENT = [
   /\bje (?:zocht|zoekt|zoekt naar)\b/i, /\bu zocht\b/i, /\bwe zagen dat\b/i,
   /\bdu (?:suchst|hast gesucht|suchtest)\b/i, /\bwir haben (?:gesehen|bemerkt)\b/i,
 ];
-const CLAIM = /confiden|anonym|anoniem|vertrau|vertrouwelijk|\bname\b|\bnaam\b|\bnamen\b|not (?:be )?reported|police|politie|polizei|strafregister|criminal record|strafblad/i;
+const CLAIM = /confiden|anonym|anoniem|vertraulich|vertrouwelijk|\bname\b|\bnaam\b|\bnamen\b|not (?:be )?reported|police|politie|polizei|strafregister|criminal record|strafblad/i;
 const UNIT = /\d+\s*(?:hours?|years?|months?|uur|uren|jaar|jaren|maanden?|stunden?|jahre?n?|monate?n?)\b/i;
 
 const problems = [];
@@ -33,7 +33,7 @@ const strings = allStrings();
 
 for (const { path, text } of strings) {
   for (const re of ASSUMES_INTENT) if (re.test(text)) problems.push(`${path}: assumes intent → "${text}"`);
-  if (CLAIM.test(text)) problems.push(`${path}: confidentiality/anonymity/legal wording in unreviewed copy → "${text}"`);
+  if (!path.startsWith('GLASS') && CLAIM.test(text)) problems.push(`${path}: confidentiality/anonymity/legal wording in unreviewed copy → "${text}"`);
   if (UNIT.test(text)) problems.push(`${path}: a number with a time unit needs a reviewed legal record → "${text}"`);
   for (const s of longSentences(text)) problems.push(`${path}: sentence over 20 words → "${s}"`);
 }

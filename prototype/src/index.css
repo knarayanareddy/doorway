@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, ui-sans-serif, sans-serif;
+  --font-serif: ui-serif, Georgia, "Times New Roman", serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --color-ink: #12202b;
+  --color-ink-soft: #3b4a56;
+  --color-night: #0e1a24;
+  --color-night-2: #162836;
+  --color-paper: #f7f2e8;
+  --color-paper-2: #efe8d9;
+  --color-line: #ddd3bf;
+  --color-lamp: #e8a33d;
+  --color-lamp-deep: #b9751a;
+  --color-lamp-soft: #fbeccb;
+  --color-sage: #5f8a73;
+  --color-sage-soft: #dcebe2;
+  --color-clay: #b4573f;
+  --color-clay-soft: #f6dcd3;
+  --color-sky: #2f6f8f;
+  --color-sky-soft: #d9ebf3;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-lamp);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.font-display {
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  letter-spacing: -0.01em;
+}
+
+/* ---- Doorway motion ---- */
+@keyframes dw-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes dw-glow {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+@keyframes dw-breathe {
+  0%, 100% { transform: scale(0.82); }
+  50% { transform: scale(1.12); }
+}
+@keyframes dw-open {
+  from { transform: perspective(500px) rotateY(0deg); }
+  to { transform: perspective(500px) rotateY(-58deg); }
+}
+
+.dw-rise { animation: dw-rise 0.45s ease both; }
+.dw-glow { animation: dw-glow 3.2s ease-in-out infinite; }
+.dw-open-door { transform-origin: left center; animation: dw-open 1.4s 0.3s cubic-bezier(.2,.7,.2,1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dw-rise, .dw-glow, .dw-open-door { animation: none !important; }
+  html { scroll-behavior: auto; }
+  * { transition-duration: 0.01ms !important; }
+}
+
+/* Hide scrollbar on chip rows */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }

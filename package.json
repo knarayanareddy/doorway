@@ -19,28 +19,35 @@
     "lint:copy": "node scripts/lint-copy.mjs",
     "check:routes": "node scripts/check-routes.mjs",
     "check:pilot": "node scripts/check-routes.mjs --pilot",
-    "check:spine": "node scripts/check-spine.mjs",
+    "check:shared": "node scripts/check-shared.mjs",
     "check": "node scripts/check-safety.mjs",
     "build": "node scripts/build.mjs",
     "demo": "DOOR_ORIGIN=http://127.0.0.1:8788 node scripts/dev.mjs",
     "sign": "node scripts/sign-routes.mjs",
     "e2e": "npm run build:e2e && playwright test",
     "build:e2e": "DOOR_ORIGIN=http://127.0.0.1:8788 node scripts/build.mjs > /dev/null",
-    "verify": "npm run check:spine && npm run check && npm run lint && npm test && npm run check:routes && npm run gate:privacy && npm run lint:copy && npm run check:docs",
+    "verify": "npm run check:shared && npm run check && npm run lint && npm test && npm run check:routes && npm run gate:privacy && npm run lint:copy && npm run check:docs",
     "verify:all": "npm run verify && npm run e2e",
     "vendor:verify": "shasum -a 256 -c vendor/MANIFEST.sha256",
     "check:docs": "node scripts/check-docs.mjs",
     "status": "node scripts/status.mjs",
     "smoke:workerd": "node scripts/run-smoke-workerd.mjs",
     "e2e:chromium": "npm run build:e2e && playwright test --project=chromium",
-    "verify:wordpress": "scripts/wp-verify.sh"
+    "verify:wordpress": "scripts/wp-verify.sh",
+    "e2e:prototype": "playwright test -c playwright.prototype.config.js",
+    "build:prototype": "npm --prefix prototype run build",
+    "demo:labs": "SEED=1 DOOR_ORIGIN=http://127.0.0.1:8788 node scripts/dev.mjs",
+    "serve:demo": "node scripts/serve-demo.mjs",
+    "e2e:hosted": "playwright test -c playwright.hosted.config.js"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@playwright/test": "^1.65.0",
-    "esbuild": "^0.28.2",
     "eslint": "^9.39.5",
     "globals": "^17.14.0",
     "wrangler": "^4.158.0"
+  },
+  "dependencies": {
+    "esbuild": "^0.28.2"
   }
 }

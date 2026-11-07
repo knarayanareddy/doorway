@@ -17,7 +17,7 @@ const STORAGE = ['sessionStorage', 'indexedDB', 'caches', 'openDatabase', 'cooki
 const restricted = (names, why) => names.map((name) => ({ name, message: why }));
 
 export default [
-  { ignores: ['node_modules/**', 'dist/**', 'organiser/**', 'vendor/**', 'research/**', 'mock-platform/**', 'playwright-report/**', 'test-results/**', '.keys/**'] },
+  { ignores: ['node_modules/**', 'dist/**', 'dist-hosted/**', 'organiser/**', 'vendor/**', 'research/**', 'mock-platform/**', 'prototype/**', 'playwright-report/**', 'test-results/**', '.keys/**'] },
   js.configs.recommended,
   {
     files: ['**/*.js', '**/*.mjs'],

@@ -191,6 +191,28 @@ export function isAllowedDestination(url) {
   }
 }
 
+/**
+ * A youth service, for the under-18 path. It is offered ONLY when a route in the bundle is marked
+ * `audience: "youth"` AND carries a complete written agreement from the service (named contact,
+ * reference, date), an allow-listed destination, and a review date that has not passed. The shipped
+ * bundle has none, so today that path offers supportive copy and no link (docs/11 D5).
+ */
+export function youthRoute(bundle, lang, now = Date.now()) {
+  const entry = bundle?.byLanguage?.[lang];
+  if (!entry) return null;
+  for (const r of [entry.default, ...(entry.alternatives || [])]) {
+    if (!r || r.audience !== 'youth') continue;
+    const a = r.agreement;
+    const named = (v) => typeof v === 'string' && v.trim().length > 1;
+    if (!a || !named(a.contact) || !named(a.okRef) || !Number.isFinite(Date.parse(a.okAt))) continue;
+    if (!isAllowedDestination(r.url)) continue;
+    const review = Date.parse(r.reviewBy);
+    if (!Number.isFinite(review) || review < now) continue;
+    return r;
+  }
+  return null;
+}
+
 /** Every route in a bundle, with where it sits. */
 export function allRoutes(bundle) {
   const out = [];
