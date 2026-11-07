@@ -144,6 +144,15 @@ test('platformHandler: the built loader is served from dist/latest', async () =>
   assert.equal(r.body, 'console.log(1);');
 });
 
+test('platformHandler: only the loader is served with CORS, so integrity + crossorigin works from another site', async () => {
+  const js = await call('GET', '/dist/latest/doorway.min.js');
+  assert.equal(js.status, 200);
+  assert.equal(js.headers['access-control-allow-origin'], '*');
+  assert.equal(js.headers['cross-origin-resource-policy'], 'cross-origin');
+  const page = await call('GET', '/mock-platform/index.html');
+  assert.equal(page.headers['access-control-allow-origin'], undefined, 'forum pages are not opened to other origins');
+});
+
 test('platformHandler: files outside the two allowed directories are not served', async () => {
   for (const url of ['/secret.txt', '/edge/c.js', '/package.json']) {
     assert.equal((await call('GET', url)).status, 404, url);

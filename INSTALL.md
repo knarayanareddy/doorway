@@ -33,6 +33,8 @@ document.dispatchEvent(new CustomEvent('doorway:flag', { detail: { type: 'search
 
 The Door origin is built into the file. It cannot be overridden by an attribute.
 
+**Whoever serves `doorway.min.js` must send `Access-Control-Allow-Origin: *`.** With `integrity` and `crossorigin="anonymous"` the browser fetches the file with CORS, and without that header it blocks the script silently apart from a console error. Most CDNs and object stores need CORS switched on explicitly; check with `curl -sI <url> | grep -i access-control`. Self-hosting on your own domain avoids it, because the request is then same-origin.
+
 ## 2. WordPress
 
 `npm run build` generates `dist/wordpress/doorway/doorway.php` with the SRI hash filled in. Upload it as a plugin, activate it, then **Settings > Doorway** and paste your install id. Your moderation plugin fires `doorway:flag`. *Run in a real WordPress 7.1 in Chromium, Firefox and WebKit (`docs/09-cms-verification.md`); not yet tried on a hosted WordPress or with a caching plugin.*

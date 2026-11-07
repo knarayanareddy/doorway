@@ -57,6 +57,10 @@ export function readConfig(env = process.env) {
 }
 
 const security = { 'x-content-type-options': 'nosniff', 'x-robots-tag': 'noindex', 'cache-control': 'no-store' };
+// The loader is a public, static script that other sites include with integrity + crossorigin="anonymous".
+// A browser then fetches it with CORS, so whoever serves it MUST send this header or the script is blocked
+// (found when installing it in a real Discourse). Only the loader gets it, never the forum pages.
+const loaderHeaders = { 'access-control-allow-origin': '*', 'cross-origin-resource-policy': 'cross-origin' };
 
 /** Platform role: only the mock forum and the built loader, with the Door's origin substituted into pages. */
 export function platformHandler(cfg, root = ROOT) {
@@ -81,7 +85,8 @@ export function platformHandler(cfg, root = ROOT) {
       const body = fs.readFileSync(file, 'utf8').replaceAll('http://127.0.0.1:8788', cfg.doorOrigin);
       res.writeHead(200, { 'content-type': type, ...security }); res.end(req.method === 'HEAD' ? undefined : body); return;
     }
-    res.writeHead(200, { 'content-type': type, ...security });
+    const isLoader = file.startsWith(path.join(distDir, 'latest') + path.sep);
+    res.writeHead(200, { 'content-type': type, ...security, ...(isLoader ? loaderHeaders : {}) });
     if (req.method === 'HEAD') res.end(); else fs.createReadStream(file).pipe(res);
   };
 }
