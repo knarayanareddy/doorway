@@ -1,10 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { resetDb, readDb, waitForAgg, frameOf, act, trigger, openPage, PLATFORM } from './helpers.js';
+import { resetDb, readDb, waitForAgg, frameOf, act, trigger, openPage, stubHelpSites, PLATFORM, settle } from './helpers.js';
 
-test.beforeEach(async ({ request, context }) => {
-  await resetDb(request);
-  await context.route('https://**/*', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<title>help</title>' }));
-});
+test.beforeEach(async ({ request }) => { await resetDb(request); });
+test.afterEach(async ({ page }) => { await settle(page); });
 
 const cardKind = (page) => frameOf(page).locator('[data-core-card]').getAttribute('data-core-card');
 const cardText = (page) => frameOf(page).locator('[role="dialog"], .quiet-text').first().innerText();
@@ -23,7 +21,8 @@ test('the first exposure is a gate with neutral copy, an independent-service att
   expect(b.height).toBeGreaterThanOrEqual(44);
 });
 
-test('the primary action opens the allow-listed service, detached, and is counted as a click', async ({ page, request }) => {
+test('the primary action opens the allow-listed service, detached, and is counted as a click', async ({ page, request, context }) => {
+  await stubHelpSites(context);
   await openPage(page);
   await trigger(page);
   const popup = page.waitForEvent('popup');
@@ -31,6 +30,7 @@ test('the primary action opens the allow-listed service, detached, and is counte
   const p = await popup;
   expect(p.url()).toBe('https://offlimits.nl/?src=doorway');
   expect(await p.evaluate(() => window.opener)).toBeNull();
+  await p.close();
   const db = await waitForAgg(request, (d) => d.agg.length > 0);
   expect(db.agg).toHaveLength(1);
   expect(db.agg[0]).toMatchObject({ outcome: 'clicked_help', route: 'nl-offlimits', format: 'gate', bucket: '1', trigger: 'search', variant: 'legal-01' });
@@ -41,12 +41,17 @@ test('keyboard only: Tab reaches both actions and Enter on the exit is a "contin
   await openPage(page);
   await trigger(page);
   await expect(act(page, 'primary')).toBeFocused({ timeout: 3000 });
-  await page.keyboard.press('Tab');
+  // Let focus settle: a keystroke 20 ms after the dialog opens is not something a person does,
+  // and Chromium can drop a Tab that arrives that early.
+  await page.waitForTimeout(250);
+  // Safari does not Tab to buttons by default (Option+Tab does); that is the browser's
+  // setting, not a missing tab stop.
+  await page.keyboard.press(test.info().project.name === 'webkit' ? 'Alt+Tab' : 'Tab');
   await expect(act(page, 'secondary')).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.locator('iframe')).toHaveCount(0);
   const db = await waitForAgg(request, (d) => d.agg.length > 0);
-  expect(db.agg[0].outcome).toBe('continued');
+  expect(db.agg.map((r) => r.outcome)).toEqual(['continued']);
 });
 
 test('Escape dismisses, focus returns to the page, and the person is counted once', async ({ page, request }) => {
@@ -201,3 +206,20 @@ test('the Door cannot be embedded by a site that is not the install\'s domain', 
 });
 
 test.afterAll(async ({ request }) => { await readDb(request); });
+
+test('H4: a visitor can report a mistaken warning in one click, without saying who they are', async ({ page, request }) => {
+  await openPage(page);
+  await trigger(page, 'chat');
+  const report = frameOf(page).locator('[data-act="tertiary"]');
+  await expect(report).toBeVisible();
+  await expect(report).toHaveText('Deze waarschuwing is onterecht');
+  const box = await report.boundingBox();
+  expect(box.height).toBeGreaterThanOrEqual(44);
+  await report.click();
+  await expect(page.locator('iframe')).toHaveCount(0);
+  const db = await waitForAgg(request, (d) => d.reports.length > 0 && d.agg.length > 0);
+  expect(db.reports).toHaveLength(1);
+  expect(db.reports[0]).toMatchObject({ install: 'inst_demo001', trigger: 'chat', reason: 'other', pack: '2026.11.07', count: 1 });
+  expect(Object.keys(db.reports[0]).sort()).toEqual(['count', 'day', 'install', 'pack', 'reason', 'trigger']);
+  expect(db.agg.map((r) => r.outcome)).toEqual(['continued']);
+});

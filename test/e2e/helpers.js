@@ -26,3 +26,20 @@ export const openPage = async (page, path = '/mock-platform/index.html') => {
   await page.goto(PLATFORM + path);
   await page.waitForFunction(() => !!window.doorway);
 };
+
+/**
+ * Stub the help services so tests never touch a real site. Only call this in a test
+ * that clicks through to one: Playwright's request interception makes WebKit cancel
+ * in-flight requests on navigation, which would hide the abandon (left_page) beacon.
+ */
+export const stubHelpSites = (context) =>
+  context.route('https://**/*', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<title>help</title>' }));
+
+/**
+ * End a test cleanly. A card left open is (correctly) counted as left_page when its page
+ * goes away; that beacon must land before the next test resets the database.
+ */
+export async function settle(page) {
+  await page.goto('about:blank').catch(() => {});
+  await new Promise((r) => setTimeout(r, 300));
+}

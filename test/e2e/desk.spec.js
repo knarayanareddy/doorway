@@ -1,10 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { resetDb, DOOR } from './helpers.js';
+import { resetDb, DOOR, settle } from './helpers.js';
 
 const ev = (o, extra = {}) => ({ i: 'inst_demo001', v: 'legal-01', f: 'gate', t: 'search', o, r: 'nl-offlimits', e: '1', ...extra });
 const send = (request, data) => request.post(`${DOOR}/v1/c`, { headers: { origin: DOOR }, data });
 
 test.beforeEach(async ({ request }) => { await resetDb(request); });
+test.afterEach(async ({ page }) => { await settle(page); });
 
 test('desk-denominator: the Desk shows exposures including those who left, labelled unauthenticated', async ({ page, request }) => {
   for (let i = 0; i < 12; i++) await send(request, ev('clicked_help'));

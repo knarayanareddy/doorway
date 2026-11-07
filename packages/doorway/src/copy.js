@@ -167,6 +167,8 @@ export function copyFor({ format, family, lang, route = null, legalJurisdiction 
 export const LABELS = {
   primary: { nl: 'Bekijk hulp', en: 'See help', de: 'Hilfe ansehen' },
   close: { nl: 'Sluiten', en: 'Close', de: 'Schließen' },
+  // A one-click, content-free report (review H4). It never asks who the visitor is.
+  report: { nl: 'Deze waarschuwing is onterecht', en: 'This warning was a mistake', de: 'Diese Warnung war ein Irrtum' },
   // Equal in weight to the primary action: a person who is here for something
   // else must be able to leave without hunting for the exit (review H4).
   secondary: { nl: 'Ik zoek iets anders', en: 'I am here for something else', de: 'Ich bin aus einem anderen Grund hier' },

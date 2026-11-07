@@ -85,3 +85,31 @@ test('secondary suppression hides a second cell but keeps the help-click count w
   assert.equal(s.clickThrough.clicked, 12);
   assert.equal(s.clickThrough.shown, 61);
 });
+
+test('an unloading page uses the beacon queue with the same validated payload, and falls back to fetch', async () => {
+  const beacons = []; const fetched = [];
+  const fetchImpl = async (u, i) => { fetched.push(JSON.parse(i.body)); return { ok: true }; };
+  const ok = createSender({ fetchImpl, beaconImpl: (u, blob) => { beacons.push({ u, type: blob.type }); return true; } });
+  assert.equal(await ok.event({ ...GOOD, o: 'left_page' }, { unloading: true }), true);
+  assert.deepEqual(beacons, [{ u: '/v1/c', type: 'application/json' }]);
+  assert.equal(fetched.length, 0);
+  assert.equal(await ok.event(GOOD), true, 'a normal outcome still uses fetch');
+  assert.equal(fetched.length, 1);
+  const refused = createSender({ fetchImpl, beaconImpl: () => false });
+  assert.equal(await refused.event({ ...GOOD, o: 'left_page' }, { unloading: true }), true);
+  assert.equal(fetched.length, 2, 'queue full -> fetch keepalive');
+  const bad = createSender({ fetchImpl, beaconImpl: () => { throw new Error('x'); }, onDrop: () => {} });
+  assert.equal(await bad.event({ ...GOOD, t: 'navigation' }, { unloading: true }), false, 'an invalid payload is never beaconed');
+});
+
+test('a visitor report is a closed shape, validated, and counted locally if it cannot be sent (H4)', async () => {
+  const sent = [];
+  const ok = createSender({ fetchImpl: async (u, i) => { sent.push([u, JSON.parse(i.body)]); return { ok: true }; } });
+  assert.equal(await ok.report({ i: 'inst_abc123', p: '2026.11.07', t: 'search', r: 'other' }), true);
+  assert.deepEqual(sent, [['/v1/report', { i: 'inst_abc123', p: '2026.11.07', t: 'search', r: 'other' }]]);
+  const drops = [];
+  const s = createSender({ fetchImpl: async () => ({ ok: false, status: 500 }), onDrop: (k) => drops.push(k) });
+  assert.equal(await s.report({ i: 'inst_abc123', p: '2026.11.07', t: 'search', r: 'other' }), false);
+  assert.equal(await s.report({ i: 'inst_abc123', p: '2026.11.07', t: 'search', r: 'my search was cats' }), false, 'free text is refused');
+  assert.deepEqual(drops, ['network', 'invalid']);
+});

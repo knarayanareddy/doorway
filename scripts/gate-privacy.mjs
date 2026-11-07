@@ -72,7 +72,7 @@ const handled = new Set([...edge.matchAll(/p === '(\/v1\/[a-z/]*)'/g)].map((m) =
 for (const [p, where] of pathsMentioned) {
   if (!handled.has(p) && !['/v1/', '/v1'].includes(p)) problems.push(`${[...where].join(', ')}: names ${p}, which edge/c.js does not handle`);
 }
-const DOOR_WRITES = new Set(['/v1/c', '/v1/heartbeat']);
+const DOOR_WRITES = new Set(['/v1/c', '/v1/heartbeat', '/v1/report']);
 for (const [p, where] of pathsMentioned) {
   for (const w of where) {
     if (w.startsWith('packages/doorway/src/send.js') && !DOOR_WRITES.has(p)) problems.push(`${w}: the Door may only POST to ${[...DOOR_WRITES].join(', ')}, not ${p}`);

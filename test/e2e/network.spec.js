@@ -1,16 +1,15 @@
 import { test, expect } from '@playwright/test';
-import { resetDb, waitForAgg, act, trigger, openPage, DOOR, PLATFORM } from './helpers.js';
+import { resetDb, waitForAgg, act, trigger, openPage, stubHelpSites, DOOR, PLATFORM, settle } from './helpers.js';
 
 // Review H3 — the EVIDENCE behind the privacy claim: every request the real Door
 // makes in a real browser, on the real mock platform.
 const FIELDS = ['i', 'v', 'f', 't', 'o', 'r', 'e'];
 
-test.beforeEach(async ({ request, context }) => {
-  await resetDb(request);
-  await context.route('https://**/*', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<title>help</title>' }));
-});
+test.beforeEach(async ({ request }) => { await resetDb(request); });
+test.afterEach(async ({ page }) => { await settle(page); });
 
 test('network: one host, POST only for writes, seven fields, no cookies, one storage key', async ({ page, context, request }) => {
+  await stubHelpSites(context);
   const seen = [];
   page.on('request', (r) => seen.push({ url: r.url(), method: r.method(), body: r.postData(), headers: r.headers(), frame: r.frame()?.url() }));
   const responses = [];
@@ -43,7 +42,7 @@ test('network: one host, POST only for writes, seven fields, no cookies, one sto
   expect(writes.length).toBeGreaterThan(0);
   for (const w of writes) {
     expect(w.method).toBe('POST');
-    expect(new URL(w.url).pathname).toMatch(/^\/v1\/(c|heartbeat)$/);
+    expect(new URL(w.url).pathname).toMatch(/^\/v1\/(c|heartbeat|report)$/);
     const body = JSON.parse(w.body);
     expect(Object.keys(body).sort()).toEqual((new URL(w.url).pathname === '/v1/c' ? FIELDS : ['d', 'i', 'v']).sort());
     expect(w.headers.cookie).toBeUndefined();

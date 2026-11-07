@@ -21,6 +21,8 @@ const STORAGE_KEY = 'doorway:v1';
 // card.js speaks in actions; the plug-in contract speaks in outcomes. This is
 // the only translation point.
 const CONTRACT = { primary: 'clicked_help', secondary: 'continued', dismiss: 'dismissed', timeout: 'timeout' };
+/** Longest the overlay waits for the outcome to be sent before it settles anyway. */
+export const SETTLE_MAX_MS = 1500;
 const ACTED = new Set(['clicked_help', 'dismissed', 'continued']);
 
 /**
@@ -76,6 +78,7 @@ export function createDoorway({
         onSelect: () => { if (hasLink) openHelp(route.url); },
       },
       secondary: { label: LABELS.secondary[L], kind: 'secondary' },
+      tertiary: { label: LABELS.report[L], kind: 'tertiary' },
       footnote: footnoteFor(route, L, now()),
     });
     return descriptor;
@@ -119,9 +122,10 @@ export function createDoorway({
     writeState(blocked ? adv : { ...adv, ...(st.drops ? { drops: st.drops } : {}) });
 
     const exposure = { finished: false, handle: null };
-    exposure.finish = (outcome) => {
+    exposure.finish = (outcome, extra = null) => {
       if (exposure.finished) return;
       exposure.finished = true;
+      exposure.stopRefocus?.();
       if (ACTED.has(outcome)) {
         const cur = readState();
         if (!cur.__blocked) writeState(markActed(cur, now()));
@@ -129,7 +133,7 @@ export function createDoorway({
       // Exactly one record per exposure: whichever outcome comes first. A person
       // who looks away and later returns is still ONE exposure, so the
       // click-through denominator equals real exposures.
-      send.event({
+      const sent = send.event({
         i: install,
         v: variant,
         f: decision.format,
@@ -137,19 +141,50 @@ export function createDoorway({
         o: outcome,
         r: route?.id || 'xx-none',
         e: decision.bucket,
-      });
-      onSettled();   // the overlay never waits on the network
+      }, { unloading: outcome === 'left_page' });
+      // The frame must outlive the request: when the loader removes the iframe,
+      // Firefox cancels a fetch still in flight, which silently loses the outcome.
+      // So settle once the send is done — bounded, so a hung network never keeps a
+      // layer over the page. A page that is already unloading (left_page) cannot wait.
+      if (outcome === 'left_page') onSettled();
+      else Promise.race([Promise.all([sent, extra]), new Promise((r) => setTimeout(r, SETTLE_MAX_MS))]).finally(onSettled);
     };
 
     const handle = mount(descriptor, {
       doc,
       onOutcome: ({ outcome }) => {
         // route-less primary is a plain close, never a help click
-        const mapped = outcome === 'primary' && !route?.url ? 'continued' : (CONTRACT[outcome] || 'timeout');
-        exposure.finish(mapped);
+        const mapped = outcome === 'primary' && !route?.url ? 'continued' : (outcome === 'tertiary' ? 'continued' : (CONTRACT[outcome] || 'timeout'));
+        // "This warning was a mistake": counted as the person continuing, plus a
+        // content-free report. The reason is always 'other' — the Door never asks a
+        // visitor to say who they are; categories come from the platform's admin (Desk).
+        const report = outcome === 'tertiary'
+          ? send.report({ i: install, p: String(routes?.version || 'unknown').toLowerCase(), t: normaliseType(type), r: 'other' })
+          : null;
+        exposure.finish(mapped, report);
       },
     });
     exposure.handle = handle;
+    // The loader focuses this frame when it reveals it, which can land after the
+    // card focused its primary action and leave focus on the frame's body (seen in
+    // WebKit). Put focus back into the dialog whenever the window gains it.
+    // It must never fight the person: once they press a key or a pointer, they own focus.
+    let interacted = false;
+    const mark = () => { interacted = true; };
+    w.addEventListener?.('keydown', mark, true);
+    w.addEventListener?.('pointerdown', mark, true);
+    const refocus = () => {
+      const root = handle.el?.shadowRoot;
+      if (!interacted && root && !root.activeElement) root.querySelector('[data-act="primary"]')?.focus();
+    };
+    w.addEventListener?.('focus', refocus);
+    // The frame is visibility:hidden until the loader reveals it, and an element in a
+    // hidden frame cannot take focus — so a focus attempt made before the reveal is lost.
+    const retries = [60, 150, 300, 600, 1200].map((ms) => setTimeout(refocus, ms));
+    exposure.stopRefocus = () => {
+      w.removeEventListener?.('focus', refocus); w.removeEventListener?.('keydown', mark, true); w.removeEventListener?.('pointerdown', mark, true);
+      retries.forEach(clearTimeout);
+    };
     active = exposure;
     startLeaveWatch();
     flushDrops();

@@ -1,10 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { resetDb, readDb, waitForAgg, act, PLATFORM } from './helpers.js';
+import { resetDb, readDb, waitForAgg, act, PLATFORM, settle } from './helpers.js';
 
-test.beforeEach(async ({ request, context }) => {
-  await resetDb(request);
-  await context.route('https://**/*', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<title>help</title>' }));
-});
+test.beforeEach(async ({ request }) => { await resetDb(request); });
+test.afterEach(async ({ page }) => { await settle(page); });
 
 const manifest = (page) => page.evaluate(async () => (await fetch('/dist/v0.2.0/manifest.json')).json());
 

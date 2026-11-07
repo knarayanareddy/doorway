@@ -8,10 +8,10 @@
  * local dropped-events counter; the Door reports that count — a number, nothing
  * else — in a heartbeat, so a pilot cannot silently undercount.
  */
-import { build, buildHeartbeat } from '../../core/src/counter.js';
+import { build, buildHeartbeat, buildReport } from '../../core/src/counter.js';
 import { VERSION } from './version.js';
 
-export function createSender({ origin = '', fetchImpl = globalThis.fetch, onDrop = () => {} } = {}) {
+export function createSender({ origin = '', fetchImpl = globalThis.fetch, beaconImpl = globalThis.navigator?.sendBeacon?.bind(globalThis.navigator), onDrop = () => {} } = {}) {
   const post = (path, payload) =>
     fetchImpl(origin + path, {
       method: 'POST',
@@ -24,11 +24,29 @@ export function createSender({ origin = '', fetchImpl = globalThis.fetch, onDrop
     }).then((r) => { if (!r.ok) throw new Error('status ' + r.status); });
 
   return {
-    /** @returns {Promise<boolean>} true when the edge accepted the event. */
-    async event(raw) {
+    /**
+     * @param {object} raw
+     * @param {{unloading?: boolean}} [opts]  true while the page is going away: a keepalive
+     *   fetch can be cancelled there (observed in WebKit), so the browser's beacon queue
+     *   is used. Same endpoint, same validated payload — only the transport differs.
+     * @returns {Promise<boolean>} true when the event was accepted (or, for a beacon, queued).
+     */
+    async event(raw, { unloading = false } = {}) {
       const res = build(raw);
       if (!res.ok) { onDrop('invalid', res.errors); return false; }
+      if (unloading && beaconImpl) {
+        try {
+          if (beaconImpl(origin + '/v1/c', new Blob([JSON.stringify(res.payload)], { type: 'application/json' }))) return true;
+        } catch { /* fall back to fetch keepalive */ }
+      }
       try { await post('/v1/c', res.payload); return true; }
+      catch (e) { onDrop('network', [String(e?.message || e)]); return false; }
+    },
+    /** A visitor's "this warning was a mistake": install, pack version, trigger kind, closed-list reason. */
+    async report(raw) {
+      const res = buildReport(raw);
+      if (!res.ok) { onDrop('invalid', res.errors); return false; }
+      try { await post('/v1/report', res.payload); return true; }
       catch (e) { onDrop('network', [String(e?.message || e)]); return false; }
     },
     /** Sends a drop count and returns true on success so the caller can reset it. */
