@@ -10,8 +10,22 @@
  * is verified manually (keyboard-only pass, screen-reader pass, 320px).
  */
 
-export const VARIANTS = Object.freeze(['gate', 'blur', 'card', 'chat', 'quiet']);
+export const VARIANTS = Object.freeze(['gate', 'blur', 'card', 'chat', 'hallway', 'door', 'quiet']);
 export const ACTION_KINDS = Object.freeze(['primary', 'secondary', 'dismiss', 'tertiary']);
+
+/**
+ * Optional content sections, for panels that explain or rehearse something (a disclosure
+ * of what is sent, a list of first sentences, an FAQ). Plain data only; every string is
+ * escaped on render, so a section can never carry markup.
+ *
+ *   section = { disclosure: { label, blocks }, placement? }  |  { blocks, placement? }
+ *   block   = { type:'text', text } | { type:'heading', text } | { type:'list', items }
+ *           | { type:'fields', rows:[{ k, v, note }] }
+ *           | { type:'phrases', items, copyLabel, copiedLabel }
+ *           | { type:'action', id, label, closes?, onSelect? }
+ *   placement = 'content' (between the body and the actions, default) | 'footer'
+ */
+export const BLOCK_TYPES = Object.freeze(['text', 'heading', 'list', 'fields', 'phrases', 'action']);
 
 export function buildCard({
   variant = 'card',
@@ -20,6 +34,8 @@ export function buildCard({
   primary,
   secondary = null,
   tertiary = null,
+  sections = [],
+  closeLabel = 'Close dialog',
   attribution = null,
   footnote = null,
   lang = 'en',
@@ -28,7 +44,7 @@ export function buildCard({
     variant, lang,
     headline: String(headline ?? '').trim(),
     body: String(body ?? '').trim(),
-    primary, secondary, tertiary, attribution, footnote,
+    primary, secondary, tertiary, sections, closeLabel, attribution, footnote,
   };
   const v = validate(d);
   if (!v.ok) throw new Error('invalid card: ' + v.errors.join('; '));
@@ -47,6 +63,26 @@ export function validate(d = {}) {
     errors.push('primary.kind must be one of ' + ACTION_KINDS.join('|'));
   }
   if (d.tertiary && (typeof d.tertiary.label !== 'string' || !d.tertiary.label.trim())) errors.push('tertiary action needs a label');
+  const secs = d.sections || [];
+  if (secs.length > 6) errors.push('at most 6 sections');
+  const ids = new Set();
+  for (const sec of secs) {
+    const blocks = sec.disclosure ? sec.disclosure.blocks : sec.blocks;
+    if (sec.disclosure && (typeof sec.disclosure.label !== 'string' || !sec.disclosure.label.trim())) errors.push('disclosure needs a label');
+    if (!Array.isArray(blocks) || blocks.length === 0) { errors.push('a section needs blocks'); continue; }
+    for (const b of blocks) {
+      if (!BLOCK_TYPES.includes(b && b.type)) { errors.push('unknown block type: ' + (b && b.type)); continue; }
+      if (b.type === 'action') {
+        if (!b.id || !/^[a-z0-9-]{1,24}$/.test(b.id)) errors.push('action block needs a simple id');
+        if (ids.has(b.id)) errors.push('duplicate action id: ' + b.id);
+        ids.add(b.id);
+        if (typeof b.label !== 'string' || !b.label.trim()) errors.push('action block needs a label');
+      }
+      if (b.type === 'list' && !Array.isArray(b.items)) errors.push('list block needs items');
+      if (b.type === 'phrases' && !(Array.isArray(b.items) && b.items.length)) errors.push('phrases block needs items');
+      if (b.type === 'fields' && !(Array.isArray(b.rows) && b.rows.length)) errors.push('fields block needs rows');
+    }
+  }
   if (d.body && d.body.length > 420) errors.push('body over 420 chars — will need scrolling');
   return { ok: errors.length === 0, errors };
 }
@@ -70,7 +106,10 @@ export function mount(d, { onOutcome, doc = globalThis.document } = {}) {
   wrap.innerHTML = render(d);
   root.appendChild(wrap);
 
-  const buttons = [...root.querySelectorAll('button')];
+  // Focusable controls are looked up when a key is pressed, not once at mount: sections can
+  // reveal buttons later, and a stale list would let Tab skip them or trap focus too early.
+  const focusables = () => [...root.querySelectorAll('button')].filter((b) => !b.closest('[hidden]'));
+  const buttons = focusables();
   const primary = root.querySelector('[data-act="primary"]');
   const prev = doc.activeElement;
   let outcome = 'timeout';
@@ -95,12 +134,42 @@ export function mount(d, { onOutcome, doc = globalThis.document } = {}) {
   const x = root.querySelector('[data-act="dismiss"]');
   if (x) x.addEventListener('click', () => finish('dismiss'));
 
+  // Sections: disclosures, copy buttons and action blocks.
+  const actions = new Map();
+  for (const sec of d.sections || []) for (const b of (sec.disclosure ? sec.disclosure.blocks : sec.blocks)) if (b.type === 'action') actions.set(b.id, b);
+  root.addEventListener('click', (e) => {
+    const t = e.target.closest ? e.target.closest('button') : null;
+    if (!t) return;
+    if (t.dataset.disc) {
+      const body = root.getElementById ? root.getElementById(t.dataset.disc) : root.querySelector('#' + t.dataset.disc);
+      const open = t.getAttribute('aria-expanded') === 'true';
+      t.setAttribute('aria-expanded', open ? 'false' : 'true');
+      if (body) body.hidden = open;
+    } else if (t.dataset.copyText !== undefined) {
+      copyText(doc, t.dataset.copyText);
+      const original = t.dataset.label;
+      t.textContent = t.dataset.done || original;
+      setTimeout(() => { t.textContent = original; }, 1800);
+    } else if (t.dataset.sect) {
+      const b = actions.get(t.dataset.sect);
+      if (!b) return;
+      if (b.closes) { finish('section:' + b.id); if (b.onSelect) b.onSelect(); }
+      else {
+        const r = b.onSelect ? b.onSelect() : null;
+        const status = t.parentElement && t.parentElement.querySelector('.astat');
+        if (status) status.textContent = (r && r.message) || '';
+      }
+    }
+  });
+
   root.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { finish('dismiss'); return; }
-    if (e.key !== 'Tab' || buttons.length === 0) return;
-    const i = buttons.indexOf(root.activeElement);
-    if (e.shiftKey && i <= 0) { e.preventDefault(); buttons[buttons.length - 1].focus(); }
-    else if (!e.shiftKey && i === buttons.length - 1) { e.preventDefault(); buttons[0].focus(); }
+    if (e.key !== 'Tab') return;
+    const list = focusables();
+    if (list.length === 0) return;
+    const i = list.indexOf(root.activeElement);
+    if (e.shiftKey && i <= 0) { e.preventDefault(); list[list.length - 1].focus(); }
+    else if (!e.shiftKey && i === list.length - 1) { e.preventDefault(); list[0].focus(); }
   });
 
   setTimeout(() => { const f = primary || buttons[0]; if (f) f.focus(); }, 30);
@@ -134,6 +203,45 @@ export function mount(d, { onOutcome, doc = globalThis.document } = {}) {
   return { el: host, close, outcome: () => outcome };
 }
 
+function copyText(doc, text) {
+  try {
+    const nav = doc.defaultView && doc.defaultView.navigator;
+    if (nav && nav.clipboard && nav.clipboard.writeText) { nav.clipboard.writeText(text).catch(() => legacyCopy(doc, text)); return; }
+  } catch (e) { /* fall through */ }
+  legacyCopy(doc, text);
+}
+function legacyCopy(doc, text) {
+  const ta = doc.createElement('textarea');
+  ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+  doc.body.appendChild(ta); ta.select();
+  try { doc.execCommand('copy'); } catch (e) { /* nothing more to try */ }
+  ta.remove();
+}
+
+let uid = 0;
+function renderBlock(b) {
+  switch (b.type) {
+    case 'text': return '<p class="bt">' + esc(b.text) + '</p>';
+    case 'heading': return '<h3 class="bh">' + esc(b.text) + '</h3>';
+    case 'list': return '<ul class="bl">' + b.items.map((i) => '<li>' + esc(i) + '</li>').join('') + '</ul>';
+    case 'fields': return '<dl class="bf">' + b.rows.map((r) => '<div><dt><code>' + esc(r.k) + '</code></dt><dd>' + esc(r.v) + (r.note ? '<small>' + esc(r.note) + '</small>' : '') + '</dd></div>').join('') + '</dl>';
+    case 'phrases': return '<ul class="ph">' + b.items.map((i) =>
+      '<li><span>' + esc(i) + '</span><button class="cp" data-copy-text="' + esc(i) + '" data-label="' + esc(b.copyLabel || 'Copy') + '" data-done="' + esc(b.copiedLabel || '') + '">' + esc(b.copyLabel || 'Copy') + '</button></li>').join('') + '</ul>';
+    case 'action': return '<div class="ar"><button class="sa" data-sect="' + esc(b.id) + '">' + esc(b.label) + '</button><span class="astat" role="status" aria-live="polite"></span></div>';
+    default: return '';
+  }
+}
+function renderSections(list, placement) {
+  return (list || []).filter((s) => (s.placement || 'content') === placement).map((s) => {
+    if (s.disclosure) {
+      const id = 'dsc' + (uid++);
+      return '<div class="disc"><button class="dt" data-disc="' + id + '" aria-expanded="false" aria-controls="' + id + '">' + esc(s.disclosure.label) + '<span class="chev" aria-hidden="true">\u25be</span></button>' +
+        '<div class="dbody" id="' + id + '" hidden>' + s.disclosure.blocks.map(renderBlock).join('') + '</div></div>';
+    }
+    return '<div class="blocks">' + s.blocks.map(renderBlock).join('') + '</div>';
+  }).join('');
+}
+
 function esc(s) {
   return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 }
@@ -144,8 +252,8 @@ function render(d) {
   }
   const attr = d.attribution
     ? '<div class="bar"><span class="attr">' + esc(d.attribution) + '</span>' +
-      '<button class="x" data-act="dismiss" aria-label="Close dialog">\u00d7</button></div>'
-    : '<div class="bar"><span></span><button class="x" data-act="dismiss" aria-label="Close dialog">\u00d7</button></div>';
+      '<button class="x" data-act="dismiss" aria-label="' + esc(d.closeLabel || 'Close dialog') + '">\u00d7</button></div>'
+    : '<div class="bar"><span></span><button class="x" data-act="dismiss" aria-label="' + esc(d.closeLabel || 'Close dialog') + '">\u00d7</button></div>';
   const sec = d.secondary ? '<button class="alt" data-act="secondary">' + esc(d.secondary.label) + '</button>' : '';
   const rep = d.tertiary ? '<button class="rep" data-act="tertiary">' + esc(d.tertiary.label) + '</button>' : '';
   const foot = d.footnote ? '<p class="conf">' + esc(d.footnote) + '</p>' : '';
@@ -153,8 +261,9 @@ function render(d) {
   return '<div role="dialog" aria-modal="true"' + labelledBy + '>' + attr +
     (d.headline ? '<h2 id="doorway-card-title">' + esc(d.headline) + '</h2>' : '') +
     (d.body ? '<p>' + esc(d.body) + '</p>' : '') +
+    renderSections(d.sections, 'content') +
     '<button class="cta" data-act="primary">' + esc(d.primary.label) + '</button>' +
-    sec + rep + foot + '</div>';
+    sec + rep + renderSections(d.sections, 'footer') + foot + '</div>';
 }
 
 const CSS = [
@@ -176,6 +285,19 @@ const CSS = [
   '.alt:focus-visible{outline:3px solid #1b1a18;outline-offset:2px}',
   '.rep{display:block;margin:14px auto 0;background:none;border:0;padding:12px 8px;min-height:44px;font-size:14px;color:#1f4e79;text-decoration:underline;cursor:pointer}',
   '.rep:focus-visible{outline:3px solid #1b1a18;outline-offset:2px}',
+  '.disc{margin-top:12px;border-top:1px solid #e2ddd4}',
+  '.dt{display:flex;width:100%;justify-content:space-between;align-items:center;background:none;border:0;padding:12px 2px;min-height:44px;font-size:14px;font-weight:600;color:#1f4e79;cursor:pointer;text-align:left}',
+  '.dt:focus-visible,.sa:focus-visible,.cp:focus-visible{outline:3px solid #1b1a18;outline-offset:2px}',
+  '.dt[aria-expanded="true"] .chev{transform:rotate(180deg)}',
+  '.dbody{padding:0 2px 8px}',
+  '.bt{font-size:14px;line-height:1.5;margin:0 0 10px;color:#3d3934}',
+  '.bh{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#6d665e;margin:14px 0 6px}',
+  '.bl{margin:0 0 10px;padding-left:18px;font-size:14px;line-height:1.5;color:#3d3934}',
+  '.bf{margin:0 0 10px;font-size:13px}.bf>div{padding:7px 0;border-bottom:1px solid #eee9df}.bf dt{margin:0}.bf dd{margin:2px 0 0;color:#3d3934;overflow-wrap:anywhere}.bf small{display:block;color:#6d665e;font-size:12px;margin-top:2px}',
+  '.bf code{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;color:#1f4e79}',
+  '.ph{list-style:none;margin:0 0 10px;padding:0}.ph li{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:9px 10px;margin-bottom:6px;border:1px solid #d9d2c5;border-radius:9px;font-size:14px;color:#3d3934}',
+  '.cp,.sa{background:none;border:1px solid #1f4e79;color:#1f4e79;border-radius:7px;font-size:13px;font-weight:600;padding:8px 10px;min-height:44px;cursor:pointer;white-space:nowrap}',
+  '.ar{display:flex;gap:10px;align-items:center;margin:6px 0 10px;flex-wrap:wrap}.astat{font-size:12px;color:#6d665e}',
   '.conf{font-size:12px;color:#6d665e;margin-top:14px;border-top:1px solid #e2ddd4;padding-top:11px}',
   '.quiet{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:#26241f;color:#f5f1e8;font-size:13px;padding:11px 16px;border-radius:999px;z-index:2147483000;max-width:92vw}',
   '@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}',

@@ -57,7 +57,7 @@ export function createLoader({
     iframe.setAttribute('sandbox', SANDBOX);
     iframe.setAttribute('referrerpolicy', 'no-referrer');
     iframe.setAttribute('title', 'Help');
-    iframe.setAttribute('allow', '');
+    iframe.setAttribute('allow', 'clipboard-write'); // only so the "copy this sentence" button works
     // Hidden until the Door says it is ready: a broken install must never leave
     // an invisible full-screen layer over the platform's page.
     iframe.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;border:0;z-index:2147483647;' +

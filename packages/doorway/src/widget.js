@@ -13,6 +13,7 @@ import { normaliseType } from '../../core/src/counter.js';
 import { buildCard, mount } from '../../shared/card.js';
 import { copyFor, attributionFor, footnoteFor, variantIndex, langOf, LABELS } from './copy.js';
 import { createSender } from './send.js';
+import { glassSection, hallwaySections } from './panels.js';
 
 export { variantIndex, footnoteFor };
 
@@ -20,7 +21,7 @@ const STORAGE_KEY = 'doorway:v1';
 
 // card.js speaks in actions; the plug-in contract speaks in outcomes. This is
 // the only translation point.
-const CONTRACT = { primary: 'clicked_help', secondary: 'continued', dismiss: 'dismissed', timeout: 'timeout' };
+const CONTRACT = { primary: 'clicked_help', secondary: 'continued', dismiss: 'dismissed', timeout: 'timeout', 'section:alt': 'clicked_help' };
 /** Longest the overlay waits for the outcome to be sent before it settles anyway. */
 export const SETTLE_MAX_MS = 1500;
 const ACTED = new Set(['clicked_help', 'dismissed', 'continued']);
@@ -61,17 +62,31 @@ export function createDoorway({
   let active = null;      // { handle, finished }
   let leaveListenersOn = false;
 
-  function present(decision, variantId, route) {
+  /**
+   * @param {object} ctx
+   * @param {object|null} ctx.route       the help service offered
+   * @param {object|null} ctx.selfhelp    a self-help alternative, if one exists
+   * @param {object} ctx.preview          the exact payload this exposure would send (outcome still null)
+   * @param {number} ctx.localCount       how many times this device has seen the Door
+   */
+  function present(decision, variantId, { route, selfhelp, preview, localCount, onWipe, onAlt }) {
     const variants = copyFor({ format: decision.format, family: decision.family, lang: L, route, legalJurisdiction, now: now() });
     const t = variants[variantIndex(variantId)] || variants[0];
     const hasLink = !!route?.url;
 
-    const descriptor = buildCard({
+    const sections = [];
+    if (decision.format === 'hallway') sections.push(...hallwaySections({ lang: L, route, selfhelp, now: now(), onAlt }));
+    // The Glass Door is on every shape except the quiet pill: the person can check what is sent
+    // at the moment they decide whether to trust it.
+    if (decision.format !== 'quiet') sections.push(glassSection({ lang: L, preview, localCount, onWipe }));
+
+    return buildCard({
       variant: decision.format,
       headline: t.h,
       body: t.b,
       lang: L,
       attribution: attributionFor(route, L),
+      closeLabel: LABELS.closeDialog[L],
       primary: {
         label: hasLink ? LABELS.primary[L] : LABELS.close[L],
         kind: 'primary',
@@ -79,9 +94,9 @@ export function createDoorway({
       },
       secondary: { label: LABELS.secondary[L], kind: 'secondary' },
       tertiary: { label: LABELS.report[L], kind: 'tertiary' },
+      sections,
       footnote: footnoteFor(route, L, now()),
     });
-    return descriptor;
   }
 
   // noreferrer+noopener: the host page's URL (which may hold the search query)
@@ -112,21 +127,40 @@ export function createDoorway({
     const decision = pick(st, config, now(), { storageBlocked: blocked });
     const variant = variantFor(decision.family, st.seen || []);
 
-    const need = decision.format === 'chat' ? 'human' : 'any';
-    const { route } = resolve(w.navigator?.language || L, routes, { need, country: countryCode });
-    const descriptor = present(decision, variant, route || null);
+    // Shapes that invite contact prefer a person; resolve() degrades to self-help, and the
+    // copy follows the route's real kind (M6), so nobody is promised a person they will not get.
+    const need = decision.format === 'hallway' || decision.format === 'door' ? 'human' : 'any';
+    const langTag = w.navigator?.language || L;
+    const { route } = resolve(langTag, routes, { need, country: countryCode });
+    const selfhelp = decision.format === 'hallway' ? (resolve(langTag, routes, { need: 'selfhelp', country: countryCode }).route || null) : null;
 
     // Count the exposure before anything can go wrong; the clock is kept for
     // in-place escalations so a retry cannot postpone the next full warning.
     const adv = advance(blocked ? {} : st, variant, now(), { keepClock: decision.keepClock });
     writeState(blocked ? adv : { ...adv, ...(st.drops ? { drops: st.drops } : {}) });
 
-    const exposure = { finished: false, handle: null };
+    // Exactly the object that will be sent, minus the outcome that does not exist yet.
+    const preview = { i: install, v: variant, f: decision.format, t: normaliseType(type), o: null, r: route?.id || 'xx-none', e: decision.bucket };
+
+    const exposure = { finished: false, handle: null, wiped: false };
+    const descriptor = present(decision, variant, {
+      route: route || null,
+      selfhelp,
+      preview,
+      localCount: adv.n,
+      onWipe: () => {
+        // The person asked this device to forget. Nothing may be written back afterwards.
+        exposure.wiped = true;
+        try { store?.removeItem(STORAGE_KEY); } catch { /* nothing to wipe */ }
+      },
+      onAlt: () => { if (selfhelp?.url) openHelp(selfhelp.url); },
+    });
+
     exposure.finish = (outcome, extra = null) => {
       if (exposure.finished) return;
       exposure.finished = true;
       exposure.stopRefocus?.();
-      if (ACTED.has(outcome)) {
+      if (ACTED.has(outcome) && !exposure.wiped) {
         const cur = readState();
         if (!cur.__blocked) writeState(markActed(cur, now()));
       }
@@ -139,7 +173,7 @@ export function createDoorway({
         f: decision.format,
         t: normaliseType(type),
         o: outcome,
-        r: route?.id || 'xx-none',
+        r: (outcome === 'clicked_help' && exposure.altRoute) || route?.id || 'xx-none',
         e: decision.bucket,
       }, { unloading: outcome === 'left_page' });
       // The frame must outlive the request: when the loader removes the iframe,
@@ -154,6 +188,7 @@ export function createDoorway({
       doc,
       onOutcome: ({ outcome }) => {
         // route-less primary is a plain close, never a help click
+        if (outcome === 'section:alt') exposure.altRoute = selfhelp?.id;
         const mapped = outcome === 'primary' && !route?.url ? 'continued' : (outcome === 'tertiary' ? 'continued' : (CONTRACT[outcome] || 'timeout'));
         // "This warning was a mistake": counted as the person continuing, plus a
         // content-free report. The reason is always 'other' — the Door never asks a

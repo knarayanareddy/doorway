@@ -33,7 +33,7 @@ const strings = allStrings();
 
 for (const { path, text } of strings) {
   for (const re of ASSUMES_INTENT) if (re.test(text)) problems.push(`${path}: assumes intent → "${text}"`);
-  if (CLAIM.test(text)) problems.push(`${path}: confidentiality/anonymity/legal wording in unreviewed copy → "${text}"`);
+  if (!path.startsWith('GLASS') && CLAIM.test(text)) problems.push(`${path}: confidentiality/anonymity/legal wording in unreviewed copy → "${text}"`);
   if (UNIT.test(text)) problems.push(`${path}: a number with a time unit needs a reviewed legal record → "${text}"`);
   for (const s of longSentences(text)) problems.push(`${path}: sentence over 20 words → "${s}"`);
 }

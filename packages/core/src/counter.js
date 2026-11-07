@@ -6,10 +6,13 @@
  * Those omissions are the entire privacy argument.
  */
 
+/** Shapes the Door can show. `fork` and `wave` are reserved: accepted only via build(..., {extraFormats}). */
+export const FORMATS = Object.freeze(['gate', 'card', 'hallway', 'door', 'quiet']);
+
 export const ALLOWED = Object.freeze({
   i: (v) => typeof v === 'string' && /^inst_[a-z0-9]{6,}$/.test(v),
   v: (v) => typeof v === 'string' && /^(legal|harm|control)-\d{2}$/.test(v),
-  f: (v) => ['gate', 'card', 'chat', 'quiet'].includes(v),
+  f: (v) => FORMATS.includes(v),
   t: (v) => ['search', 'chat', 'nav'].includes(v),
   o: (v) => ['clicked_help', 'left_page', 'dismissed', 'continued', 'timeout'].includes(v),
   r: (v) => typeof v === 'string' && /^[a-z]{2}-[a-z0-9-]{2,}$/.test(v),
@@ -36,15 +39,19 @@ export function normaliseType(raw) {
   }
 }
 
-/** Whitelist build. Unknown or extra keys are rejected, not stripped. */
-export function build(input = {}) {
+/**
+ * Whitelist build. Unknown or extra keys are rejected, not stripped.
+ * `extraFormats` exists only for prototypes of reserved shapes; the shipped Door and the
+ * edge never pass it, so the edge keeps rejecting them.
+ */
+export function build(input = {}, { extraFormats = [] } = {}) {
   const errors = [];
   for (const k of Object.keys(input)) {
     if (!(k in ALLOWED)) errors.push(`unknown field: ${k}`);
   }
   for (const [k, ok] of Object.entries(ALLOWED)) {
     if (input[k] === undefined) errors.push(`missing field: ${k}`);
-    else if (!ok(input[k])) errors.push(`invalid ${k}: ${String(input[k]).slice(0, 40)}`);
+    else if (!ok(input[k]) && !(k === 'f' && extraFormats.includes(input[k]))) errors.push(`invalid ${k}: ${String(input[k]).slice(0, 40)}`);
   }
   if (errors.length) return { ok: false, errors };
   return { ok: true, payload: Object.fromEntries(FIELDS.map((k) => [k, input[k]])) };

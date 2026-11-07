@@ -30,16 +30,36 @@ export const DEFAULT_CONFIG = Object.freeze({
   // rule is unchanged where nagging would actually happen. See docs/07.
   intervalHours: Object.freeze([0, 10 / 60, 6, 72]),
   minIntervalHours: 72,
-  gateUntil: 2,
-  chatFrom: 5,
-  // family shown per format; corrected after the RCT review
+  // One SHAPE per exposure, each answering a different question the person may be
+  // silently asking. The last shape repeats once the sequence runs out.
+  //   gate      "What is this?"                  the plain fact
+  //   card      "Why does it matter?"            the harm, in a human voice
+  //   hallway   "What happens if I reach out?"   rehearse the contact before making it
+  //   door      "Is it still open?"              presence instead of pressure
+  // `fork` ("Where do I stand?") and `wave` ("What do I do with this urge?") are
+  // reserved names. They are NOT in the shipped sequence until the open decisions on
+  // self-identification and clinical review are made (docs/11).
+  sequence: Object.freeze(['gate', 'card', 'hallway', 'hallway', 'door']),
+  // Family of copy per shape; `quiet` is the pill inside the re-warning window.
   families: Object.freeze({
     gate: 'legal',
     card: 'harm',
-    chat: 'control',
+    fork: 'harm',
+    wave: 'control',
+    hallway: 'control',
+    door: 'control',
     quiet: 'harm',
   }),
 });
+
+/** The shape for exposure number `next` (1-based). */
+export function shapeFor(next, cfg = DEFAULT_CONFIG) {
+  const seq = cfg.sequence;
+  return seq[Math.min(Math.max(1, Math.floor(next)), seq.length) - 1];
+}
+
+/** A shape re-shown inside the window must never be a modal gate (H1): the gate becomes an inline card. */
+export const inlineShape = (shape) => (shape === 'gate' ? 'card' : shape);
 
 /** Hours that must pass before exposure n+1 is shown at full strength. */
 export function intervalFor(n, cfg = DEFAULT_CONFIG) {
@@ -104,13 +124,11 @@ export function pick(state = {}, cfg = DEFAULT_CONFIG, now = Date.now(), opts = 
       };
     }
     const upNext = n + 1;
-    const family = upNext <= cfg.gateUntil ? cfg.families.gate
-      : upNext < cfg.chatFrom ? cfg.families.card
-        : cfg.families.chat;
+    const shape = shapeFor(upNext, cfg);
     return {
       state: 'ESCALATING',
-      format: upNext >= cfg.chatFrom ? 'chat' : 'card',
-      family,
+      format: inlineShape(shape),
+      family: cfg.families[shape],
       bucket: bucketOf(upNext),
       keepClock: true,
       reason: `retry inside the ${window}h window — escalate in place, clock not reset`,
@@ -118,14 +136,13 @@ export function pick(state = {}, cfg = DEFAULT_CONFIG, now = Date.now(), opts = 
   }
 
   const next = n + 1;
-
-  if (next <= cfg.gateUntil) {
-    return { state: 'FIRST', format: 'gate', family: cfg.families.gate, bucket: bucketOf(next) };
-  }
-  if (next < cfg.chatFrom) {
-    return { state: 'RETURNING', format: 'card', family: cfg.families.card, bucket: bucketOf(next) };
-  }
-  return { state: 'PERSISTENT', format: 'chat', family: cfg.families.chat, bucket: bucketOf(next) };
+  const shape = shapeFor(next, cfg);
+  return {
+    state: next === 1 ? 'FIRST' : next < cfg.sequence.length ? 'RETURNING' : 'PERSISTENT',
+    format: shape,
+    family: cfg.families[shape],
+    bucket: bucketOf(next),
+  };
 }
 
 /**
