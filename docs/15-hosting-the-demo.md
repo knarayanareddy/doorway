@@ -31,7 +31,7 @@ urls = {p: sb.url(p, token=False) for p in (3000, 3001)}   # token=False makes t
 ```bash
 # inside the sandbox (Ubuntu 24.04; it has no xz, so use the .tar.gz)
 sudo mkdir -p /opt/node && curl -sL https://nodejs.org/dist/v24.22.2/node-v24.22.2-linux-x64.tar.gz | sudo tar -xz -C /opt/node --strip-components=1
-git clone --depth 1 -b feature/levelled-up https://github.com/knarayanareddy/doorway.git app && cd app
+git clone --depth 1 -b wip/one-app https://github.com/knarayanareddy/doorway.git app && cd app
 PATH=/opt/node/bin:$PATH npm ci --omit=dev
 # the app that /app/ serves (prototype/dist/index.html); its devDependencies are needed only for this build
 PATH=/opt/node/bin:$PATH npm --prefix prototype ci
@@ -71,6 +71,7 @@ The platform origin serves the built app (`prototype/dist/index.html`, from `npm
 | `PORT` | both | injected by Maritime; the server binds `0.0.0.0:$PORT` |
 | `LABS_FORMATS` | door | defaults to `fork,wave` because this is a demo; a production edge leaves it unset |
 | `DESK_TOKEN` | door | the demo Desk's bearer token; defaults to `desk-demo-token`, which is public on purpose |
+| `I_UNDERSTAND_THIS_IS_A_PUBLIC_DEMO` | door, platform | set to `1` to start on a plain-http, non-localhost origin with the public `DESK_TOKEN`; without it the process refuses to start. https origins are not checked by this rule, so set a private `DESK_TOKEN` for any demo that should not be public |
 | `SEED` | door | `0` skips the synthetic data |
 | `PROTO_DIST` | platform | where the built app is. The image sets `/app/prototype/dist`; a sandbox leaves it unset (default `prototype/dist`). If `index.html` is missing the platform logs one `app not built` line and `/app/` answers 404 |
 
@@ -79,7 +80,7 @@ The platform origin serves the built app (`prototype/dist/index.html`, from `npm
 Maritime builds the image from the `Dockerfile`, whose `app` stage runs the prototype build, so no separate step is needed. Maritime gives an agent its URL at creation, and each deployment needs the other's, so the order is: create both, set the environment, restart.
 
 ```bash
-# 1. create both from the repository (use -b feature/levelled-up until it is merged)
+# 1. create both from the repository (use -b wip/one-app until it is merged: it holds the app at /app/)
 maritime create doorway-door     --repo https://github.com/knarayanareddy/doorway --public
 maritime create doorway-platform --repo https://github.com/knarayanareddy/doorway --public
 # 2. read each agent's id, then:   https://<door-id>.mtm.sh   https://<platform-id>.mtm.sh

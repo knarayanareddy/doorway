@@ -10,7 +10,7 @@
 
 ### V1 · Dutch confidentiality: what Offlimits actually promises
 
-**The claim.** The organisers' `data/legal-confidentiality.json` block `confidentiality-nl-1` asserts that nothing is reported to law enforcement. We have not verified this with the service.
+**The claim.** The organisers' `data/legal-confidentiality.json` block `confidentiality-nl-1` asserts that nothing is reported to law enforcement. We have not verified this with the service. The signed routes bundle no longer carries this claim: it sits in `research/route-claims-unverified.json`, which is never shipped or rendered.
 
 **Why it matters.** Whether a caller will be reported is the single most decision-relevant fact for someone considering a call. A wrong or unconfirmed claim is worse than none.
 

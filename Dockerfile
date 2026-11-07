@@ -44,5 +44,6 @@ COPY --from=app /app/prototype/dist/index.html ./prototype/dist/index.html
 
 ENV NODE_ENV=production
 ENV PROTO_DIST=/app/prototype/dist
+# DESK_TOKEN: set your own. On a plain-http, non-localhost origin the process refuses to start with the public default unless I_UNDERSTAND_THIS_IS_A_PUBLIC_DEMO=1.
 # ROLE, DOOR_ORIGIN and PLATFORM_ORIGIN are required and are set per deployment (maritime env set ... --reload).
 CMD ["node", "scripts/serve-demo.mjs"]

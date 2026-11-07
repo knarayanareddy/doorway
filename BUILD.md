@@ -99,4 +99,4 @@ Limits on the read side: `GET /v1/agg` answers 429 after 10 failed Bearer attemp
 
 1. **A non-developer installs it in under fifteen minutes, on camera.** Not yet run. The install is one script tag with data attributes (or the WordPress plugin); see `INSTALL.md`.
 2. **The network panel shows seven fields and zero cookies.** Asserted by `network.spec.js`; also demonstrable live with `npm run demo`.
-3. **Five consecutive triggers produce five different responses.** Asserted in `shift.test.js` for both spaced and burst sequences.
+3. **Five consecutive triggers escalate through the shipped sequence (gate, card, hallway, hallway, door; with the demo labs, gate, fork, wave, hallway, door).** Asserted in `shift.test.js` for both spaced and burst sequences.
