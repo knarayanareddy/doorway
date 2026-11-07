@@ -12,6 +12,10 @@
   label{display:block;margin:.6rem 0 .2rem} input,select,button{font:inherit;padding:.45rem .6rem}
   table{border-collapse:collapse;width:100%} td,th{border-bottom:1px solid #ddd;padding:.35rem .5rem;text-align:left}
   .sup{color:#6d665e;font-style:italic} .flag{background:#fde8e8} .note{color:#6d665e;font-size:.9rem}
+  .bar{display:flex;height:1.4rem;border-radius:4px;overflow:hidden;background:#eee;margin:.6rem 0}
+  .bar span{display:block;min-width:0} .o-clicked_help{background:#1d5c8a} .o-left_page{background:#b5651d} .o-dismissed{background:#8a8a8a} .o-continued{background:#5b8f3a} .o-timeout{background:#c9b458}
+  ul.ladder{list-style:none;padding:0} ul.ladder li{margin:.35rem 0} .unmeasured{color:#6d665e}
+  .caveat{border:1px solid #c9b6d6;background:#f6f1fb;padding:.6rem .9rem;border-radius:6px} .caveat h2{margin-top:.3rem}
 </style>
 </head>
 <body>
@@ -31,10 +35,36 @@
   <p class="label" id="label"></p>
   <h2>Exposures and outcomes</h2>
   <p id="headline"></p>
+  <div id="bar" class="bar" role="img" aria-label="Outcomes as a bar. Cells that are hidden are listed under the bar."></div>
+  <ul id="barkey" class="note"></ul>
   <table id="outcomes"><thead><tr><th>Outcome</th><th>Count</th></tr></thead><tbody></tbody></table>
   <h2>By shape</h2>
   <table id="shapes"><thead><tr><th>Shape</th><th>Exposures</th><th>Help clicks</th><th>Rate</th></tr></thead><tbody></tbody></table>
   <p class="note">Labs shapes (Fork, Wave) appear only on installs that opted in to labs. Rates are over every exposure of that shape, including people who left.</p>
+  <h2>Which triggers</h2>
+  <table id="triggers"><thead><tr><th>Trigger</th><th>Exposures</th><th>Help clicks</th><th>Rate</th></tr></thead><tbody></tbody></table>
+  <h2>Where people were sent</h2>
+  <table id="routes"><thead><tr><th>Help route</th><th>Exposures</th><th>Help clicks</th><th>Rate</th></tr></thead><tbody></tbody></table>
+  <p class="note">"No route shown" means the warning offered no help link for that exposure. It is not a place.</p>
+  <h2>How far the escalation went</h2>
+  <table id="escalation"><thead><tr><th>Step</th><th>Exposures</th><th>Help clicks</th><th>Rate</th></tr></thead><tbody></tbody></table>
+  <p class="note">Step 1 is a first warning. Higher steps are repeat warnings the Door counted for the same person in the window.</p>
+  <h2>Control wording vs other wording</h2>
+  <table id="arms"><thead><tr><th>Wording</th><th>Exposures</th><th>Help clicks</th><th>Rate</th></tr></thead><tbody></tbody></table>
+  <p class="note">Control is the wording that offers the way out. It is not a group that saw no warning, so this is not a randomised test.</p>
+  <h2>Adoption ladder</h2>
+  <p id="level"></p>
+  <ul id="ladder" class="ladder"></ul>
+  <aside class="caveat" id="caveat">
+    <h2>What this dashboard cannot tell you</h2>
+    <ul>
+      <li>The numbers are self-reported by the install's page. They are not authenticated, and the counter cannot prove an event was real.</li>
+      <li>There is no time of day. Nothing shows when in the day a warning fired.</li>
+      <li>The counter cannot tell people apart. One person may count twice, and two people may count as one.</li>
+      <li>Cells under 10 are hidden, and one more cell is hidden so a hidden value cannot be worked out from a total.</li>
+      <li>Rates are help clicks over exposures. A click is not proof that someone got help, and leaving a page is not proof of anything.</li>
+    </ul>
+  </aside>
   <h2>Days</h2>
   <table id="days-table"><thead><tr><th>Day</th><th>Exposures</th><th></th></tr></thead><tbody></tbody></table>
   <p class="note">Flagged days are shown, labelled, and left out of the headline rate. Cells under k are hidden so a single visit cannot be recovered.</p>

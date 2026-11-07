@@ -71,6 +71,10 @@ The Door will only load on the exact domain registered for the install (`frame-a
 
 `https://door.example.org/desk` — enter your install id and Desk token. Every figure is labelled *self-reported by the install's page, unauthenticated*; cells under 10 are hidden. The Desk also shows how many events the Door could not send, and a form to report a mistaken warning (no search text, no time finer than a day).
 
+The Desk also breaks the same counts down by trigger (search, chat, navigation), by help route (a route shown as *no route shown* means the warning offered no link), by escalation step (1 to 5 or more), and by control wording. The control wording is the copy that offers the way out, not a group that saw no warning. It has a one-page adoption ladder that ticks only what the counts prove. Two rungs (routes current, Glass Door audited) are listed as not measured by the Desk.
+
+The Desk has no hour-of-day view and no badge for a level. A "what this dashboard cannot tell you" box says what the counts can not show.
+
 ## 8. Running your own edge
 
 See `BUILD.md` → *Deploying the edge*.

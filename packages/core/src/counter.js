@@ -197,21 +197,36 @@ function hidden(values, k) {
   }
   return h;
 }
-export function deskByFormat(rows, { k = 10 } = {}) {
+/**
+ * Breaks rows down by `key` (rows are {key, outcome, count}). Same suppression for every
+ * breakdown. `order` lists the known keys in display order; unknown keys follow in row order.
+ */
+export function deskBreakdown(rows, { k = 10, order = [] } = {}) {
   const by = new Map();
   for (const r of rows) {
-    const f = by.get(r.format) || { total: 0, clicked: 0 };
+    const f = by.get(r.key) || { total: 0, clicked: 0 };
     f.total += r.count;
     if (r.outcome === 'clicked_help') f.clicked += r.count;
-    by.set(r.format, f);
+    by.set(r.key, f);
   }
-  const names = [...by.keys()].sort((a, b) => (SHAPE_ORDER.indexOf(a) + 1 || 99) - (SHAPE_ORDER.indexOf(b) + 1 || 99));
+  const rank = (n) => (order.indexOf(n) + 1 || 99);
+  const names = [...by.keys()].sort((a, b) => rank(a) - rank(b));
   const hideExp = hidden(names.map((n) => by.get(n).total), k);
   const hideClk = hidden(names.map((n) => by.get(n).clicked), k);
-  return names.map((format, i) => {
-    const f = by.get(format);
+  return names.map((key, i) => {
+    const f = by.get(key);
     const exposures = hideExp[i] ? null : f.total;
     const clicked = hideClk[i] ? null : f.clicked;
-    return { format, exposures, clicked, rate: exposures !== null && clicked !== null ? f.clicked / f.total : null, suppressed: exposures === null || clicked === null };
+    return { key, exposures, clicked, rate: exposures !== null && clicked !== null ? f.clicked / f.total : null, suppressed: exposures === null || clicked === null };
   });
+}
+
+export const TRIGGER_ORDER = ['search', 'chat', 'nav'];
+export const ESCALATION_ORDER = ['1', '2', '3', '4', '5+'];
+/** Variant ids are `legal-NN`, `harm-NN` or `control-NN`. `control` is the copy family that offers the exit, not a holdout group. */
+export const variantArm = (v) => (String(v).startsWith('control-') ? 'control' : 'other');
+
+export function deskByFormat(rows, { k = 10 } = {}) {
+  return deskBreakdown(rows.map((r) => ({ ...r, key: r.format })), { k, order: SHAPE_ORDER })
+    .map(({ key, ...rest }) => ({ format: key, ...rest }));
 }

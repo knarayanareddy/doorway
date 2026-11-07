@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kletskoek Forum — Escalation demo</title>
+  <link rel="stylesheet" href="/mock-platform/style.css">
+  <link rel="stylesheet" href="./demo-standin.css">
+  <style>
+    .esc-steps { list-style: none; padding: 0; margin: 12px 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+    .esc-steps li { border: 1px solid var(--kk-border); border-radius: var(--kk-radius); padding: 8px; text-align: center; font-size: 14px; color: #666; }
+    .esc-steps li.reached { background: #eef4ff; color: #1a1a1a; }
+    .esc-steps li[aria-current="step"] { border: 2px solid #1a1a1a; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="labs-banner" role="note">
+    LABS DEMO — mock data only. Fork and Wave are unreviewed labs, not shipped (docs/11). The Door is real; the forum is mock.
+  </div>
+
+  <div class="demo-banner">
+    ⚠ Demo environment — uses fake trigger terms only. See <a href="https://github.com/Hackathon-for-Good-The-Hague/HFG8-UNICRI-Stop-Before-It-Starts/blob/main/SAFETY.md">SAFETY.md</a>
+  </div>
+
+  <header class="site-header">
+    <div class="site-header-inner">
+      <div class="site-title">
+        Kletskoek Forum
+        <small>De gezelligste hoek van het internet</small>
+      </div>
+    </div>
+  </header>
+
+  <div class="labs-wrap">
+    <section class="labs-card" aria-labelledby="escalate-heading">
+      <h2 id="escalate-heading">Keep pressing and watch it escalate</h2>
+      <p>
+        Each press is a trigger on this forum. The Door answers with a different shape each time, in this order: gate, fork, wave, hallway, door.
+        Fork and Wave are unreviewed labs, shown here on mock data.
+      </p>
+      <p>
+        After each Door, this page moves on by itself, as a visitor who walks away would. The Door counts leaving as not responding, which is how it escalates. If you close the Door yourself, that counts as a response.
+      </p>
+      <div class="labs-buttons">
+        <button type="button" class="labs-btn" id="escalate-press">Fire a trigger</button>
+        <button type="button" class="labs-btn" id="escalate-reset">Start again</button>
+      </div>
+      <p id="escalate-count">Presses so far: 0</p>
+      <p id="escalate-next" role="status" aria-live="polite">Next: gate</p>
+      <ol class="esc-steps" id="escalate-steps" aria-label="The five shapes, in order">
+        <li data-step="1">Gate 1</li>
+        <li data-step="2">Fork 2</li>
+        <li data-step="3">Wave 3</li>
+        <li data-step="4">Hallway 4</li>
+        <li data-step="5">Door 5+</li>
+      </ol>
+      <p id="escalate-note" role="status" aria-live="polite"></p>
+      <p id="widget-status" role="status">Checking whether the widget loaded…</p>
+      <p>
+        Start again resets this timeline only. The Door keeps its own memory of this browser, and this page cannot reach it.
+        To clear that, use "Wis wat dit apparaat onthoudt" on a Door card, or start the demo in a private window. A second run in the same browser can start further along than the timeline says.
+      </p>
+    </section>
+  </div>
+
+  <main class="main-content">
+    <section class="thread-list">
+      <h2>Recente berichten</h2>
+      <div class="thread">
+        <a class="thread-title" href="#">Beste stamppot recepten voor de winter</a>
+        <div class="thread-meta">geplaatst door <strong>KokKarel</strong> · 14 reacties · 2 uur geleden</div>
+      </div>
+      <div class="thread">
+        <a class="thread-title" href="#">Tips voor fietsen in de regen</a>
+        <div class="thread-meta">geplaatst door <strong>RegenRijder</strong> · 8 reacties · 1 dag geleden</div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    Kletskoek Forum is een fictief platform voor Hackathon for Good #8.
+    Dit is geen echt forum. Alle berichten en gebruikers zijn verzonnen.
+  </footer>
+
+  <!--
+    Escalation demo wiring. The page is the platform: it counts its own presses and nothing else.
+    It never reads the Door's storage or messages. The step is kept in the URL (?step=N), because the
+    Door's memory lives on the Door's origin and survives this page's reloads.
+  -->
+  <script>
+    (function () {
+      var SHAPES = ['gate', 'fork', 'wave', 'hallway', 'door'];
+      var HOLD_MS = 6000;
+      var parsed = parseInt(new URLSearchParams(window.location.search).get('step'), 10);
+      var count = parsed > 0 && parsed < 100000 ? parsed : 0;
+      var lastPromise = null;
+      var countEl = document.getElementById('escalate-count');
+      var nextEl = document.getElementById('escalate-next');
+      var noteEl = document.getElementById('escalate-note');
+      var status = document.getElementById('widget-status');
+      var steps = document.querySelectorAll('#escalate-steps li');
+
+      function widgetReady() { return !!window.doorway && typeof window.doorway.trigger === 'function'; }
+
+      function reportStatus() {
+        status.textContent = widgetReady()
+          ? 'Widget loaded.'
+          : 'Widget not loaded: window.doorway is undefined. Check the loader script path.';
+      }
+
+      function render() {
+        countEl.textContent = 'Presses so far: ' + count;
+        var nextIndex = Math.min(count, SHAPES.length - 1);
+        nextEl.textContent = 'Next: ' + SHAPES[nextIndex] + (count >= SHAPES.length - 1 ? ' (it stays on the Door from here)' : '');
+        for (var i = 0; i < steps.length; i++) {
+          var n = i + 1;
+          steps[i].classList.toggle('reached', n <= count);
+          if (count > 0 && n === Math.min(count, SHAPES.length)) steps[i].setAttribute('aria-current', 'step');
+          else steps[i].removeAttribute('aria-current');
+        }
+      }
+
+      function press() {
+        if (!widgetReady()) { reportStatus(); return; }
+        var p = window.doorway.trigger('search');
+        // The loader returns the open overlay's own promise while one is up: that press is ignored, so it is not counted.
+        if (p === lastPromise) { noteEl.textContent = 'The Door is already open. This press was not counted.'; return; }
+        lastPromise = p;
+        count += 1;
+        noteEl.textContent = '';
+        render();
+
+        var moving = false;
+        var moveOn = setTimeout(function () {
+          moving = true;
+          window.location.search = '?step=' + count;
+        }, HOLD_MS);
+        Promise.resolve(p).then(function () {
+          // Settling while the page is leaving is expected; settling before it is the Door closed early.
+          if (moving) return;
+          clearTimeout(moveOn);
+          noteEl.textContent = 'The Door closed before this page moved on. The Door counts that as a response, so the next press may show the quiet pill instead of the next shape.';
+        });
+      }
+
+      document.getElementById('escalate-press').addEventListener('click', press);
+      document.getElementById('escalate-reset').addEventListener('click', function () {
+        window.location.search = '?step=0';
+      });
+      document.addEventListener('DOMContentLoaded', reportStatus);
+      reportStatus();
+      render();
+    })();
+  </script>
+
+  <!-- Starter widget: the labs that this demo uses, and nothing else (no preview, no quick exit) -->
+  <script src="/dist/latest/doorway.min.js" data-install="inst_demo001" data-country="NL" data-legal-jurisdiction="NL" data-labs="fork,wave" data-wave-seconds="15" defer></script>
+</body>
+</html>

@@ -16,7 +16,7 @@
  * construction, so every write is also size-capped, rate-limited and anomaly-flagged,
  * and every number the Desk shows says it is self-reported.
  */
-import { build, buildHeartbeat, buildReport, aggregateKey, deskSummary, deskByFormat, flagAnomalies, MAX_BODY_BYTES } from '../packages/core/src/counter.js';
+import { build, buildHeartbeat, buildReport, aggregateKey, deskSummary, deskByFormat, deskBreakdown, variantArm, TRIGGER_ORDER, ESCALATION_ORDER, flagAnomalies, MAX_BODY_BYTES } from '../packages/core/src/counter.js';
 import { edgeLabsFormats } from '../packages/doorway/src/labs.js';
 
 const INSTALL_TTL_MS = 60_000;
@@ -283,9 +283,21 @@ async function agg(request, url, env) {
   const headline = deskSummary(rows.filter((r) => !flaggedSet.has(r.day)), { flaggedDays: flagged });
 
   const K = headline.k;
+  // Small days are hidden. The headline total counts every unflagged day, so one lone hidden day could be
+  // recovered by subtraction; hide the smallest visible unflagged day too (same rule as the outcome cells).
+  const hiddenDays = new Set(dayList.filter((d) => d.total < K).map((d) => d.day));
+  const hiddenUnflagged = dayList.filter((d) => hiddenDays.has(d.day) && !flaggedSet.has(d.day));
+  if (hiddenUnflagged.length === 1) {
+    const next = dayList.filter((d) => !hiddenDays.has(d.day) && !flaggedSet.has(d.day)).sort((a, b) => a.total - b.total)[0];
+    if (next) hiddenDays.add(next.day);
+  }
   const shapeRows = (await env.DB.prepare(
     `SELECT day, format, outcome, SUM(count) AS count FROM agg WHERE install = ? AND day >= ? GROUP BY day, format, outcome`
   ).bind(id, since).all()).results || [];
+  // One column per breakdown. The column names are fixed here, never taken from the request.
+  const dimRows = async (col) => ((await env.DB.prepare(
+    `SELECT day, "${col}" AS key, outcome, SUM(count) AS count FROM agg WHERE install = ? AND day >= ? GROUP BY day, "${col}", outcome`
+  ).bind(id, since).all()).results || []).filter((r) => !flaggedSet.has(r.day));
   const hb = await env.DB.prepare(`SELECT COALESCE(SUM(dropped),0) AS n FROM heartbeats WHERE install = ? AND day >= ?`).bind(id, since).first();
   const reports = (await env.DB.prepare(
     `SELECT reason, SUM(count) AS count FROM reports WHERE install = ? AND day >= ? GROUP BY reason`
@@ -295,8 +307,12 @@ async function agg(request, url, env) {
     label: headline.label,
     periodDays: days,
     summary: headline,
-    days: dayList.map((d) => ({ day: d.day, exposures: d.total < K ? null : d.total, flagged: flaggedSet.has(d.day) })),
+    days: dayList.map((d) => ({ day: d.day, exposures: hiddenDays.has(d.day) ? null : d.total, flagged: flaggedSet.has(d.day) })),
     byFormat: deskByFormat(shapeRows.filter((r) => !flaggedSet.has(r.day)), { k: K }),
+    byTrigger: deskBreakdown(await dimRows('trigger'), { k: K, order: TRIGGER_ORDER }),
+    byRoute: deskBreakdown(await dimRows('route'), { k: K }),
+    byEscalation: deskBreakdown(await dimRows('bucket'), { k: K, order: ESCALATION_ORDER }),
+    variantArms: deskBreakdown((await dimRows('variant')).map((r) => ({ ...r, key: variantArm(r.key) })), { k: K, order: ['control', 'other'] }),
     droppedEvents: hb?.n || 0,
     falsePositiveReports: reports.map((r) => (r.count < K ? { reason: r.reason, count: null, suppressed: true } : r)),
   });
