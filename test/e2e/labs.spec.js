@@ -270,7 +270,7 @@ test('wave: a guided exercise, a plan chosen from presets only, kept as a number
   await expect(act(page, 'primary')).toBeVisible();
   expect(await kind(page)).toBe('wave');
   const text = await dialog(page).innerText();
-  expect(text).toMatch(/Labs: gereserveerde vorm, nog niet klinisch beoordeeld/);
+  expect(text, 'no labs or review caveat inside the card').not.toMatch(/Labs:|nog niet klinisch beoordeeld/);
   expect(text).toMatch(/een vaardigheid, geen behandeling/);
   expect(await frameOf(page).locator('textarea, input[type="text"], input:not([type])').count(), 'there is no free-text input anywhere').toBe(0);
 
