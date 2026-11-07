@@ -53,7 +53,7 @@ export function SyntheticDesk() {
       <div role="note" className="flex flex-wrap items-center gap-3 rounded-2xl bg-clay-soft/70 p-4 ring-1 ring-clay/25">
         <Tag tone="clay">SYNTHETIC</Tag>
         <p className="text-sm text-ink">
-          Invented numbers, computed in this browser from assumed rates for a 20,000-member forum. They are <strong>not</strong> from any Door and show no real platform.
+          <strong>Illustration: invented numbers, not data from any platform.</strong> Computed in this browser from assumed rates for a 20,000-member forum. No Door sent them.
         </p>
       </div>
 
@@ -63,9 +63,9 @@ export function SyntheticDesk() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-lamp-deep"><Layers className="h-3.5 w-3.5" /> The Open Door Ladder · illustrative</div>
-              <h2 className="font-display mt-1 text-xl font-medium">Gamification for the people with the power to adopt</h2>
+              <h2 className="font-display mt-1 text-xl font-medium">Adoption ladder for platform operators</h2>
               <p className="mt-1 text-sm text-ink-soft">
-                The real blocker is voluntary adoption at the long tail. So the game is for <em>operators</em>: five checkable criteria earn a public, verifiable badge. Criteria, not competition — nobody is ranked against anybody.
+                The real blocker is voluntary adoption at the long tail. So the ladder is for <em>operators</em>: five checkable criteria earn a public, verifiable badge. Criteria, not competition — nobody is ranked against anybody.
               </p>
               <p className="mt-2 text-xs text-ink-soft">Illustrative: this five-level ladder is a design sketch. Only the first three rungs can be measured from the Door (see the live view).</p>
             </div>
@@ -125,10 +125,10 @@ export function SyntheticDesk() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-ink-soft"><Lock className="h-3.5 w-3.5" /> Aggregates · last 7 days · cells below {K} are suppressed</div>
-            <h2 className="font-display mt-1 text-xl font-medium">What a 20,000-member forum actually sees</h2>
+            <h2 className="font-display mt-1 text-xl font-medium">What a 20,000-member forum would see (illustration)</h2>
             <p className="mt-1 text-xs text-ink-soft">{UNAUTHENTICATED_LABEL}</p>
           </div>
-          <Tag tone="clay">SYNTHETIC — baselines 0.5–1.5%, not 15%</Tag>
+          <Tag tone="clay">SYNTHETIC ILLUSTRATION</Tag>
         </div>
 
         <div className="mt-4 overflow-x-auto">

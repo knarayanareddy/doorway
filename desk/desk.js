@@ -87,11 +87,20 @@ function ladder(j) {
   }
 }
 
+// What a person is told when a request does not work. Always textContent; the server's wording is never shown.
+const TOO_MANY = 'Too many attempts. Wait a minute and try again.';
+const WRONG_LOGIN = 'Wrong install id or token. Check both and try again.';
+const NO_NETWORK = 'Could not reach the counter. Check your connection and try again.';
+const failure = (res, fallback) => (res.status === 429 ? TOO_MANY : res.status === 401 ? WRONG_LOGIN : fallback);
+
 async function load() {
   $('err').textContent = '';
-  const res = await fetch(`/v1/agg?i=${encodeURIComponent(session.i)}&days=${session.days}`, { headers: { authorization: `Bearer ${session.t}` }, credentials: 'omit', cache: 'no-store' });
-  if (!res.ok) { $('err').textContent = res.status === 401 ? 'Wrong install id or token.' : 'Could not load numbers.'; $('out').hidden = true; return; }
-  const j = await res.json();
+  let res, j;
+  try {
+    res = await fetch(`/v1/agg?i=${encodeURIComponent(session.i)}&days=${session.days}`, { headers: { authorization: `Bearer ${session.t}` }, credentials: 'omit', cache: 'no-store' });
+    if (res.ok) j = await res.json();
+  } catch { $('err').textContent = NO_NETWORK; $('out').hidden = true; return; }
+  if (!res.ok) { $('err').textContent = failure(res, 'Could not load numbers.'); $('out').hidden = true; return; }
   $('out').hidden = false;
   $('label').textContent = j.label;
   const s = j.summary, ct = s.clickThrough;
@@ -124,7 +133,10 @@ $('login').addEventListener('submit', (e) => {
 $('report').addEventListener('submit', async (e) => {
   e.preventDefault();
   const body = { i: session.i, p: 'desk', t: $('rtype').value, r: $('reason').value };
-  const res = await fetch('/v1/report', { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${session.t}` }, body: JSON.stringify(body), credentials: 'omit' });
-  $('rmsg').textContent = res.ok ? 'Recorded.' : 'Could not record.';
+  let res;
+  try {
+    res = await fetch('/v1/report', { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${session.t}` }, body: JSON.stringify(body), credentials: 'omit' });
+  } catch { $('rmsg').textContent = NO_NETWORK; return; }
+  $('rmsg').textContent = res.ok ? 'Recorded.' : failure(res, 'Could not record.');
   if (res.ok) load();
 });

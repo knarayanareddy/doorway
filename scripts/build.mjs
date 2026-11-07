@@ -18,6 +18,11 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { build } from 'esbuild';
 import { VERSION } from '../packages/doorway/src/version.js';
+import { PUBLIC_KEY_RAW_B64U } from '../packages/doorway/src/pubkey.js';
+import { evaluateProdKey } from './lib/prod-guard.mjs';
+
+// A production build (DOORWAY_PRODUCTION=1) must not pin the public dev key.
+{ const g = evaluateProdKey({ publicKey: PUBLIC_KEY_RAW_B64U, env: process.env }); if (!g.ok) { console.error(g.note); process.exit(1); } }
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const DOOR_ORIGIN = (process.env.DOOR_ORIGIN || 'https://door.doorway.example').replace(/\/$/, '');
@@ -29,14 +34,22 @@ if (DIST === ROOT || ROOT.startsWith(DIST + path.sep)) throw new Error(`DIST_DIR
 const out = (...p) => path.join(DIST, ...p);
 fs.rmSync(out(), { recursive: true, force: true });
 
-const common = { bundle: true, minify: true, format: 'iife', target: 'es2022', legalComments: 'none', logLevel: 'warning', loader: { '.json': 'json' } };
+// DEMO_LABS=1 (set by scripts/dev.mjs, the local harness that runs the e2e suite) or DEMO_ROUTES=1 (the demo) lets the
+// Door honour the demo-only labs `advance` and `preview` (labs.js). A build with neither is a shipped build and drops them.
+const DEMO_LABS = process.env.DEMO_ROUTES === '1' || process.env.DEMO_LABS === '1';
+const common = { bundle: true, minify: true, format: 'iife', target: 'es2022', legalComments: 'none', logLevel: 'warning', loader: { '.json': 'json' }, define: { __DEMO_LABS__: String(DEMO_LABS) } };
 
-await build({ ...common, entryPoints: [path.join(ROOT, 'packages/doorway/src/door.js')], outfile: out('door', 'door.js') });
+// DEMO_ROUTES=1 is set only by the demo npm scripts (package.json). The Door then imports the signed DEMO routes
+// file, whose nl route carries verified hours and a number, each marked `demo: true`. Production and build:e2e never set it.
+const routesFile = process.env.DEMO_ROUTES === '1' ? 'routes.demo.json' : 'routes.nl.json';
+const routesFilePlugin = { name: 'routes-file', setup(b) { b.onResolve({ filter: /\/routes\.nl\.json$/ }, () => ({ path: path.join(ROOT, 'packages/doorway/src', routesFile) })); } };
+
+await build({ ...common, entryPoints: [path.join(ROOT, 'packages/doorway/src/door.js')], outfile: out('door', 'door.js'), plugins: [routesFilePlugin] });
 await build({
   ...common,
   entryPoints: [path.join(ROOT, 'packages/doorway/src/loader-entry.js')],
   outfile: out(`v${VERSION}`, 'doorway.min.js'),
-  define: { __DOOR_ORIGIN__: JSON.stringify(DOOR_ORIGIN) },
+  define: { ...common.define, __DOOR_ORIGIN__: JSON.stringify(DOOR_ORIGIN) },
 });
 
 fs.copyFileSync(path.join(ROOT, 'desk/desk.html'), out('door', 'desk.html'));

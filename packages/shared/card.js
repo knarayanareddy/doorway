@@ -48,13 +48,15 @@ export function buildCard({
   closeLabel = 'Close dialog',
   attribution = null,
   footnote = null,
+  kicker = null,
+  tag = null,
   lang = 'en',
 } = {}) {
   const d = {
     variant, lang,
     headline: String(headline ?? '').trim(),
     body: String(body ?? '').trim(),
-    primary, secondary, tertiary, sections, closeLabel, attribution, footnote,
+    primary, secondary, tertiary, sections, closeLabel, attribution, footnote, kicker, tag,
   };
   const v = validate(d);
   if (!v.ok) throw new Error('invalid card: ' + v.errors.join('; '));
@@ -133,7 +135,7 @@ export function mount(d0, { onOutcome, doc = globalThis.document } = {}) {
 
   // Focusable controls are looked up when a key is pressed, not once at mount: sections can
   // reveal buttons later, and a stale list would let Tab skip them or trap focus too early.
-  const focusables = () => [...root.querySelectorAll('button')].filter((b) => !b.closest('[hidden]'));
+  const focusables = () => [...root.querySelectorAll('button, a[data-act]')].filter((b) => !b.closest('[hidden]'));
   const buttons = focusables();
   const primary = root.querySelector('[data-act="primary"]');
   const prev = doc.activeElement;
@@ -181,8 +183,10 @@ export function mount(d0, { onOutcome, doc = globalThis.document } = {}) {
   // One delegated handler. Report BEFORE acting: a primary action is usually a navigation, and a
   // navigation that unloads the page swallows both the outcome callback and the counter beacon,
   // which silently deletes the one number the whole product is measured on. The order is load-bearing.
+  // The Door's call button is a real tel: link (a href, not a URL the Door opens), so it is the one anchor
+  // that counts as an action. It reports like any primary; its navigation is left to the browser.
   root.addEventListener('click', (e) => {
-    const t = e.target.closest ? e.target.closest('button') : null;
+    const t = e.target.closest ? e.target.closest('button, a[data-act]') : null;
     if (!t) return;
     const act = t.dataset.act;
     if (act === 'primary' || act === 'secondary' || act === 'tertiary') {
@@ -257,7 +261,7 @@ export function mount(d0, { onOutcome, doc = globalThis.document } = {}) {
     else if (!e.shiftKey && i === list.length - 1) { e.preventDefault(); list[0].focus(); }
   });
 
-  setTimeout(() => { const f = primary || buttons[0]; if (f) f.focus(); }, 30);
+  setTimeout(() => { const f = primary || buttons[0]; if (f) f.focus({ preventScroll: true }); }, 30);
 
   // Auto-dismiss with pause on hover/focus per WCAG 2.2.1
   if (d.variant === 'quiet') {
@@ -337,10 +341,36 @@ function esc(s) {
   return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 }
 
-function render(d) {
+// A plain door, drawn with stroke only: the icon tile of the Door panel. Static markup, no script, no style attribute.
+const DOOR_ICON = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
+  '<path d="M4 21V5a2 2 0 0 1 2-2h8v18"/><path d="M14 3l5 2.5V21"/><path d="M3 21h18"/><path d="M11 12h.01"/></svg>';
+
+/** The Door shape (exposure 5+): a wide dark panel. Same actions and the same ids as every other shape. */
+function renderDoor(d) {
+  const top = d.attribution ? '<span class="attr">' + esc(d.attribution) + '</span>' : '<span></span>';
+  const close = '<button class="x" data-act="dismiss" aria-label="' + esc(d.closeLabel || 'Close dialog') + '">\u00d7</button>';
+  const cta = d.primary.href
+    ? '<a class="cta" data-act="primary" href="' + esc(d.primary.href) + '">' + esc(d.primary.label) + '</a>'
+    : '<button class="cta" data-act="primary">' + esc(d.primary.label) + '</button>';
+  const carry = d.secondary ? '<button class="carry" data-act="secondary">' + esc(d.secondary.label) + '</button>' : '';
+  const rep = d.tertiary ? '<button class="rep" data-act="tertiary">' + esc(d.tertiary.label) + '</button>' : '';
+  const kicker = d.kicker ? '<p class="drk">' + esc(d.kicker) + (d.tag ? '<span class="drg">' + esc(d.tag) + '</span>' : '') + '</p>' : '';
+  const body = d.body ? '<p class="drb">' + esc(d.body) + '</p>' : '';
+  return '<div role="dialog" aria-modal="true" aria-labelledby="doorway-card-title" class="dr">' +
+    '<div class="bar">' + top + close + '</div>' + renderSections(d.sections, 'top') +
+    '<div class="drm"><div class="drt">' + DOOR_ICON + '</div><div class="drc">' + kicker +
+    '<h2 id="doorway-card-title">' + esc(d.headline) + '</h2>' + body + '</div></div>' +
+    '<div class="dra">' + cta + renderSections(d.sections, 'content') + '</div>' +
+    renderSections(d.sections, 'footer') +
+    '<div class="drf">' + carry + rep + '</div>' +
+    (d.footnote ? '<p class="conf">' + esc(d.footnote) + '</p>' : '') + '</div>';
+}
+
+export function render(d) {
   if (d.variant === 'quiet') {
     return '<div role="status" aria-live="polite" class="quiet-text">' + esc(d.body || d.headline) + '</div>';
   }
+  if (d.variant === 'door') return renderDoor(d);
   const attr = d.attribution
     ? '<div class="bar"><span class="attr">' + esc(d.attribution) + '</span>' +
       '<button class="x" data-act="dismiss" aria-label="' + esc(d.closeLabel || 'Close dialog') + '">\u00d7</button></div>'
@@ -358,47 +388,106 @@ function render(d) {
     sec + rep + renderSections(d.sections, 'footer') + foot + '</div>';
 }
 
-const CSS = [
+export const CSS = [
   ':host{all:initial}',
   '*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}',
-  '.ovl{position:fixed;inset:0;background:rgba(20,18,16,.72);z-index:2147483000;display:flex;align-items:flex-end;justify-content:center;padding:0}',
+  // One palette for every shape (the Door preview's index.css tokens): night card, paper text, lamp accent.
+  // Shapes differ by silhouette and layout only (the per-shape block below), never by colour family.
+  '.ovl{position:fixed;inset:0;background:rgba(14,26,36,.72);z-index:2147483000;display:flex;align-items:flex-end;justify-content:center;padding:0}',
   '@media(min-width:560px){.ovl{align-items:center;padding:24px}}',
-  '.ovl>div{background:#fff;color:#1b1a18;width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:14px 14px 0 0;padding:24px 22px 18px;box-shadow:0 8px 40px rgba(0,0,0,.35)}',
-  '@media(min-width:560px){.ovl>div{border-radius:14px}}',
+  '.ovl>div{background:#0e1a24;color:#f7f2e8;width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:24px 22px 18px;box-shadow:0 30px 80px -30px rgba(14,26,36,.9);border:1px solid rgba(247,242,232,.1)}',
+  '@media(min-width:560px){.ovl>div{border-radius:16px}}',
   '.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}',
-  '.attr{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#6d665e;font-weight:700}',
-  '.x{background:none;border:0;font-size:24px;line-height:1;color:#9a938a;cursor:pointer;padding:6px 10px;border-radius:6px}',
-  '.x:focus-visible{outline:3px solid #1f4e79;outline-offset:2px}',
-  'h2{font-family:Georgia,serif;font-size:20px;line-height:1.25;margin:0 0 10px;font-weight:600}',
-  'p{font-size:15px;line-height:1.5;margin:0 0 12px;color:#3d3934}',
-  '.cta{display:block;width:100%;background:#1f4e79;color:#fff;border:0;border-radius:9px;font-size:16px;font-weight:650;padding:15px 16px;margin-top:16px;cursor:pointer;min-height:48px}',
-  '.cta:focus-visible{outline:3px solid #1b1a18;outline-offset:2px}',
-  '.alt{display:block;width:100%;background:#fff;border:2px solid #1f4e79;border-radius:9px;font-size:16px;font-weight:650;color:#1f4e79;padding:13px 16px;margin-top:12px;cursor:pointer;min-height:48px}',
-  '.alt:focus-visible{outline:3px solid #1b1a18;outline-offset:2px}',
-  '.rep{display:block;margin:14px auto 0;background:none;border:0;padding:12px 8px;min-height:44px;font-size:14px;color:#1f4e79;text-decoration:underline;cursor:pointer}',
-  '.rep:focus-visible{outline:3px solid #1b1a18;outline-offset:2px}',
-  '.disc{margin-top:12px;border-top:1px solid #e2ddd4}',
-  '.dt{display:flex;width:100%;justify-content:space-between;align-items:center;background:none;border:0;padding:12px 2px;min-height:44px;font-size:14px;font-weight:600;color:#1f4e79;cursor:pointer;text-align:left}',
-  '.dt:focus-visible,.sa:focus-visible,.cp:focus-visible{outline:3px solid #1b1a18;outline-offset:2px}',
+  '.attr{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(247,242,232,.6);font-weight:700}',
+  '.x{background:none;border:0;font-size:24px;line-height:1;color:rgba(247,242,232,.6);cursor:pointer;padding:6px 10px;border-radius:6px;min-width:44px;min-height:44px}',
+  '.x:focus-visible{outline:3px solid #e8a33d;outline-offset:2px}',
+  'h2{font-family:Georgia,serif;font-size:22px;line-height:1.25;margin:0 0 10px;font-weight:500;color:#f7f2e8}',
+  'p{font-size:15px;line-height:1.5;margin:0 0 12px;color:rgba(247,242,232,.85)}',
+  '.cta{display:block;width:100%;background:#e8a33d;color:#0e1a24;border:0;border-radius:12px;font-size:16px;font-weight:650;padding:15px 16px;margin-top:16px;cursor:pointer;min-height:48px}',
+  '.cta:focus-visible{outline:3px solid #f7f2e8;outline-offset:2px}',
+  '.alt{display:block;width:100%;background:rgba(247,242,232,.08);border:1px solid rgba(247,242,232,.3);border-radius:12px;font-size:16px;font-weight:650;color:#f7f2e8;padding:13px 16px;margin-top:12px;cursor:pointer;min-height:48px}',
+  '.alt:focus-visible{outline:3px solid #f7f2e8;outline-offset:2px}',
+  '.rep{display:block;margin:14px auto 0;background:none;border:0;padding:12px 8px;min-height:44px;font-size:14px;color:#e8a33d;text-decoration:underline;cursor:pointer}',
+  '.rep:focus-visible{outline:3px solid #f7f2e8;outline-offset:2px}',
+  '.disc{margin-top:12px;border-top:1px solid rgba(247,242,232,.14)}',
+  '.dt{display:flex;width:100%;justify-content:space-between;align-items:center;background:none;border:0;padding:12px 2px;min-height:44px;font-size:14px;font-weight:600;color:#e8a33d;cursor:pointer;text-align:left}',
+  '.dt:focus-visible,.sa:focus-visible,.cp:focus-visible{outline:3px solid #f7f2e8;outline-offset:2px}',
   '.dt[aria-expanded="true"] .chev{transform:rotate(180deg)}',
   '.dbody{padding:0 2px 8px}',
-  '.bt{font-size:14px;line-height:1.5;margin:0 0 10px;color:#3d3934}',
-  '.bh{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#6d665e;margin:14px 0 6px}',
-  '.bl{margin:0 0 10px;padding-left:18px;font-size:14px;line-height:1.5;color:#3d3934}',
-  '.bf{margin:0 0 10px;font-size:13px}.bf>div{padding:7px 0;border-bottom:1px solid #eee9df}.bf dt{margin:0}.bf dd{margin:2px 0 0;color:#3d3934;overflow-wrap:anywhere}.bf small{display:block;color:#6d665e;font-size:12px;margin-top:2px}',
-  '.bf code{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;color:#1f4e79}',
-  '.ph{list-style:none;margin:0 0 10px;padding:0}.ph li{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:9px 10px;margin-bottom:6px;border:1px solid #d9d2c5;border-radius:9px;font-size:14px;color:#3d3934}',
-  '.cp,.sa{background:none;border:1px solid #1f4e79;color:#1f4e79;border-radius:7px;font-size:13px;font-weight:600;padding:8px 10px;min-height:44px;cursor:pointer;white-space:nowrap}',
-  '.sa.danger{background:#b4573f;border-color:#b4573f;color:#fff}',
-  '.ar{display:flex;gap:10px;align-items:center;margin:6px 0 10px;flex-wrap:wrap}.astat{font-size:12px;color:#6d665e}',
+  '.bt{font-size:14px;line-height:1.5;margin:0 0 10px;color:rgba(247,242,232,.85)}',
+  '.bh{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#e8a33d;margin:14px 0 6px}',
+  '.bl{margin:0 0 10px;padding-left:18px;font-size:14px;line-height:1.5;color:rgba(247,242,232,.85)}',
+  '.bf{margin:0 0 10px;font-size:13px}.bf>div{padding:7px 0;border-bottom:1px solid rgba(247,242,232,.12)}.bf dt{margin:0}.bf dd{margin:2px 0 0;color:rgba(247,242,232,.85);overflow-wrap:anywhere}.bf small{display:block;color:rgba(247,242,232,.6);font-size:12px;margin-top:2px}',
+  '.bf code{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;color:#e8a33d}',
+  '.ph{list-style:none;margin:0 0 10px;padding:0}.ph li{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:9px 10px;margin-bottom:6px;border:1px solid rgba(247,242,232,.2);border-radius:12px;font-size:14px;color:#f7f2e8}',
+  '.cp,.sa{background:none;border:1px solid #e8a33d;color:#e8a33d;border-radius:8px;font-size:13px;font-weight:600;padding:8px 10px;min-height:44px;cursor:pointer;white-space:nowrap}',
+  '.sa.danger{background:#f6dcd3;border-color:#f6dcd3;color:#0e1a24}',
+  '.ar{display:flex;gap:10px;align-items:center;margin:6px 0 10px;flex-wrap:wrap}.astat{font-size:12px;color:rgba(247,242,232,.6)}',
   '.co{display:flex;flex-direction:column;gap:8px;margin:6px 0 8px}',
-  '.cb{display:block;width:100%;text-align:left;background:#fff;border:2px solid #d2cbc0;color:#1b1a18;border-radius:9px;font-size:15px;padding:12px 14px;min-height:48px;cursor:pointer}',
-  '.cb[aria-pressed="true"]{border-color:#1f4e79;background:#eef4fa;font-weight:650}',
-  '.cb:focus-visible{outline:3px solid #1b1a18;outline-offset:2px}',
-  '.tm{margin:6px 0 10px}.tpg{display:block;width:100%;height:10px;margin:10px 0 6px}',
+  '.cb{display:block;width:100%;text-align:left;background:#162836;border:1px solid rgba(247,242,232,.22);color:#f7f2e8;border-radius:12px;font-size:15px;padding:12px 14px;min-height:48px;cursor:pointer}',
+  '.cb[aria-pressed="true"]{border-color:#e8a33d;background:rgba(232,163,61,.16);font-weight:650}',
+  '.cb:focus-visible{outline:3px solid #f7f2e8;outline-offset:2px}',
+  '.tm{margin:6px 0 10px}.tpg{display:block;width:100%;height:10px;margin:10px 0 6px;accent-color:#e8a33d}',
   '.tp:focus{outline:none}',
-  '.tl{font-size:13px;color:#6d665e;min-height:18px}.tp{font-size:15px;font-weight:650;color:#1b1a18;min-height:22px}.td{font-size:14px;color:#3d3934}',
-  '.conf{font-size:12px;color:#6d665e;margin-top:14px;border-top:1px solid #e2ddd4;padding-top:11px}',
+  '.tl{font-size:13px;color:rgba(247,242,232,.6);min-height:18px}.tp{font-size:15px;font-weight:650;color:#f7f2e8;min-height:22px}.td{font-size:14px;color:rgba(247,242,232,.85)}',
+  '.conf{font-size:12px;color:rgba(247,242,232,.6);margin-top:14px;border-top:1px solid rgba(247,242,232,.14);padding-top:11px}',
   '.quiet{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:#26241f;color:#f5f1e8;font-size:13px;padding:11px 16px;border-radius:999px;z-index:2147483000;max-width:92vw}',
+  // Per-shape silhouettes. One palette (night, paper, lamp) for every shape; a shape changes only its layout:
+  // header treatment, radius, where the lamp accent sits, and how choices, phrases and the timer are arranged.
+  '@keyframes wv-breathe{0%,100%{transform:scale(.92)}50%{transform:scale(1.06)}}',
+  // GATE: the serious one. Square corners, a full-width lamp rule across the top, a large headline, square buttons.
+  ':host([data-core-card="gate"]) .ovl>div{border-radius:4px;border-top:4px solid #e8a33d;padding:30px 26px 22px}',
+  ':host([data-core-card="gate"]) h2{font-size:30px;line-height:1.18;margin-bottom:14px}',
+  ':host([data-core-card="gate"]) p{font-size:16px}',
+  ':host([data-core-card="gate"]) .cta,:host([data-core-card="gate"]) .alt{border-radius:4px}',
+  // CARD: the harm warning. Soft round corners and a pause motif (two lamp bars) above the headline; pill buttons.
+  ':host([data-core-card="card"]) .ovl>div{border-radius:28px;padding:26px 26px 20px}',
+  ':host([data-core-card="card"]) h2::before{content:"";display:block;width:18px;height:20px;margin-bottom:14px;background:linear-gradient(to right,#e8a33d 0 6px,transparent 6px 12px,#e8a33d 12px 18px)}',
+  ':host([data-core-card="card"]) .cta,:host([data-core-card="card"]) .alt{border-radius:999px}',
+  // FORK: the crossroads. The choices become a two-column grid of tiles; the primary action sits below them.
+  ':host([data-core-card="fork"]) .ovl>div{border-radius:18px}',
+  ':host([data-core-card="fork"]) .co{display:grid;grid-template-columns:1fr 1fr;gap:10px}',
+  ':host([data-core-card="fork"]) .cb{display:flex;align-items:center;justify-content:center;text-align:center;min-height:96px;padding:12px;font-size:15px;line-height:1.3;border-radius:14px}',
+  ':host([data-core-card="fork"]) .cb[aria-pressed="true"]{box-shadow:inset 0 3px 0 #e8a33d}',
+  '@media(max-width:359px){:host([data-core-card="fork"]) .co{grid-template-columns:1fr}}',
+  // WAVE: calm and centred. A large countdown ring that breathes, a lamp progress line under it, very round corners.
+  ':host([data-core-card="wave"]) .ovl>div{border-radius:32px;text-align:center;padding:28px 24px 22px}',
+  ':host([data-core-card="wave"]) h2{text-align:center}',
+  ':host([data-core-card="wave"]) .tm{display:flex;flex-direction:column;align-items:center;margin:4px 0 8px}',
+  ':host([data-core-card="wave"]) .tl{order:-1;flex:none;width:min(176px,38vh);height:min(176px,38vh);border-radius:50%;border:6px solid #e8a33d;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:300;color:#f7f2e8;font-variant-numeric:tabular-nums;margin:6px 0 12px;animation:wv-breathe 8s ease-in-out infinite;min-height:0}',
+  ':host([data-core-card="wave"]) .tpg{width:100%}',
+  // HALLWAY: a door ajar. A lamp light edge down the left side; the phrases are chat bubbles with their copy buttons.
+  ':host([data-core-card="hallway"]) .ovl>div{border-radius:16px;padding-left:34px;position:relative}',
+  ':host([data-core-card="hallway"]) .ovl>div::before{content:"";position:absolute;left:12px;top:24px;bottom:24px;width:4px;border-radius:2px;background:linear-gradient(#e8a33d,rgba(232,163,61,0))}',
+  ':host([data-core-card="hallway"]) .ph{display:flex;flex-direction:column;align-items:flex-start;gap:8px}',
+  ':host([data-core-card="hallway"]) .ph li{max-width:92%;background:#162836;border-color:transparent;border-radius:18px 18px 18px 4px;padding:12px 12px 12px 14px}',
+  // The Door panel: night background, a lamp glow on the left, a door tile. Stroke-only icon, no images, no web fonts.
+  '.ovl>div.dr{position:relative;background:#0e1a24;color:#f5f1e8;max-width:560px;padding:20px 22px 14px;box-shadow:0 8px 40px rgba(0,0,0,.45)}',
+  '.dr::before{content:"";position:absolute;left:-40px;top:0;height:100%;width:50%;background:linear-gradient(to right,rgba(232,163,61,.2),transparent);pointer-events:none}',
+  '.dr>*{position:relative}',
+  '.dr .attr{color:#a79f94;font-size:12px;font-weight:400;letter-spacing:0;text-transform:none;line-height:1.4}',
+  '.dr .x{color:#a79f94}',
+  '.dr h2{color:#f5f1e8;font-size:21px;margin:0}',
+  '.drm{display:flex;gap:16px;align-items:flex-start}',
+  '.drt{flex:0 0 56px;width:56px;height:56px;border-radius:12px;background:rgba(232,163,61,.15);color:#e8a33d;display:grid;place-items:center}',
+  '.drc{flex:1;min-width:0}',
+  '.drk{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#e8a33d;margin:0 0 6px}',
+  '.drg{display:inline-block;margin-left:8px;padding:1px 7px;border:1px solid #e8a33d;border-radius:999px;font-size:10px;font-weight:600;letter-spacing:.02em;text-transform:none;color:#e8a33d}',
+  '.drb{font-size:14px;color:rgba(245,241,232,.78);margin:6px 0 0}',
+  '.dra{display:flex;flex-direction:column;gap:10px;margin-top:16px}',
+  '.dr .cta{display:flex;align-items:center;justify-content:center;margin:0;text-decoration:none;text-align:center;background:#e8a33d;color:#0e1a24;min-height:48px;padding:14px 16px;font-size:16px}',
+  '.dr .cta:focus-visible,.dr .carry:focus-visible,.dr .dt:focus-visible,.dr .sa:focus-visible,.dr .rep:focus-visible,.dr .x:focus-visible{outline:3px solid #f5f1e8;outline-offset:2px}',
+  '.dr .ar{margin:0;justify-content:center}',
+  '.dra .sa:not(.danger){background:none;border-color:transparent;color:#e8a33d;text-decoration:underline;text-underline-offset:4px;padding:10px 12px}',
+  '.dr .sa{background:none;border-color:#e8a33d;color:#e8a33d}',
+  '.dr .sa.danger{background:#b4573f;border-color:#b4573f;color:#fff}',
+  '.dr .disc{margin-top:14px;border-top:1px solid rgba(255,255,255,.12)}',
+  '.dr .dt{color:#e8a33d}',
+  '.dr .dbody{color:#e6e0d3}.dr .dbody .bt,.dr .dbody .bl{color:#e6e0d3}.dr .dbody .bh{color:#a79f94}',
+  '.dr .bf>div{border-color:rgba(255,255,255,.12)}.dr .bf dd{color:#e6e0d3}.dr .bf small{color:#a79f94}.dr .bf code{color:#e8a33d}',
+  '.dr .drf{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.12)}',
+  '.dr .carry{background:none;border:1px solid rgba(245,241,232,.3);border-radius:8px;color:#f5f1e8;font-size:13px;font-weight:600;padding:10px 12px;min-height:44px;cursor:pointer}',
+  '.dr .rep{margin:0;padding:10px 8px;min-height:44px;color:#e8a33d}',
+  '.dr .conf{color:#a79f94;border-color:rgba(255,255,255,.12)}',
   '@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}',
 ].join('\n');

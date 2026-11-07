@@ -49,6 +49,7 @@ export function DemoPage() {
   const [lang] = useState(forumLang);
   const [status, setStatus] = useState<DoorwayStatus>("loading");
   const [count, setCount] = useState(readCount);
+  const [wasReset, setWasReset] = useState(false);
   const [doorOpen, setDoorOpen] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [searched, setSearched] = useState<string | null>(null);
@@ -121,11 +122,12 @@ export function DemoPage() {
     countRef.current = 0;
     setCount(0);
     writeCount(0);
+    setWasReset(true);
     setNote("This timeline is back at 0. The Door still remembers this browser: open a private window to see the first step again.");
   };
 
-  const nextText = count >= ORDER.length ? "Next: Door. It stays on the Door from here." : `Next: ${STEP_LABEL[ORDER[count]]}`;
-  const nextLabel = count < ORDER.length ? STEP_LABEL[ORDER[count]] : null;
+  const nextText = wasReset && count === 0 ? "Next: wherever this browser's Door has got to. Use a private window for a clean start." : count >= ORDER.length ? "Next: Door. It stays on the Door from here." : `Next: ${STEP_LABEL[ORDER[count]]}`;
+  const nextLabel = count < ORDER.length && !(wasReset && count === 0) ? STEP_LABEL[ORDER[count]] : null;
 
   return (
     <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[1fr_330px] lg:px-6">
@@ -137,9 +139,6 @@ export function DemoPage() {
             A Dutch hobby forum. The forum decides a search is a trigger and calls{" "}
             <code className="rounded bg-ink/8 px-1 font-mono text-[11px]">window.doorway.trigger(&quot;search&quot;)</code> — it never passes the text.
           </span>
-        </div>
-        <div role="note" className="rounded-xl bg-lamp-soft px-3 py-2 text-xs leading-relaxed text-lamp-deep ring-1 ring-lamp/30">
-          <Tag tone="lamp">Labs</Tag> Fork and Wave are unreviewed labs shown on mock data. The Door is the real one.
         </div>
         <BrowserFrame>
           <ForumHeader lang={lang} onSearch={onSearch} />
@@ -261,14 +260,11 @@ export function DemoPage() {
             <Row k="Install" v={INSTALL.install} />
             <Row k="Country" v={INSTALL.country} />
             <Row k="Legal jurisdiction" v={INSTALL.legalJurisdiction} />
-            <Row k="Labs" v={INSTALL.labs} />
+            <Row k="Shapes switched on" v={INSTALL.labs} />
             <Row k="Wave length" v={`${INSTALL.waveSeconds} s`} />
             <Row k="Language" v="Follows the browser (nl, en or de). No switch exists." />
             <Row k="Loader" v={status === "ready" ? "Loaded from /dist/latest" : status === "loading" ? "Loading…" : "Not available"} />
           </dl>
-          <p className="text-[11px] leading-snug text-ink-soft">
-            Fork and Wave are unreviewed labs, shown here on mock data. The Door is the real one.
-          </p>
         </div>
 
         <div className="flex gap-2 rounded-2xl bg-lamp-soft p-3 text-xs leading-relaxed text-lamp-deep ring-1 ring-lamp/30">

@@ -94,6 +94,43 @@ test('readConfig: PORT, LABS_FORMATS and DESK_TOKEN are read when given; SEED=0 
   assert.equal(cfg.seed, false);
 });
 
+// ── the public demo token must not face the open internet ───────────────────
+
+test('readConfig: the public demo token on a plain-http origin that is not local is refused, and the message says why and how to fix it', () => {
+  const { problems } = readConfig({ ...base, DOOR_ORIGIN: 'http://door.example.org' });
+  assert.deepEqual(problems, ['DOOR_ORIGIN is not https and not localhost, and DESK_TOKEN is the public demo token. Set DESK_TOKEN to your own secret, or set I_UNDERSTAND_THIS_IS_A_PUBLIC_DEMO=1 if this really is a public demo.']);
+});
+
+test('readConfig: both plain-http origins are named together in one problem', () => {
+  const { problems } = readConfig({ ...base, DOOR_ORIGIN: 'http://door.example.org', PLATFORM_ORIGIN: 'http://forum.example.org' });
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /^DOOR_ORIGIN and PLATFORM_ORIGIN are not https/);
+});
+
+test('readConfig: a loopback origin over plain http with the public token is fine (the local harness and the tests)', () => {
+  for (const [door, platform] of [['http://127.0.0.1:8788', 'http://127.0.0.1:8789'], ['http://localhost:9112', 'http://localhost:9111']]) {
+    assert.deepEqual(readConfig({ ...base, DOOR_ORIGIN: door, PLATFORM_ORIGIN: platform }).problems, [], door);
+  }
+});
+
+test('readConfig: an https origin with the public token is not refused (a deliberately public hosted demo)', () => {
+  assert.deepEqual(readConfig(base).problems, []);
+});
+
+test('readConfig: the public token given explicitly is still the public token', () => {
+  const { problems } = readConfig({ ...base, DOOR_ORIGIN: 'http://door.example.org', DESK_TOKEN: 'desk-demo-token' });
+  assert.equal(problems.length, 1);
+});
+
+test('readConfig: a real DESK_TOKEN lets a plain-http origin start', () => {
+  assert.deepEqual(readConfig({ ...base, DOOR_ORIGIN: 'http://door.example.org', DESK_TOKEN: 'a-real-secret-of-some-length' }).problems, []);
+});
+
+test('readConfig: I_UNDERSTAND_THIS_IS_A_PUBLIC_DEMO=1 is the explicit way to run a public demo with the public token', () => {
+  assert.deepEqual(readConfig({ ...base, DOOR_ORIGIN: 'http://door.example.org', I_UNDERSTAND_THIS_IS_A_PUBLIC_DEMO: '1' }).problems, []);
+  assert.notDeepEqual(readConfig({ ...base, DOOR_ORIGIN: 'http://door.example.org', I_UNDERSTAND_THIS_IS_A_PUBLIC_DEMO: 'yes' }).problems, [], 'only the exact value 1 counts');
+});
+
 // ── platformHandler ──────────────────────────────────────────────────────────
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'serve-demo-test-'));

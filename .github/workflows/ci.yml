@@ -8,6 +8,8 @@ concurrency:
   group: verify-${{ github.ref }}
   cancel-in-progress: true
 
+# Every job below is blocking: a failing job fails the run. Whether a failing run blocks a merge depends on the
+# repository's required status checks (Settings > Branches), which are not in this file.
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -23,14 +25,17 @@ jobs:
       # unit + edge tests, signed-routes check, privacy gate, copy lint, docs check.
       - name: verify
         run: npm run verify
+      - name: "Prototype e2e specs, linted (its TypeScript is not: no TypeScript parser is installed)"
+        run: npm run lint:prototype
       - name: Real Workers runtime (workerd + local D1), no account needed
         run: npm run smoke:workerd
       - name: Install browsers
         run: npx playwright install --with-deps chromium firefox webkit
       - name: "End-to-end in Chromium, Firefox and WebKit (hostile host, network record, installer errors, Desk)"
         run: npm run e2e
-      - name: "Hosted demo: two origins, a real browser (the Dockerfile's server)"
-        run: npm run e2e:hosted
+      # The demo Door (DEMO_ROUTES=1): 'Bel nu', the tel: link, the 'Demo data' chip. The guard test fails if any of them skip.
+      - name: "Demo Door panel: verified hours, call button, Demo data (playwright.demo.config.js)"
+        run: npm run e2e:demo
       - name: "Prototype: typecheck, build, and its own end-to-end suite (imports the real core)"
         run: |
           npm ci --prefix prototype
@@ -40,6 +45,109 @@ jobs:
         if: failure()
         with:
           name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+
+  # A change to packages/shared/.fingerprint.json must come with a dated entry in packages/shared/FINGERPRINT-LOG.md.
+  # Needs the base commit, so the checkout is full (fetch-depth 0). Read-only: git diff only.
+  fingerprint-log:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: "Shared-module fingerprint changes have a FINGERPRINT-LOG.md entry"
+        env:
+          FINGERPRINT_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: node scripts/check-fingerprint-log.mjs
+
+  # The hosted demo: two origins, a real browser, in all three engines. Separate from verify so it runs in parallel.
+  hosted:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+      - name: "Hosted demo in Chromium, Firefox and WebKit: two origins, a real browser (the Dockerfile's server)"
+        run: npm run e2e:hosted
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-hosted
+          path: |
+            playwright-report/
+            test-results/
+
+  # The image as it is deployed: one image, two roles, two ports, and both must answer before the job passes.
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the demo image
+        run: docker build -t doorway-demo .
+      - name: Start the Door (ROLE=door) and the platform (ROLE=platform) on two ports
+        run: |
+          docker run -d --name door -p 8801:8801 \
+            -e ROLE=door -e PORT=8801 \
+            -e DOOR_ORIGIN=http://127.0.0.1:8801 -e PLATFORM_ORIGIN=http://127.0.0.1:8802 doorway-demo
+          docker run -d --name platform -p 8802:8802 \
+            -e ROLE=platform -e PORT=8802 \
+            -e DOOR_ORIGIN=http://127.0.0.1:8801 -e PLATFORM_ORIGIN=http://127.0.0.1:8802 doorway-demo
+      - name: Wait up to 20 s for /health on both containers and /app/ on the platform
+        run: |
+          wait_for() {
+            for i in $(seq 1 40); do
+              if curl -fsS --max-time 2 "$1" > /dev/null; then echo "ok: $1"; return 0; fi
+              sleep 0.5
+            done
+            echo "not answering after 20 s: $1" >&2
+            return 1
+          }
+          wait_for http://127.0.0.1:8801/health
+          wait_for http://127.0.0.1:8802/health
+          wait_for http://127.0.0.1:8802/app/
+      - name: Container logs (on failure)
+        if: failure()
+        run: docker logs door; docker logs platform
+      - name: Stop the containers
+        if: always()
+        run: docker rm -f door platform
+
+  # The WordPress plugin inside a real WordPress 7.1 (SQLite, no MySQL), driven by the Playwright suite.
+  wordpress:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      # PHP for scripts/wp-verify.sh. Pinned by full commit SHA (the tag it points to is v2.40.0).
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2.40.0
+        with:
+          php-version: '8.3'
+          extensions: sqlite3, pdo_sqlite, zip, curl
+      - run: npm ci
+      - name: Tools the script needs (zsh runs it, unzip installs the SQLite plugin)
+        run: sudo apt-get update && sudo apt-get install -y zsh unzip
+      # wp-verify.sh runs wordpress.spec.js in every project of playwright.config.js, so all three browsers are installed.
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+      - name: "WordPress 7.1 on SQLite with the generated plugin: npm run verify:wordpress"
+        run: npm run verify:wordpress
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-wordpress
           path: |
             playwright-report/
             test-results/

@@ -62,4 +62,4 @@ Keys are made under Settings, API keys. A key made **without opening Advanced** 
 - **The `Dockerfile` itself has still never been built.** The sandbox path avoids needing it.
 
 ## Handling the key
-A key pasted into a chat is exposed to that chat. Prefer `maritime onboard`, which signs in by a short code and never shows the key, or put it in a file outside the repository and revoke it afterwards. The key used for this test was kept in an owner-only file outside the repository, never in a command line, and deleted afterwards; revoke it anyway.
+A key pasted into a chat is exposed to that chat. Prefer `maritime onboard`, which signs in by a short code and never shows the key, or put it in a file outside the repository and revoke it afterwards. A key was pasted into the development conversation while this test ran, so it must be treated as exposed. Every key pasted during development must be revoked by the release owner. This document does not repeat any of them, and nothing here shows that they have been revoked. That revocation is an open action.

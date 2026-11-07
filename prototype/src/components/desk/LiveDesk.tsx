@@ -4,7 +4,6 @@ import { Btn, DoorLogo, Tag } from "../ui";
 import { cn } from "../../utils/cn";
 import {
   FORMAT_LABEL,
-  LABS_FORMATS,
   NOT_REPORTED,
   OUTCOME_LABEL,
   ROUTE_NONE,
@@ -211,7 +210,7 @@ function Panels({ a, days, install }: { a: DeskAgg; days: number; install: strin
       {/* breakdowns */}
       <section className="rounded-2xl bg-white p-5 ring-1 ring-line">
         <SectionHead eyebrow="By shape" title="What each warning shape saw">
-          Rates are over every exposure of that shape. Labs shapes (Fork, Wave) are marked and are not part of the shipped product.
+          Rates are over every exposure of that shape, including people who left.
         </SectionHead>
         <div className="mt-4">
           <BreakdownTable
@@ -219,7 +218,6 @@ function Panels({ a, days, install }: { a: DeskAgg; days: number; install: strin
             k={k}
             rows={a.byFormat?.map((f): TableRow => ({
               name: FORMAT_LABEL[f.format] ?? f.format,
-              tag: LABS_FORMATS.includes(f.format) ? "labs" : undefined,
               exposures: f.exposures,
               clicked: f.clicked,
               rate: f.rate,

@@ -2,6 +2,24 @@
 
 Written so that "tested" never means more than it did.
 
+## What CI runs, and what stays manual
+
+On every push and pull request, `.github/workflows/ci.yml` runs:
+
+- **verify:** the static gate, ESLint (the prototype's e2e specs included, its TypeScript not), the Workers smoke test, `npm run e2e` in Chromium, Firefox and WebKit, `npm run e2e:demo` in Chromium only, and the prototype's typecheck and end-to-end suite.
+- **hosted:** `npm run e2e:hosted` against two local processes on two origins, in all three engines.
+- **docker:** builds the image, starts the Door and the platform as two containers, and requires `/health` on both and `/app/` on the platform within 20 seconds each.
+- **wordpress:** `npm run verify:wordpress`, which runs the generated plugin in WordPress on SQLite in all three engines.
+- **fingerprint-log:** a change to `packages/shared/.fingerprint.json` needs a dated entry in its log.
+
+Every job fails the run when it fails. Whether that blocks a merge depends on the repository's required checks, which are not set in this repository.
+
+Still manual, and not in CI:
+
+- **Discourse in Firefox and WebKit.** No Discourse runs in CI. The one Discourse run was Chromium, on 7 November 2026.
+- **Real Safari and iOS.** Playwright's WebKit is not Safari, and no iOS device is involved.
+- **Wake on a web request** for the hosted demo on Maritime. The docker job runs the image on the CI runner, not on Maritime.
+
 ## Browsers
 
 `npm run e2e` runs the same suite in **Chromium, Firefox and WebKit** (Playwright builds). Running it in three engines found two real defects that Chromium alone hid:
@@ -21,7 +39,7 @@ Two things that looked like Safari bugs were not: Safari does not Tab to buttons
 
 ## WordPress
 
-`npm run verify:wordpress` (`scripts/wp-verify.sh`) builds the plugin, runs `php -l`, installs it into a real **WordPress 7.1.4** on SQLite served by PHP's built-in server, sets the install id with wp-cli, and drives it in all three browsers. Checked: exactly one script tag with the SRI hash, `defer`, `crossorigin`, `data-install`, `data-country` and the trigger event; `window.doorway` exists; a `doorway:flag` event opens the Door and the outcome is counted for that install. Also checked by hand with wp-cli: the settings sanitizers reject malformed input (`"not valid"`, `INST_X`, `inst_<script>`, `NLD`) and no tag is emitted when no install id is set.
+`npm run verify:wordpress` (`scripts/wp-verify.sh`) builds the plugin, runs `php -l`, installs it into a real WordPress on SQLite served by PHP's built-in server (the script downloads the latest release, so CI may run a newer one than the **7.1.4** recorded for the earlier run), sets the install id with wp-cli, and drives it in all three browsers. Checked: exactly one script tag with the SRI hash, `defer`, `crossorigin`, `data-install`, `data-country` and the trigger event; `window.doorway` exists; a `doorway:flag` event opens the Door and the outcome is counted for that install. Also checked by hand with wp-cli: the settings sanitizers reject malformed input (`"not valid"`, `INST_X`, `inst_<script>`, `NLD`) and no tag is emitted when no install id is set.
 
 **Not covered:** the Settings page rendered in a browser while logged in, a hosted WordPress, page-caching or minifying plugins (a minifier that rewrites the tag would break its SRI hash), multisite.
 

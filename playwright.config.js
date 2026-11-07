@@ -5,8 +5,8 @@ export default defineConfig({
   timeout: 30_000,
   fullyParallel: false,
   workers: 1,
-  retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
+  retries: 0, // CI does not retry: a flaky test is fixed or quarantined by name (BUILD.md), never retried silently
+  reporter: process.env.CI ? [['list'], ['github'], ['html', { open: 'never' }]] : 'list',
   use: { baseURL: 'http://127.0.0.1:8789', locale: 'nl-NL', trace: 'retain-on-failure' },
   projects: [
     // Platform and Door are both on loopback here, which Chrome's Local Network Access

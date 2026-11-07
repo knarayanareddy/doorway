@@ -222,6 +222,47 @@ test('fork: a keyboard user can reach the options and move on', async ({ page })
   await expect(page.locator('iframe')).toHaveCount(0);
 });
 
+// ── real exposures, counted ────────────────────────────────────────────────
+// Previews are never counted (above). These drive the REAL loader instead: escalate.html loads the Door with
+// data-labs="fork,wave" and no preview. Each Door left unanswered counts as left_page and moves the next press
+// on one step, so press k shows shape k. Nothing is forced and nothing is previewed.
+const ESCALATE_PAGE = '/mock-platform/escalate.html';
+const reachPress = async (page, k) => {
+  await page.goto(PLATFORM + ESCALATE_PAGE);
+  await page.waitForFunction(() => !!window.doorway);
+  for (let i = 1; i <= k; i++) {
+    await page.locator('#escalate-press').click();
+    await expect(frameOf(page).locator('[data-core-card]')).toHaveCount(1);
+    if (i < k) {
+      await page.goto(`${PLATFORM}${ESCALATE_PAGE}?step=${i}`);
+      await page.waitForFunction(() => !!window.doorway);
+    }
+  }
+};
+
+test('a real fork exposure, through the loader, is counted: one fork row, in bucket 2, with its outcome', async ({ page, request }) => {
+  await reachPress(page, 2);
+  expect(await kind(page), 'the second real exposure is the Fork').toBe('fork');
+  await expect(act(page, 'primary')).toBeVisible();
+  await frameOf(page).locator('.cb').first().click();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('iframe')).toHaveCount(0);
+  const db = await waitForAgg(request, (d) => d.agg.some((r) => r.format === 'fork'));
+  const forks = db.agg.filter((r) => r.format === 'fork');
+  expect(forks).toHaveLength(1);
+  expect(forks[0]).toMatchObject({ format: 'fork', bucket: '2', trigger: 'search', outcome: 'dismissed' });
+});
+
+test('a real wave exposure, through the loader, is counted in bucket 3 (the Wave is never started here)', async ({ page, request }) => {
+  await reachPress(page, 3);
+  expect(await kind(page), 'the third real exposure is the Wave').toBe('wave');
+  await expect(act(page, 'primary')).toBeFocused({ timeout: 3000 });
+  await page.keyboard.press('Escape');
+  await expect(page.locator('iframe')).toHaveCount(0);
+  const db = await waitForAgg(request, (d) => d.agg.some((r) => r.format === 'wave'));
+  expect(db.agg.filter((r) => r.format === 'wave')).toEqual([expect.objectContaining({ format: 'wave', bucket: '3', trigger: 'search', outcome: 'dismissed' })]);
+});
+
 // ── 4. the Wave ────────────────────────────────────────────────────────────
 test('wave: a guided exercise, a plan chosen from presets only, kept as a number in this tab only', async ({ page }) => {
   await openLabs(page, { waveSeconds: 10 });
@@ -307,7 +348,8 @@ test('host-adversary: fork, wave and quick-exit labs change nothing the host can
 });
 
 // ── the Desk shows it ──────────────────────────────────────────────────────
-test('desk: the per-shape table shows labs shapes next to the shipped ones, with small cells hidden', async ({ page, request }) => {
+// The rows below are POSTed straight to the edge, not produced by a visitor's journey: this checks the Desk's table, not the Door.
+test('desk: the per-shape table shows labs shapes next to the shipped ones, with small cells hidden (synthetic rows POSTed straight to the edge, not a UI run)', async ({ page, request }) => {
   const ev = (f, v, o, e) => ({ i: 'inst_demo001', v, f, t: 'search', o, r: 'nl-offlimits', e });
   const send = (b) => request.post(`${DOOR}/v1/c`, { headers: { origin: DOOR }, data: b });
   for (let i = 0; i < 40; i++) await send(ev('gate', 'legal-01', i < 8 ? 'clicked_help' : 'left_page', '1'));

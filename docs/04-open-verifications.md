@@ -70,7 +70,7 @@ The pinned public key (`packages/doorway/src/pubkey.js`) is a **dev** key genera
 
 ### V3 · What the 4.5% redirect figure counts
 
-**The claim.** Nurmi et al. (2026, SSRN preprint) report that 4.5% of search sessions redirected users to therapy resources.
+**The claim.** Nurmi et al. (2026, SSRN preprint, posted 5 March 2026; not peer reviewed) report that 4.5% of search sessions redirected users to therapy resources. *Source: `research/03-dataset-ping-app.html`. The paper itself is not in the repo.*
 
 **The ambiguity.** A click-through rate, or an automatic redirect? These are different numbers and only one is comparable to Ó Ciardha's 12.44%, which is a share of warnings *triggered*.
 
@@ -80,7 +80,7 @@ The pinned public key (`packages/doorway/src/pubkey.js`) is a **dev** key genera
 
 ### V4 · Whether the 2018→2024 decline is real or definitional
 
-**The claim.** CSAM search volume on Ahmia fell from 27.2% in 2018 to 6.0% in 2024.
+**The claim.** CSAM search volume on Ahmia fell from 27.2% in 2018 to 6.0% in 2024. *Source: `research/03-dataset-ping-app.html` (the same SSRN preprint).*
 
 **The ambiguity.** The filter was expanded in November 2023 to block all sexual queries, and the denominator changed. The decline may be partly arithmetic.
 
@@ -148,17 +148,17 @@ Whether a user who closes the tab is distinguishable from one who navigates away
 
 | Claim | Source |
 |---|---|
-| Art. 252 Sr in force 1 July 2024, max 6 years, habit/profession 9 years, "zich de toegang verschaffen" criminalised, viewing without downloading suffices | Wet seksuele misdrijven; OM Richtlijn 2024R006 |
-| Base offence: short unconditional sentence + 240 h community service + suspended sentence; 12 months where repeated; ten-year probation from 1 July 2024; art. 22b Sr task-penalty prohibition | OM Richtlijn 2024R006 |
-| Offlimits preventielijn renamed from Stop it Now in January 2026; 0800 266 64 36; founded 2012 with De Waag | Offlimits own pages |
-| Ahmia: 19,611,744 searches, 15.84% triggered, 12.44% CTR, no detectable reduction in searching | Ó Ciardha et al. 2026, arXiv:2606.06417 |
+| Art. 252 Sr in force 1 July 2024, max 6 years, habit/profession 9 years, "zich de toegang verschaffen" criminalised, viewing without downloading suffices | Wet seksuele misdrijven; OM Richtlijn 2024R006 (both as cited in `research/unicri-research.html`) |
+| Base offence: short unconditional sentence + 240 h community service + suspended sentence; 12 months where repeated; ten-year probation from 1 July 2024; art. 22b Sr task-penalty prohibition | OM Richtlijn 2024R006 (as cited in `research/unicri-research.html`) |
+| Offlimits preventielijn renamed from Stop it Now in January 2026; 0800 266 64 36; founded 2012 with De Waag | Offlimits pages (link in `organiser/unicri/BRIEF.md`); also `research/unicri-research.html` |
+| Ahmia: almost 20 million searches over 140 days, over 3 million triggered a warning, 12.44% click-through (386,497 clicks / 3,105,800 warnings), no detectable reduction in searching | Ó Ciardha et al. 2026, arXiv:2606.06417 (abstract: "almost 20 million searches", "over 3 million"); `research/unicri-research.html` (the four-deployment table) for the clicks and warnings; the no-reduction finding is in the same dossier |
 | Google: −3.8pp (−5.6pp Europe), 0.73% help CTR, within-session only | Umbach et al. 2026, arXiv:2606.06126 |
-| reThink: 4.4M warnings, 490 click-throughs, ~68 helpline contacts, 82% not searching again is session-level with no baseline | Scanlan et al. 2024, IWF evaluation |
+| reThink: 4.4M warnings, 490 click-throughs, ~68 helpline contacts, 82% not searching again is session-level with no baseline | Scanlan et al. 2024, reThink evaluation (`research/unicri-research.html`) |
 | Prichard 2024: 75% → 35–47% entry; deterrence+image OR 5.02; images added nothing | *Child Abuse & Neglect* 155:106955 |
 | Prichard 2022: IP-trace OR 2.64, illegality OR 2.99, harm OR 1.31 not significant | *Sexual Abuse* 34:106 |
 | Insoll 2024: 55.0% want to stop, 70.2% could not find anonymous help, 73.9% (Nurmi) could not get help | *JOTS* 2(4); *Sci Rep* 14:7849 |
-| Ahmia search logs are withheld; only the 11,470-response survey is released | Nurmi et al. 2024, data availability statement + Zenodo 10457587 |
+| Ahmia search logs are withheld; only the 11,470-response survey is released (on Zenodo) | Nurmi et al. 2024, data availability statement, as read in `research/03-dataset-ping-app.html` |
 
 ---
 
-*Last updated 7 November 2026. Closed items moved here with the source that closed them.*
+*Last updated 7 November 2026. Closed items moved here with the source that closed them. Every figure is also listed, with its status, in `docs/16-claims-ledger.md`.*

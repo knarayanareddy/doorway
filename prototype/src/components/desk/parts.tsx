@@ -4,9 +4,9 @@ import { Btn } from "../ui";
 import { cn } from "../../utils/cn";
 import { cellText, hiddenText, rateText, type Cell } from "../../lib/liveDesk";
 
-export const SNIPPET = `<script src="https://cdn.example.org/v0.2.0/doorway.min.js"
-        integrity="sha384-…" crossorigin="anonymous"
-        data-install="inst_xxxxxx"
+export const SNIPPET = `<script src="https://YOUR-CDN/doorway.min.js"
+        integrity="sha384-<HASH>" crossorigin="anonymous"
+        data-install="<INSTALL_ID>"
         data-trigger-event="doorway:flag" defer></script>
 
 document.dispatchEvent(new CustomEvent('doorway:flag', { detail: { type: 'search' } }))`;
@@ -31,7 +31,7 @@ export function InstallCard() {
         </Btn>
       </div>
       <pre className="mt-3 overflow-x-auto rounded-lg bg-night p-3 font-mono text-[11.5px] leading-5 text-paper/85">{SNIPPET}</pre>
-      <p className="mt-2 text-[11px] text-ink-soft">The platform passes a trigger <em>kind</em> (search, chat, nav), never the query. Placeholder CDN URL and hash — nothing is published here; see INSTALL.md.</p>
+      <p className="mt-2 text-[11px] text-ink-soft">The platform passes a trigger <em>kind</em> (search, chat, nav), never the query. Your install id and integrity hash come from npm run build; see INSTALL.md.</p>
     </section>
   );
 }

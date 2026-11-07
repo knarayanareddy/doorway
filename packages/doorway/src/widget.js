@@ -11,11 +11,11 @@ import { pick, advance, variantFor, markActed } from '../../core/src/shift.js';
 import { resolve, youthRoute } from '../../core/src/route.js';
 import { normaliseType } from '../../core/src/counter.js';
 import { buildCard, mount } from '../../shared/card.js';
-import { copyFor, attributionFor, footnoteFor, variantIndex, langOf, LABELS } from './copy.js';
+import { copyFor, attributionFor, footnoteFor, variantIndex, langOf, LABELS, DOOR } from './copy.js';
 import { createSender } from './send.js';
-import { glassSection, hallwaySections } from './panels.js';
+import { glassSection, hallwaySections, doorPanel } from './panels.js';
 import { configFor, labsFormats, quickExit, readWavePlan, saveWavePlan, clearWavePlan } from './labs.js';
-import { FORK, WAVE, QUICK, QUICK_HINT, BACK, LABS_TAG } from './copy-labs.js';
+import { FORK, WAVE, QUICK, QUICK_HINT, BACK } from './copy-labs.js';
 
 export { variantIndex, footnoteFor };
 
@@ -91,7 +91,7 @@ export function createDoorway({
       { type: 'action', id: 'quit', label: QUICK[L], tone: 'danger', closes: true, outcome: 'left_page', onSelect: () => quickExit(w, L) },
       { type: 'text', text: QUICK_HINT[L] },
     ] }] : []);
-    const tag = (which) => [{ placement: 'top', blocks: [{ type: 'text', text: LABS_TAG[which][L] }] }];
+    const tag = () => [];
     const help = (label, kind = 'primary') => (hasLink
       ? { label, kind, outcome: 'clicked_help', routeId: route.id, onSelect: () => openHelp(route.url) }
       : { label: BACK[L], kind, outcome: 'dismissed' });
@@ -150,6 +150,23 @@ export function createDoorway({
       });
     }
 
+    // The Door (exposure 5+): one big action, a rotating line, carry on, and the Glass Door. Same outcomes as every card.
+    if (format === 'door') {
+      const d = doorPanel({ lang: L, route: route || null, selfhelp, now: now(), n: localCount, onOpen: openHelp });
+      return buildCard({
+        ...common,
+        variant: 'door',
+        kicker: d.kicker,
+        tag: d.tag,
+        headline: d.headline,
+        body: d.body,
+        primary: d.primary,
+        secondary: { label: DOOR[L].carryOn, kind: 'secondary', outcome: 'dismissed' },
+        tertiary: { label: LABELS.report[L], kind: 'tertiary' },
+        sections: [...quit(), ...(d.chat ? [{ blocks: [d.chat] }] : []), glass()],
+      });
+    }
+
     const variants = copyFor({ format, family: decision.family, lang: L, route, legalJurisdiction, now: now() });
     const t = variants[variantIndex(variantId)] || variants[0];
     const sections = [];
@@ -205,7 +222,7 @@ export function createDoorway({
     const need = ['hallway', 'door', 'fork', 'wave'].includes(decision.format) ? 'human' : 'any';
     const langTag = w.navigator?.language || L;
     const { route } = resolve(langTag, routes, { need, country: countryCode });
-    const selfhelp = decision.format === 'hallway' ? (resolve(langTag, routes, { need: 'selfhelp', country: countryCode }).route || null) : null;
+    const selfhelp = ['hallway', 'door'].includes(decision.format) ? (resolve(langTag, routes, { need: 'selfhelp', country: countryCode }).route || null) : null;
 
     // Count the exposure before anything can go wrong; the clock is kept for
     // in-place escalations so a retry cannot postpone the next full warning.

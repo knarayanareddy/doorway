@@ -67,8 +67,6 @@ test('live numbers match a direct call to the Door (headline, shape, trigger, wo
   for (const f of direct.byFormat) {
     await expectRow(page, LABEL[f.format], f);
   }
-  await expect(rowFor(page, LABEL.fork).getByText('labs', { exact: true })).toHaveCount(1);
-  await expect(rowFor(page, LABEL.wave).getByText('labs', { exact: true })).toHaveCount(1);
 
   const search = direct.byTrigger.find((r) => r.key === 'search');
   await expectRow(page, 'Search', search);
@@ -86,7 +84,8 @@ test('suppressed cells read as hidden, never as 0', async ({ page, request }) =>
   for (const f of suppressed) {
     const cell = rowFor(page, LABEL[f.format]).getByRole('cell').nth(2);
     await expect(cell).toHaveText(HIDDEN);
-    await expect(cell).toHaveAttribute('title', HIDDEN_FULL);
+    // The title sits on the span inside the cell (prototype/src/components/desk/parts.tsx), not on the td.
+    await expect(cell.locator('[title]')).toHaveAttribute('title', HIDDEN_FULL);
   }
   // No cell in the by-shape table may show a bare 0 for a suppressed value.
   await expect(page.getByRole('table').filter({ hasText: 'Shape' }).getByRole('cell', { name: /^0$/ })).toHaveCount(0);
@@ -170,7 +169,7 @@ test('synthetic mode is labelled SYNTHETIC and shows no live numbers', async ({ 
   await page.getByRole('button', { name: 'Synthetic 20,000-member forum' }).click();
   await expect(page.getByRole('button', { name: 'Synthetic 20,000-member forum' })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByText('SYNTHETIC — not from any Door')).toBeVisible();
-  await expect(page.getByText('SYNTHETIC — baselines 0.5–1.5%, not 15%')).toBeVisible();
+  await expect(page.getByText('SYNTHETIC ILLUSTRATION')).toBeVisible();
   await expect(page.getByText('Illustrative badge', { exact: false })).toBeVisible();
   await expect(page.getByTestId('stat-exposures')).toHaveCount(0);
   // The synthetic view has no counter of its own: no 'live from this browser' tally and no clear button.

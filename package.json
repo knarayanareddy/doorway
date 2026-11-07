@@ -12,17 +12,21 @@
     "packages/*"
   ],
   "scripts": {
-    "test": "node --test packages/shared/core.test.js 'packages/doorway/test/*.test.js' 'edge/test/*.test.js'",
+    "test": "node --test packages/shared/core.test.js 'packages/doorway/test/*.test.js' 'edge/test/*.test.js' 'scripts/check-*.test.mjs'",
     "test:core": "node --test packages/shared/core.test.js",
     "lint": "eslint --max-warnings=0 .",
     "gate:privacy": "node scripts/gate-privacy.mjs",
     "lint:copy": "node scripts/lint-copy.mjs",
     "check:routes": "node scripts/check-routes.mjs",
+    "check:prod-key": "node scripts/check-prod-key.mjs",
+    "scan:secrets": "node scripts/scan-secrets.mjs",
     "check:pilot": "node scripts/check-routes.mjs --pilot",
     "check:shared": "node scripts/check-shared.mjs",
+    "check:fingerprint-log": "node scripts/check-fingerprint-log.mjs",
+    "lint:prototype": "eslint --no-ignore --max-warnings=0 prototype/e2e",
     "check": "node scripts/check-safety.mjs",
     "build": "node scripts/build.mjs",
-    "demo": "DOOR_ORIGIN=http://127.0.0.1:8788 node scripts/dev.mjs",
+    "demo": "DEMO_ROUTES=1 DOOR_ORIGIN=http://127.0.0.1:8788 node scripts/dev.mjs",
     "sign": "node scripts/sign-routes.mjs",
     "e2e": "npm run build:e2e && playwright test",
     "build:e2e": "DOOR_ORIGIN=http://127.0.0.1:8788 node scripts/build.mjs > /dev/null",
@@ -36,10 +40,11 @@
     "verify:wordpress": "scripts/wp-verify.sh",
     "e2e:prototype": "playwright test -c playwright.prototype.config.js",
     "build:prototype": "npm --prefix prototype run build",
-    "demo:labs": "SEED=1 DOOR_ORIGIN=http://127.0.0.1:8788 node scripts/dev.mjs",
-    "demo:app": "npm run build:prototype && SEED=1 DOOR_ORIGIN=http://127.0.0.1:8788 node scripts/dev.mjs",
+    "demo:labs": "DEMO_ROUTES=1 SEED=1 DOOR_ORIGIN=http://127.0.0.1:8788 node scripts/dev.mjs",
+    "demo:app": "npm run build:prototype && DEMO_ROUTES=1 SEED=1 DOOR_ORIGIN=http://127.0.0.1:8788 node scripts/dev.mjs",
     "serve:demo": "node scripts/serve-demo.mjs",
-    "e2e:hosted": "playwright test -c playwright.hosted.config.js"
+    "e2e:hosted": "playwright test -c playwright.hosted.config.js",
+    "e2e:demo": "playwright test -c playwright.demo.config.js"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

@@ -6,9 +6,9 @@
  * predicates that guard every other claim: isRenderableConfidence and isRenderableHours.
  */
 import { FIELDS } from '../../core/src/counter.js';
-import { isRenderableConfidence } from '../../core/src/route.js';
+import { isRenderableConfidence, isAllowedDestination } from '../../core/src/route.js';
 import { isRenderableHours, openStatus } from '../../core/src/hours.js';
-import { GLASS, HALLWAY_PHRASES, HALLWAY_FAQ, langOf } from './copy.js';
+import { GLASS, HALLWAY_PHRASES, HALLWAY_FAQ, DOOR, DEMO_TAG, LABELS, langOf } from './copy.js';
 
 /**
  * The Glass Door. `preview` is the exact object the Door would send for this exposure, with
@@ -59,6 +59,7 @@ export function hallwaySections({ lang, route, selfhelp, now = Date.now(), onAlt
     if (st) {
       const blocks = [{ type: 'text', text: st.open ? HALLWAY_FAQ.openUntil[L](st.closesAt) : HALLWAY_FAQ.closedOpens[L](st.opensAt) }];
       if (!st.open && selfhelp && selfhelp.id !== route.id) blocks.push({ type: 'text', text: HALLWAY_FAQ.closedTip[L] });
+      if (route.demo === true) blocks.unshift({ type: 'text', text: DEMO_TAG[L] });
       sections.push({ blocks });
     }
   }
@@ -94,4 +95,56 @@ export function hallwaySections({ lang, route, selfhelp, now = Date.now(), onAlt
     });
   }
   return sections;
+}
+
+/** A route's url, only if it is on the allow-list (the bundle already drops others; this is the same rule, again). */
+const allowed = (r) => (r && typeof r.url === 'string' && isAllowedDestination(r.url) ? r : null);
+/** A dialable number: digits and an optional leading +, 6 to 20 of them. Otherwise null, and no call is offered. */
+const telFor = (phone) => {
+  const digits = typeof phone === 'string' ? phone.replace(/[\s()-]/g, '') : '';
+  return /^\+?\d{6,20}$/.test(digits) ? digits : null;
+};
+
+/**
+ * The Door (exposure 5+): presence, not pressure. What it says about the line depends only on verified data:
+ *   - "open" with a call button  only if isRenderableHours passes, the hours say open, and the route has a number;
+ *   - "opens at ..." to self-help only if isRenderableHours passes and the hours say closed;
+ *   - otherwise neither open nor closed is claimed, and the one action is a plain link to the help service.
+ * Links are only ever followed through `onOpen`, which the widget gives the card; tel: is a href and never a URL.
+ * `tag` is 'Demo data' only when the hours or the number come from the DEMO record (route.demo === true).
+ *
+ * @param {{lang:string, route:object|null, selfhelp:object|null, now?:number, n?:number, onOpen:(url:string)=>void}} a
+ *   n: the exposure count; the headline rotates with it (titles[(n-5) % length]), as the reference Door does.
+ */
+export function doorPanel({ lang, route, selfhelp = null, now = Date.now(), n = 1, onOpen }) {
+  const L = langOf(lang);
+  const t = DOOR[L];
+  const base = { kicker: t.kicker, headline: t.titles[Math.max(0, n - 5) % t.titles.length], body: t.body, tag: null, chat: null };
+  const help = allowed(route);
+  if (!help) return { ...base, primary: { label: LABELS.close[L], kind: 'primary' } };
+
+  const hours = isRenderableHours(route, now) ? openStatus(route.hours, new Date(now)) : null;
+  const demo = route.demo === true ? DEMO_TAG[L] : null;
+  const tel = telFor(route.phone);
+  if (hours && hours.open && tel) {
+    return {
+      ...base,
+      tag: demo,
+      primary: { label: `${t.callOpen} ${route.phone.trim()}`, kind: 'primary', outcome: 'clicked_help', routeId: help.id, href: `tel:${tel}` },
+      chat: { type: 'action', id: 'chat', label: t.chat, closes: true, outcome: 'clicked_help', routeId: help.id, onSelect: () => onOpen(help.url) },
+    };
+  }
+  if (hours && !hours.open) {
+    const self = allowed(selfhelp);
+    const target = self || help;
+    return {
+      ...base,
+      tag: demo,
+      primary: {
+        label: self && hours.opensAt ? t.closed(hours.opensAt) : LABELS.primary[L],
+        kind: 'primary', outcome: 'clicked_help', routeId: target.id, onSelect: () => onOpen(target.url),
+      },
+    };
+  }
+  return { ...base, primary: { label: LABELS.primary[L], kind: 'primary', outcome: 'clicked_help', routeId: help.id, onSelect: () => onOpen(help.url) } };
 }

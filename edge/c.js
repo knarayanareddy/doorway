@@ -19,14 +19,25 @@
 import { build, buildHeartbeat, buildReport, aggregateKey, deskSummary, deskByFormat, deskBreakdown, variantArm, TRIGGER_ORDER, ESCALATION_ORDER, flagAnomalies, MAX_BODY_BYTES } from '../packages/core/src/counter.js';
 import { edgeLabsFormats } from '../packages/doorway/src/labs.js';
 
+// Install rows are cached per isolate, and the cache is bounded. A VERIFIED row is kept for a minute. An unverified
+// row is never served from the cache: a verify on any isolate must be seen at once, so it is read from D1 each time.
+// A missing id is remembered for five seconds, in a small map of its own, so junk ids cannot push out real installs.
 const INSTALL_TTL_MS = 60_000;
-const installCache = new Map();
+const MISS_TTL_MS = 5_000;
+const VERIFIED_MAX = 500;
+const MISS_MAX = 64;
+const verifiedInstalls = new Map(); // id -> { row, until }, least recently used first
+const missedInstalls = new Map();   // id -> until
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const p = url.pathname;
     try {
+      // Until DOOR_ORIGIN is a real origin, nothing is written. edge/wrangler.toml ships a `.example` placeholder (RFC 2606, reserved).
+      if (doorUnconfigured(env) && (request.method === 'POST' || (request.method === 'GET' && p === '/v1/status'))) {
+        return json({ error: 'door origin not configured' }, 503, p === '/v1/status' ? { 'access-control-allow-origin': '*' } : {});
+      }
       if (request.method === 'GET' && (p === '/v1/' || p === '/v1')) return door(url, env);
       if (request.method === 'GET' && p === '/v1/door.js') return asset(request, env, '/door.js');
       if (request.method === 'GET' && p === '/desk') return deskPage(request, env, '/desk.html', 'text/html; charset=utf-8');
@@ -60,17 +71,34 @@ function json(o, status = 200, extra = {}) {
 }
 const empty = (status = 204) => new Response(null, { status, headers: { 'cache-control': 'no-store' } });
 
+/** Insert or refresh a cache entry, then evict the least recently used one if the map is over its bound. */
+function remember(map, key, value, max) {
+  map.delete(key);
+  map.set(key, value);
+  if (map.size > max) map.delete(map.keys().next().value);
+}
+
 export async function getInstall(env, id) {
-  const hit = installCache.get(id);
-  if (hit && hit.until > Date.now()) return hit.row;
+  const t = Date.now();
+  const hit = verifiedInstalls.get(id);
+  if (hit && hit.until > t) { remember(verifiedInstalls, id, hit, VERIFIED_MAX); return hit.row; }
+  const missUntil = missedInstalls.get(id);
+  if (missUntil !== undefined && missUntil > t) return null;
   const row = (await env.DB.prepare(
     `SELECT id, domain, verified_at, verify_token, desk_token_hash, daily_cap, rate_per_min FROM installs WHERE id = ?`
   ).bind(id).first()) || null;
-  installCache.set(id, { row, until: Date.now() + INSTALL_TTL_MS });
+  if (row?.verified_at) remember(verifiedInstalls, id, { row, until: Date.now() + INSTALL_TTL_MS }, VERIFIED_MAX);
+  else if (!row) remember(missedInstalls, id, Date.now() + MISS_TTL_MS, MISS_MAX);
   return row;
 }
-export const forgetInstall = (id) => installCache.delete(id);
-export const __clearInstallCache = () => installCache.clear();
+export function forgetInstall(id) { verifiedInstalls.delete(id); missedInstalls.delete(id); }
+export function __clearInstallCache() { verifiedInstalls.clear(); missedInstalls.clear(); }
+export const __installCacheSize = () => ({ verified: verifiedInstalls.size, missed: missedInstalls.size });
+
+/** True when DOOR_ORIGIN is unset or is a `.example` host (the wrangler.toml placeholder). Writes are refused then. */
+const doorUnconfigured = (env) => {
+  try { return !env.DOOR_ORIGIN || new URL(env.DOOR_ORIGIN).hostname.endsWith('.example'); } catch { return true; }
+};
 
 /**
  * Writes are accepted only from the Door's own origin. Platforms never write
@@ -96,29 +124,53 @@ async function readJson(request) {
 async function overMinuteLimit(env, install) {
   const t = now();
   const minute = t.toISOString().slice(0, 16);
+  return (await minuteBump(env, `m:${install.id}:${minute}`, minute, t)) > install.rate_per_min;
+}
+/** Adds one to a per-minute counter and returns the new count. Minute rows are pruned as they are created. */
+async function minuteBump(env, k, minute, t = now()) {
   const row = await env.DB.prepare(
     `INSERT INTO rate (k, kind, stamp, n) VALUES (?, 'm', ?, 1) ON CONFLICT(k) DO UPDATE SET n = n + 1 RETURNING n`
-  ).bind(`m:${install.id}:${minute}`, minute).first();
+  ).bind(k, minute).first();
   if (row.n === 1) {
     const old = new Date(t.getTime() - 3 * 60_000).toISOString().slice(0, 16);
     await env.DB.prepare(`DELETE FROM rate WHERE kind = 'm' AND stamp < ?`).bind(old).run();
   }
-  return row.n > install.rate_per_min;
+  return row.n;
 }
-async function dayCapReached(env, install) {
-  const day = dayOf(now());
-  const row = await env.DB.prepare(`SELECT n FROM rate WHERE k = ?`).bind(`d:${install.id}:${day}`).first();
-  return (row?.n || 0) >= install.daily_cap;
+async function minuteRead(env, k) {
+  return (await env.DB.prepare(`SELECT n FROM rate WHERE k = ?`).bind(k).first())?.n || 0;
 }
-async function countAccepted(env, install) {
+/**
+ * Read-side limits (Desk and status). Keys start with their own letter (f:, r:, s:) so they
+ * never share a counter with the write limiter's m: rows. Ids that do not exist all share one
+ * bucket, so junk ids cannot grow the rate table.
+ */
+const UNKNOWN_BUCKET = 'unknown-install';
+const DESK_FAILS_PER_MIN = 10;
+const DESK_READS_PER_MIN = 60;
+const STATUS_PER_MIN = 120;
+const minuteOf = (t) => t.toISOString().slice(0, 16);
+/** 429 with seconds until the next minute, so a client can wait it out. */
+const tooMany = (extra = {}) => json({ error: 'too many attempts' }, 429, { 'retry-after': String(60 - now().getUTCSeconds()), ...extra });
+/**
+ * Reserves one accepted event against the install's daily cap. The check and the increment are ONE statement:
+ * the upsert only changes the row while it is below the cap, and RETURNING gives no row when it is not. Two
+ * requests can therefore never both take the last slot, whatever their interleaving. A new day's row starts at 1.
+ */
+async function reserveDaily(env, install) {
+  if (!(install.daily_cap > 0)) return false;
   const day = dayOf(now());
   const row = await env.DB.prepare(
-    `INSERT INTO rate (k, kind, stamp, n) VALUES (?, 'd', ?, 1) ON CONFLICT(k) DO UPDATE SET n = n + 1 RETURNING n`
-  ).bind(`d:${install.id}:${day}`, day).first();
+    `INSERT INTO rate (k, kind, stamp, n) VALUES (?, 'd', ?, 1)
+     ON CONFLICT(k) DO UPDATE SET n = n + 1 WHERE rate.n < ?
+     RETURNING n`
+  ).bind(`d:${install.id}:${day}`, day, install.daily_cap).first();
+  if (!row) return false;
   if (row.n === 1) {
     const old = dayOf(new Date(Date.now() - 2 * 86_400_000));
     await env.DB.prepare(`DELETE FROM rate WHERE kind = 'd' AND stamp < ?`).bind(old).run();
   }
+  return true;
 }
 
 async function authedInstall(request, env, id) {
@@ -151,7 +203,8 @@ async function collect(request, env) {
   const install = await getInstall(env, p.i);
   if (!install || !install.verified_at) return json({ error: 'install' }, 403);
   if (await overMinuteLimit(env, install)) return json({ error: 'rate' }, 429, { 'retry-after': '60' });
-  if (await dayCapReached(env, install)) return json({ error: 'daily-cap' }, 429, { 'retry-after': '3600' });
+  // Reserved before the write: if the write then fails, the slot stays used. That can only under-count, never overshoot.
+  if (!(await reserveDaily(env, install))) return json({ error: 'daily-cap' }, 429, { 'retry-after': '3600' });
 
   const day = dayOf(now());
   await env.DB.prepare(
@@ -159,7 +212,6 @@ async function collect(request, env) {
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
      ON CONFLICT(key, day) DO UPDATE SET count = count + 1`
   ).bind(p.i, p.v, p.f, p.t, p.e, day, aggregateKey(p), p.o, p.r).run();
-  await countAccepted(env, install);
   return empty();
 }
 
@@ -203,6 +255,9 @@ async function status(url, env) {
   const cors = { 'access-control-allow-origin': '*' };
   if (!/^inst_[a-z0-9]{6,}$/.test(id)) return json({ ok: false, reason: 'bad-install' }, 200, cors);
   const install = await getInstall(env, id);
+  const minute = minuteOf(now());
+  if ((await minuteBump(env, `s:${install ? id : UNKNOWN_BUCKET}:${minute}`, minute)) > STATUS_PER_MIN) return tooMany(cors);
+  // 'unknown-install' and 'unverified' differ on purpose: the Door's loader prints a different fix for each (INSTALL.md section 6).
   if (!install) return json({ ok: false, reason: 'unknown-install' }, 200, cors);
   if (!install.verified_at) return json({ ok: false, reason: 'unverified' }, 200, cors);
   return json({ ok: true }, 200, cors);
@@ -261,8 +316,18 @@ async function deskPage(request, env, path, type) {
 
 async function agg(request, url, env) {
   const id = url.searchParams.get('i') || '';
+  const minute = minuteOf(now());
+  // Ten failed Bearer attempts in a minute lock the install (or the shared unknown bucket) out for the rest
+  // of that minute, checked BEFORE the token, so a correct token cannot be used to keep guessing.
+  const known = await getInstall(env, id);
+  const failKey = `f:${known ? known.id : UNKNOWN_BUCKET}:${minute}`;
+  if ((await minuteRead(env, failKey)) >= DESK_FAILS_PER_MIN) return tooMany();
   const install = await authedInstall(request, env, id);
-  if (!install) return json({ error: 'unauthorised' }, 401);
+  if (!install) {
+    await minuteBump(env, failKey, minute);
+    return json({ error: 'unauthorised' }, 401);
+  }
+  if ((await minuteBump(env, `r:${install.id}:${minute}`, minute)) > DESK_READS_PER_MIN) return tooMany();
   const days = Math.min(90, Math.max(1, Number(url.searchParams.get('days')) || 30));
   const since = dayOf(new Date(Date.now() - (days - 1) * 86_400_000));
 

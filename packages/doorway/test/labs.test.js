@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseLabs, sequenceFor, configFor, previewShape, waveSeconds, QUICK_EXIT, quickExit, readWavePlan, saveWavePlan, clearWavePlan, WAVE_KEY, edgeLabsFormats, labsFormats } from '../src/labs.js';
+import { fileURLToPath } from 'node:url';
+import { build as esbuild } from 'esbuild';
+import { parseLabs, sequenceFor, configFor, previewShape, waveSeconds, QUICK_EXIT, quickExit, readWavePlan, saveWavePlan, clearWavePlan, WAVE_KEY, edgeLabsFormats, labsFormats, DEMO_LABS } from '../src/labs.js';
 import { FORK, WAVE, labsStrings, LABS_TAG } from '../src/copy-labs.js';
 import { pick, advance, variantFor, DEFAULT_CONFIG } from '../../core/src/shift.js';
 import { build, deskByFormat } from '../../core/src/counter.js';
@@ -148,10 +150,42 @@ test('createDoorway without labs behaves exactly as shipped', () => {
 });
 
 // ── the demo-only `advance` token: a Door lab, never a format ─────────────
-test('advance is a known lab token, only when spelled exactly; other spellings are ignored', () => {
-  assert.deepEqual(parseLabs('advance'), ['advance']);
-  assert.deepEqual(parseLabs('ADVANCE, Advance ,advance2,adv,<advance>'), []);
-  assert.deepEqual(parseLabs('fork,advance,advance'), ['fork', 'advance'], 'de-duplicated');
+test('advance is a known lab token in a demo build, only when spelled exactly; other spellings are ignored', () => {
+  assert.deepEqual(parseLabs('advance', true), ['advance']);
+  assert.deepEqual(parseLabs('ADVANCE, Advance ,advance2,adv,<advance>', true), []);
+  assert.deepEqual(parseLabs('fork,advance,advance', true), ['fork', 'advance'], 'de-duplicated');
+});
+
+// The demo-only labs are decided at BUILD time: scripts/build.mjs defines __DEMO_LABS__. These tests bundle labs.js
+// in memory with each value of that define (the same esbuild define the real build uses; nothing is written to dist/)
+// and import the result, so the shipped and demo behaviour are both checked through the real mechanism.
+async function labsBundled(demo) {
+  const r = await esbuild({
+    entryPoints: [fileURLToPath(new URL('../src/labs.js', import.meta.url))],
+    bundle: true, format: 'esm', write: false, logLevel: 'silent', define: { __DEMO_LABS__: String(demo) },
+  });
+  return import('data:text/javascript;base64,' + Buffer.from(r.outputFiles[0].text).toString('base64'));
+}
+
+test('a shipped build drops advance and preview, from the parser, the lab list and the shape forcing', async () => {
+  const shipped = await labsBundled(false);
+  assert.equal(shipped.DEMO_LABS, false);
+  assert.deepEqual([...shipped.LABS], ['fork', 'wave', 'quick-exit']);
+  assert.deepEqual(shipped.parseLabs('advance,preview,fork,quick-exit'), ['fork', 'quick-exit']);
+  assert.equal(shipped.previewShape('fork', shipped.parseLabs('preview')), null, 'a forced shape cannot be requested');
+});
+
+test('a demo build keeps advance and preview, and nothing else changes', async () => {
+  const demo = await labsBundled(true);
+  assert.equal(demo.DEMO_LABS, true);
+  assert.deepEqual([...demo.LABS], ['fork', 'wave', 'quick-exit', 'preview', 'advance']);
+  assert.deepEqual(demo.parseLabs('advance,preview,fork,quick-exit,evil'), ['advance', 'preview', 'fork', 'quick-exit']);
+  assert.equal(demo.previewShape('fork', demo.parseLabs('preview')), 'fork');
+});
+
+test('outside any bundle the demo flag is off, so the tests see the shipped behaviour', () => {
+  assert.equal(DEMO_LABS, false);
+  assert.deepEqual(parseLabs('advance,preview'), []);
 });
 
 test('advance is not a format: it never reaches the edge, and the edge never accepts it', () => {
