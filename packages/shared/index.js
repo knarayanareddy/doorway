@@ -1,10 +1,9 @@
 /**
- * packages/shared — card, validation, loop and accessibility helpers.
+ * packages/shared — card, validation and accessibility helpers.
  * Doorway-specific logic belongs in packages/core or packages/doorway instead.
  */
 export * as card from './card.js';
 export * as validate from './validate.js';
-export * as loop from './loop.js';
 export * as a11y from './a11y.js';
 
 export const VERSION = '0.1.0';

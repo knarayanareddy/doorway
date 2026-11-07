@@ -2,7 +2,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildCard, validate, VARIANTS } from './card.js';
 import { strict, suppress, rate } from './validate.js';
-import { compose, latency, LOOP_KIND } from './loop.js';
 import { longSentences, MAX_SENTENCE_WORDS } from './a11y.js';
 
 /* ---------- card ---------- */
@@ -65,38 +64,6 @@ test('a rate always carries its denominator and flags small n', () => {
   assert.equal(r.denominator, 20);
   assert.match(r.note, /small denominator/);
   assert.equal(rate(1, 0).value, null);
-});
-
-/* ---------- loop ---------- */
-
-test('every loop kind composes without naming a person', () => {
-  for (const k of Object.values(LOOP_KIND)) {
-    const m = compose(k, { service: 'Offlimits', count: 3, count2: 1 });
-    assert.equal(typeof m.body, 'string');
-    assert.ok(m.body.length > 0);
-    assert.ok(!/^You (?:searched|viewed)/i.test(m.body), k + ' must not address the person behaviourally');
-  }
-});
-
-test('the dissent message is the one that retains, and it names the action', () => {
-  const m = compose(LOOP_KIND.SPLIT, { count: 2 });
-  assert.match(m.body, /two risks/);
-  assert.match(m.body, /split into 2/);
-});
-
-test('a non-causal arrival claim is labelled as association', () => {
-  const m = compose(LOOP_KIND.ARRIVED, { count: 68, service: 'Stop It Now', causal: false });
-  assert.equal(m.honesty, 'association, not attribution');
-});
-
-test('an unknown loop kind throws rather than inventing a message', () => {
-  assert.throws(() => compose('nonsense'), /unknown loop kind/);
-});
-
-test('latency is never negative', () => {
-  assert.equal(latency(1000, 500), 0);
-  assert.equal(latency(1000, 1500), 500);
-  assert.equal(latency(null), null);
 });
 
 /* ---------- a11y ---------- */
