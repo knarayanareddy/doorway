@@ -11,3 +11,4 @@ dist/*.map
 test-results/
 dist/
 playwright-report/
+dist-hosted/

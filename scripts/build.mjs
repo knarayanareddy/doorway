@@ -22,7 +22,11 @@ import { VERSION } from '../packages/doorway/src/version.js';
 const ROOT = new URL('..', import.meta.url).pathname;
 const DOOR_ORIGIN = (process.env.DOOR_ORIGIN || 'https://door.doorway.example').replace(/\/$/, '');
 if (!/^https?:\/\/[^/]+$/.test(DOOR_ORIGIN)) throw new Error(`DOOR_ORIGIN must be an origin, got ${DOOR_ORIGIN}`);
-const out = (...p) => path.join(ROOT, 'dist', ...p);
+// DIST_DIR lets two builds run side by side (the hosted demo's two roles share one checkout in tests). It must be
+// a directory of its own: the build empties it first.
+const DIST = process.env.DIST_DIR ? path.resolve(process.env.DIST_DIR) : path.join(ROOT, 'dist');
+if (DIST === ROOT || ROOT.startsWith(DIST + path.sep)) throw new Error(`DIST_DIR must be a directory of its own, got ${DIST}`);
+const out = (...p) => path.join(DIST, ...p);
 fs.rmSync(out(), { recursive: true, force: true });
 
 const common = { bundle: true, minify: true, format: 'iife', target: 'es2022', legalComments: 'none', logLevel: 'warning', loader: { '.json': 'json' } };

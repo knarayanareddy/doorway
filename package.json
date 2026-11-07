@@ -36,14 +36,18 @@
     "verify:wordpress": "scripts/wp-verify.sh",
     "e2e:prototype": "playwright test -c playwright.prototype.config.js",
     "build:prototype": "npm --prefix prototype run build",
-    "demo:labs": "SEED=1 DOOR_ORIGIN=http://127.0.0.1:8788 node scripts/dev.mjs"
+    "demo:labs": "SEED=1 DOOR_ORIGIN=http://127.0.0.1:8788 node scripts/dev.mjs",
+    "serve:demo": "node scripts/serve-demo.mjs",
+    "e2e:hosted": "playwright test -c playwright.hosted.config.js"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@playwright/test": "^1.65.0",
-    "esbuild": "^0.28.2",
     "eslint": "^9.39.5",
     "globals": "^17.14.0",
     "wrangler": "^4.158.0"
+  },
+  "dependencies": {
+    "esbuild": "^0.28.2"
   }
 }
