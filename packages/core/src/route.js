@@ -130,22 +130,109 @@ export function listsCountry(route, country) {
 
 function satisfies(route, need) {
   if (need === 'any') return true;
-  if (need === 'human') return route.channel === 'chat' || route.channel === 'phone';
+  if (need === 'human') return isHuman(route);
   if (need === 'selfhelp') return route.channel === 'selfhelp';
   return true;
 }
 
-/** Routes must never claim confidentiality without a cited source. */
-export function assertHonest(routes) {
+/** A person answers, whether by chat, phone or an intake appointment. */
+export function isHuman(route) {
+  return route?.channel === 'chat' || route?.channel === 'phone' || route?.channel === 'programme';
+}
+
+const MONTH_MS = 30.4375 * 24 * 3.6e6;
+export const CONFIDENCE_MAX_AGE_MONTHS = 12;
+
+/**
+ * THE confidentiality predicate. The widget, assertHonest() and CI all call this
+ * and nothing else — there is no second regex that happens to catch what this
+ * one misses (review B3).
+ *
+ * A claim is renderable only if it is a structured record naming its basis, its
+ * source, a named person at the service who confirmed it, a confirmation date
+ * inside the last twelve months, and an expiry that has not passed.
+ */
+export function isRenderableConfidence(route, now = Date.now()) {
+  const c = route?.conf;
+  if (!c || typeof c !== 'object') return false;
+  const named = (v) => typeof v === 'string' && v.trim().length > 1;
+  if (!named(c.text) || !named(c.basis) || !named(c.verifiedBy)) return false;
+  if (!/^https:\/\//.test(c.sourceUrl || '')) return false;
+  const verified = Date.parse(c.verifiedAt);
+  const expires = Date.parse(c.expiresAt);
+  if (!Number.isFinite(verified) || !Number.isFinite(expires)) return false;
+  if (verified > now) return false;
+  if (now - verified > CONFIDENCE_MAX_AGE_MONTHS * MONTH_MS) return false;
+  return expires > now;
+}
+
+/**
+ * Where a primary button may send a person in crisis. Exact hostnames, https
+ * only, no wildcards. A route outside this list is dropped even if the bundle's
+ * signature is valid (review B4).
+ */
+export const DESTINATION_ALLOWLIST = Object.freeze([
+  'offlimits.nl',
+  'stoppenismogelijk.eu',
+  'www.redirection.fi',
+  'www.stopitnow.org.uk',
+  'www.stopitnow.org',
+  'www.stopitnow.org.au',
+  'www.preventell.se',
+  'www.kein-taeter-werden.de',
+]);
+
+export function isAllowedDestination(url) {
+  try {
+    const u = new URL(url);
+    return u.protocol === 'https:' && !u.username && !u.password && DESTINATION_ALLOWLIST.includes(u.hostname);
+  } catch {
+    return false;
+  }
+}
+
+/** Every route in a bundle, with where it sits. */
+export function allRoutes(bundle) {
+  const out = [];
+  for (const [lang, entry] of Object.entries(bundle?.byLanguage || {})) {
+    if (entry.default) out.push({ r: entry.default, where: `${lang}/default` });
+    (entry.alternatives || []).forEach((r, i) => out.push({ r, where: `${lang}/alt${i}` }));
+  }
+  return out;
+}
+
+/** The bundle with every route whose destination is not allow-listed removed. */
+export function dropDisallowed(bundle) {
+  const keep = (r) => r && isAllowedDestination(r.url);
+  const byLanguage = {};
+  for (const [lang, entry] of Object.entries(bundle?.byLanguage || {})) {
+    const all = [entry.default, ...(entry.alternatives || [])].filter(keep);
+    if (!all.length) continue;
+    byLanguage[lang] = { default: all[0], alternatives: all.slice(1) };
+  }
+  return { ...bundle, byLanguage };
+}
+
+/**
+ * Route data honesty. Returns a list of problems; empty means the table may ship.
+ * A confidentiality record that is merely not-yet-verified is NOT a problem — it
+ * is simply never rendered. Everything that could mislead a caller is.
+ */
+export function assertHonest(routes, now = Date.now()) {
   const problems = [];
-  const walk = (r, where) => {
-    if (!r) return;
-    if (r.channel !== 'selfhelp' && !r.conf) problems.push(`${where}: human route with no confidentiality statement`);
-    if (r.conf && /verify|todo|unknown/i.test(r.conf)) problems.push(`${where}: confidentiality unverified — do not render`);
-  };
-  for (const [lang, entry] of Object.entries(routes.byLanguage || {})) {
-    walk(entry.default, `${lang}/default`);
-    (entry.alternatives || []).forEach((r, i) => walk(r, `${lang}/alt${i}`));
+  for (const { r, where } of allRoutes(routes)) {
+    if (!isAllowedDestination(r.url)) problems.push(`${where}: destination ${r.url} is not on the allow-list`);
+    if (typeof r.conf === 'string') problems.push(`${where}: conf must be a structured record, not free text`);
+    if (r.conf && typeof r.conf === 'object') {
+      for (const k of ['text', 'basis', 'sourceUrl', 'verifiedBy', 'verifiedAt', 'expiresAt']) {
+        if (!(k in r.conf)) problems.push(`${where}: conf record missing ${k}`);
+      }
+    }
+    if (r.channel === 'phone' && !r.phone) problems.push(`${where}: channel is phone but no phone number is given`);
+    if (r.channel === 'programme' && r.phone) problems.push(`${where}: a programme with an intake is not a helpline — drop phone or change channel`);
+    const review = Date.parse(r.reviewBy);
+    if (!Number.isFinite(review)) problems.push(`${where}: no reviewBy date`);
+    else if (review < now) problems.push(`${where}: reviewBy ${r.reviewBy} has passed — re-verify this route`);
   }
   return problems;
 }

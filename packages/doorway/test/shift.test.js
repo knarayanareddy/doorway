@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pick, advance, bucketOf, variantFor, intervalFor, DEFAULT_CONFIG } from '../../core/src/shift.js';
+import { pick, advance, markActed, bucketOf, variantFor, intervalFor, DEFAULT_CONFIG } from '../../core/src/shift.js';
 
 const H = 3.6e6;
 const T0 = 1_760_000_000_000;
@@ -29,10 +29,19 @@ test('five exposures produce five buckets, capped at 5+', () => {
   assert.deepEqual([1, 2, 3, 4, 5, 9].map(bucketOf), ['1', '2', '3', '4', '5+', '5+']);
 });
 
-test('inside the re-warning interval it degrades to quiet rather than repeating', () => {
+test('inside the interval, a person who has not acted is escalated in place, not silenced', () => {
   const r = pick({ n: 3, last: T0 }, DEFAULT_CONFIG, T0 + 1 * H);
-  assert.equal(r.state, 'HABITUATED');
-  assert.equal(r.format, 'quiet');
+  assert.equal(r.state, 'ESCALATING');
+  assert.notEqual(r.format, 'quiet');
+  assert.notEqual(r.format, 'gate', 'an in-window retry is an inline card, never a modal gate');
+  assert.equal(r.keepClock, true, 'the re-warning clock must not be reset');
+});
+
+test('quiet is reserved for someone who already acted, and only for 72 hours', () => {
+  const acted = markActed({ n: 3, last: T0 }, T0 + 0.5 * H);
+  assert.equal(pick(acted, DEFAULT_CONFIG, T0 + 1 * H).format, 'quiet');
+  const stale = { n: 3, last: T0, acted: T0 - 100 * H };
+  assert.notEqual(pick(stale, DEFAULT_CONFIG, T0 + 1 * H).format, 'quiet', 'an old action does not silence a new burst');
 });
 
 test('blocked storage degrades to card (not the heaviest gate), never fails closed', () => {
@@ -92,18 +101,31 @@ test('acceptance #3: five exposures at realistic gaps produce five distinct resp
 });
 
 test('acceptance #3 guard: five triggers two seconds apart cannot be five responses', () => {
-  // This is the honest limit, and it must be stated rather than discovered live.
-  // Nobody sees five interventions in two seconds unless they are being tested.
+  // Review H1: this used to be gate, quiet x4 — the strongest signal the system
+  // sees (re-searching right after a warning) was answered with the weakest
+  // response. Now it escalates in place and the clock does not reset.
   let st = {};
   const t0 = Date.now();
   const forms = [];
   for (let i = 0; i < 5; i++) {
     const d = pick(st, DEFAULT_CONFIG, t0 + i * 2000);
-    forms.push(d.format);
-    st = advance(st, null, t0 + i * 2000);
+    forms.push(`${d.format}/${d.family}`);
+    st = advance(st, null, t0 + i * 2000, { keepClock: d.keepClock });
   }
-  assert.deepEqual(forms, ['gate', 'quiet', 'quiet', 'quiet', 'quiet'],
-    'a burst is exactly what the anti-nagging rule exists to absorb');
+  assert.deepEqual(forms, ['gate/legal', 'card/legal', 'card/harm', 'card/harm', 'chat/control']);
+  assert.equal(st.last, t0, 'the clock stayed at the first exposure');
+});
+
+test('burst: five triggers in two seconds give five different responses (shift-burst)', () => {
+  let st = {};
+  const t0 = Date.now();
+  const seen = new Set();
+  for (let i = 0; i < 5; i++) {
+    const d = pick(st, DEFAULT_CONFIG, t0 + i * 400);
+    seen.add(d.format + '/' + variantFor(d.family, st.seen || []));
+    st = advance(st, variantFor(d.family, st.seen || []), t0 + i * 400, { keepClock: d.keepClock });
+  }
+  assert.equal(seen.size, 5);
 });
 
 test('the interval widens with the count, so early repetition is reachable', () => {
@@ -115,13 +137,13 @@ test('the interval widens with the count, so early repetition is reachable', () 
   assert.equal(intervalFor(99), 72, 'holds at the last value rather than growing without bound');
 });
 
-test('a daily user is still not nagged', () => {
-  // By the seventh exposure the window is back to 72h and stays there.
-  assert.equal(pick({ n: 6, last: Date.now() - 20 * H }, DEFAULT_CONFIG, Date.now()).format, 'quiet',
-    '20h after a late exposure is still inside the 72h window');
-  assert.equal(pick({ n: 6, last: Date.now() - 80 * H }, DEFAULT_CONFIG, Date.now()).format, 'chat',
+test('a daily user who has acted is still not nagged', () => {
+  const now = Date.now();
+  const acted = { n: 6, last: now - 20 * H, acted: now - 20 * H };
+  assert.equal(pick(acted, DEFAULT_CONFIG, now).format, 'quiet',
+    '20h after they acted is inside the 72h quiet window');
+  assert.equal(pick({ n: 6, last: now - 80 * H, acted: now - 80 * H }, DEFAULT_CONFIG, now).format, 'chat',
     'past the window the persistent form returns');
-  // And the widening never shortens the late-stage window.
   const windows = [3, 10, 50].map((n) => intervalFor(n));
   assert.deepEqual(windows, [72, 72, 72]);
 });
