@@ -154,8 +154,15 @@ test('the shipped table routes GB to the UK line under need:any', () => {
 });
 
 test('every country we have a service for resolves to it under need:any', () => {
-  const want = { NL: 'nl-offlimits', DE: 'de-kein-taeter', GB: 'uk-stopitnow' };
-  const lang = { NL: 'nl', DE: 'de', GB: 'en' };
+  const want = {
+    NL: 'nl-offlimits',
+    DE: 'de-kein-taeter',
+    GB: 'uk-stopitnow',
+    SE: 'se-preventell',
+    US: 'us-stopitnow',
+    AU: 'au-stopitnow',
+  };
+  const lang = { NL: 'nl', DE: 'de', GB: 'en', SE: 'sv', US: 'en', AU: 'en' };
   for (const [country, id] of Object.entries(want)) {
     const r = resolve(lang[country], table, { need: 'any', country });
     assert.equal(r.route.id, id, `${country} must resolve to ${id}, got ${r.route.id}`);

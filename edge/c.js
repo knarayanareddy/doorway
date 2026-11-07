@@ -40,15 +40,17 @@ export default {
     ).bind(p.i).first();
     if (!install || !install.verified_at) return json({ error: 'install' }, 403, origin);
 
-    const key = aggregateKey(p);
-    const hour = new Date().toISOString().slice(0, 13); // date+HOUR only
+    // U3: Coarsen aggregate temporal bucket to calendar day (YYYY-MM-DD).
+    // Storing hourly cells with count=1 allowed hosts to join them with their own server logs.
+    const day = new Date().toISOString().slice(0, 10);
+    const coarseKey = [p.i, p.v, p.f, p.t, p.e, p.o, p.r].join('|');
 
-    // Increment an hourly aggregate. No row corresponds to a person.
+    // Increment a daily aggregate. No row corresponds to an individual hour or person.
     await env.DB.prepare(
-      `INSERT INTO agg (install, variant, format, trigger, bucket, hour, key, outcome, route, count)
+      `INSERT INTO agg (install, variant, format, trigger, bucket, day, key, outcome, route, count)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
-       ON CONFLICT(key, hour) DO UPDATE SET count = count + 1`
-    ).bind(p.i, p.v, p.f, p.t, p.e, hour, key, p.o, p.r).run();
+       ON CONFLICT(key, day) DO UPDATE SET count = count + 1`
+    ).bind(p.i, p.v, p.f, p.t, p.e, day, coarseKey, p.o, p.r).run();
 
     // Deliberately no logging of the request, the IP, or the user agent.
     return cors(new Response(null, { status: 204 }), origin);

@@ -145,13 +145,17 @@ export function attach({ doc, doorway, routes, onCounter } = {}) {
 
     function finish(contractOutcome) {
       const outcome = outcomeFor(contractOutcome);
+      // U1: The host platform owns the page and may log sbis:result next to
+      // sessionScopedId. To prevent service-level profiling, helpServiceId is
+      // omitted (null) on the DOM event dispatched to the host. The counter
+      // receives the route anonymously through the eight-field write path.
       doc.body.dispatchEvent(
         new CustomEvent_(RESULT_EVENT, {
           detail: {
             shown: true,
             variantId: variant,
             outcome,
-            helpServiceId: outcome === 'clicked_help' ? shownRouteId : null,
+            helpServiceId: null,
             durationMs: 0, // measured by the host, not by us — we do not run timers on the page
             timestamp: new Date().toISOString(),
           },

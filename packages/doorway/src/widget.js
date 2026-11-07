@@ -202,11 +202,24 @@ export function createDoorway({ config, routes, endpoint, lang, country, onEvent
       primary: {
         label: L === 'nl' ? 'Bekijk anonieme hulp' : 'See anonymous help',
         kind: 'primary',
-        // Navigating to the help service sends the page URL as Referer. If the
-        // page URL contains the search query, the help service learns what the
-        // person searched for. The host page should set Referrer-Policy:
-        // no-referrer to prevent this leak (see U7 in the review).
-        onSelect: () => { if (route?.url) window.location.assign(route.url); },
+        // U7 & U1: Cleanly isolate navigation and strip Referer using rel="noreferrer noopener".
+        // This guarantees the host page's search query in the URL is never leaked to the help service.
+        onSelect: () => {
+          if (!route?.url) return;
+          try {
+            if (typeof document !== 'undefined') {
+              const a = document.createElement('a');
+              a.href = route.url;
+              a.rel = 'noreferrer noopener';
+              a.target = '_blank';
+              a.click();
+              return;
+            }
+          } catch { /* fallback to direct navigation if document unavailable */ }
+          if (typeof window !== 'undefined' && window.location) {
+            window.location.assign(route.url);
+          }
+        },
       },
       secondary: {
         label: L === 'nl' ? 'Ik zoek iets anders' : 'I am here for something else',

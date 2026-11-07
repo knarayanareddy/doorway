@@ -1,0 +1,21 @@
+name = "doorway-edge"
+main = "c.js"
+compatibility_date = "2026-11-01"
+
+# U8 Hardening: Explicitly disable Cloudflare Workers default observability,
+# telemetry, and logging so that IP addresses and client headers are never stored.
+[observability]
+enabled = false
+
+[logpush]
+enabled = false
+
+# D1 Database binding for daily aggregate counts
+[[d1_databases]]
+binding = "DB"
+database_name = "doorway-agg"
+database_id = "00000000-0000-0000-0000-000000000000"
+
+# Production deployments should scope ALLOWED_ORIGIN to the specific platform domain:
+[vars]
+# ALLOWED_ORIGIN = "https://your-platform.org"

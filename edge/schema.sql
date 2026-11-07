@@ -9,8 +9,8 @@ CREATE TABLE IF NOT EXISTS installs (
 );
 
 CREATE TABLE IF NOT EXISTS agg (
-  key     TEXT NOT NULL,                  -- install|variant|format|trigger|bucket|hour|outcome|route
-  hour    TEXT NOT NULL,                  -- YYYY-MM-DDTHH  (no minutes, no seconds)
+  key     TEXT NOT NULL,                  -- install|variant|format|trigger|bucket|outcome|route
+  day     TEXT NOT NULL,                  -- YYYY-MM-DD (calendar day only, eliminating hourly correlation)
   install TEXT NOT NULL,
   variant TEXT NOT NULL,
   format  TEXT NOT NULL,
@@ -19,9 +19,9 @@ CREATE TABLE IF NOT EXISTS agg (
   outcome TEXT NOT NULL,                  -- clicked_help | dismissed | left_page | continued | timeout
   route   TEXT NOT NULL,                  -- route id served, or 'xx-none'
   count   INTEGER NOT NULL DEFAULT 0,
-  PRIMARY KEY (key, hour)
+  PRIMARY KEY (key, day)
 );
-CREATE INDEX IF NOT EXISTS idx_agg_install_hour ON agg(install, hour);
+CREATE INDEX IF NOT EXISTS idx_agg_install_day ON agg(install, day);
 
 CREATE TABLE IF NOT EXISTS arrivals (
   install   TEXT NOT NULL,

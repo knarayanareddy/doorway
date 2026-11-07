@@ -76,6 +76,24 @@ Not negotiable, not even for a screenshot.
 
 ---
 
+## R9 · Host platform as an untrusted adversary (U1).
+
+**The threat.** The host platform owns the webpage, the user session (`sessionScopedId`), and the search box. If the intervention module dispatches an event (`sbis:result`) reporting that a user selected `clicked_help` or names the specific helpline, any host that logs that event constructs a list of users seeking CSAM help.
+
+**What we do instead.** The widget isolates help navigation in a detached browsing context (`rel="noreferrer noopener"`) so the host search query never leaks in HTTP `Referer` (U7). On the contract event seam (`sbis:result`), the specific helpline ID is completely redacted (`helpServiceId: null`) and granular interaction states are shielded from host session logs.
+
+---
+
+## R10 · Underlying edge infrastructure is not trusted to "never log" (U8).
+
+**The threat.** While our Worker script (`edge/c.js`) executes no logging code, the underlying cloud provider (Cloudflare, CDN edge terminators, reverse proxies) terminates TLS and observes client IP addresses by default through network observability and Logpush.
+
+**What we do instead.** 
+1. **Edge Hardening:** Workers Observability and Logpush are explicitly disabled in `wrangler.toml`.
+2. **Oblivious HTTP (OHTTP / RFC 9458):** For high-threat environments, client payloads are encrypted using HPKE and proxied through an independent third-party Relay (e.g. Cloudflare Privacy Gateway). The Relay sees the client IP but cannot decrypt the payload; the Gateway Worker decrypts the payload but sees only the Relay's IP address.
+
+---
+
 ## The one-line test
 
 If a proposed feature requires knowing which person did something, it is out — regardless of how much better it would make the product. That rule is simple enough to apply at 3 a.m. on Sunday, which is the only time such a rule matters.

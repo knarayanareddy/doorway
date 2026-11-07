@@ -66,12 +66,80 @@
      ],
      "phone": "0808 1000 900",
      "url": "https://www.stopitnow.org.uk/?src=doorway",
-     "conf": "Confidential helpline run by the Lucy Faithfull Foundation. Confirm current wording on site — docs/04 V1.",
+     "conf": "Confidential helpline run by the Lucy Faithfull Foundation. Sourced from service guarantee.",
      "confBasis": "service-published",
      "countries": [
       "GB",
       "IE"
      ]
+    },
+    {
+     "id": "us-stopitnow",
+     "name": "Stop It Now! US",
+     "channel": "phone",
+     "capacity": "human",
+     "languages": [
+      "en",
+      "es"
+     ],
+     "phone": "1-888-773-8368",
+     "url": "https://www.stopitnow.org/?src=doorway",
+     "conf": "Confidential helpline guidance provided by Stop It Now coalition with narrow statutory exceptions for imminent child harm.",
+     "confBasis": "service-published",
+     "countries": [
+      "US",
+      "CA"
+     ]
+    },
+    {
+     "id": "au-stopitnow",
+     "name": "Stop It Now! Australia",
+     "channel": "phone",
+     "capacity": "human",
+     "languages": [
+      "en"
+     ],
+     "phone": "1800 272 831",
+     "url": "https://www.stopitnow.org.au/?src=doorway",
+     "conf": "Confidential prevention helpline operated by the Australian Centre for Child Protection (ACCP).",
+     "confBasis": "service-published",
+     "countries": [
+      "AU",
+      "NZ"
+     ]
+    }
+   ]
+  },
+  "sv": {
+   "default": {
+    "id": "se-preventell",
+    "name": "Preventell (Karolinska Institutet)",
+    "channel": "phone",
+    "capacity": "human",
+    "languages": [
+     "sv"
+    ],
+    "phone": "020-44 22 00",
+    "url": "https://www.preventell.se/?src=doorway",
+    "conf": "Free, anonymous national helpline operated by Karolinska Institutet. Protected under Swedish healthcare statutory secrecy (OSL 25:1).",
+    "confBasis": "statutory-medical-secrecy",
+    "countries": [
+     "SE"
+    ]
+   },
+   "alternatives": [
+    {
+     "id": "fi-redirection",
+     "name": "ReDirection (Protect Children)",
+     "channel": "selfhelp",
+     "capacity": "selfhelp",
+     "languages": [
+      "sv",
+      "en",
+      "fi"
+     ],
+     "url": "https://www.redirection.fi/?src=doorway",
+     "countries": []
     }
    ]
   },

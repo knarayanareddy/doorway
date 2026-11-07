@@ -101,7 +101,31 @@ export function mount(d, { onOutcome, doc = globalThis.document } = {}) {
 
   setTimeout(() => { const f = primary || buttons[0]; if (f) f.focus(); }, 30);
 
-  if (d.variant === 'quiet') setTimeout(() => { if (host.isConnected) close(); }, 9000);
+  // Auto-dismiss with pause on hover/focus per WCAG 2.2.1
+  if (d.variant === 'quiet') {
+    let timer = null;
+    let remaining = 9000;
+    let start = Date.now();
+
+    const startTimer = () => {
+      start = Date.now();
+      timer = setTimeout(() => { if (host.isConnected) close(); }, remaining);
+    };
+
+    const pauseTimer = () => {
+      if (timer) clearTimeout(timer);
+      remaining = Math.max(0, remaining - (Date.now() - start));
+    };
+
+    if (wrap.addEventListener) {
+      wrap.addEventListener('mouseenter', pauseTimer);
+      wrap.addEventListener('mouseleave', () => { if (remaining > 0) startTimer(); });
+      wrap.addEventListener('focusin', pauseTimer);
+      wrap.addEventListener('focusout', () => { if (remaining > 0) startTimer(); });
+    }
+
+    startTimer();
+  }
 
   return { el: host, close, outcome: () => outcome };
 }
@@ -111,15 +135,18 @@ function esc(s) {
 }
 
 function render(d) {
-  if (d.variant === 'quiet') return esc(d.body || d.headline);
+  if (d.variant === 'quiet') {
+    return '<div role="status" aria-live="polite" class="quiet-text">' + esc(d.body || d.headline) + '</div>';
+  }
   const attr = d.attribution
     ? '<div class="bar"><span class="attr">' + esc(d.attribution) + '</span>' +
-      '<button class="x" data-act="dismiss" aria-label="Close">\u00d7</button></div>'
-    : '<div class="bar"><span></span><button class="x" data-act="dismiss" aria-label="Close">\u00d7</button></div>';
+      '<button class="x" data-act="dismiss" aria-label="Close dialog">\u00d7</button></div>'
+    : '<div class="bar"><span></span><button class="x" data-act="dismiss" aria-label="Close dialog">\u00d7</button></div>';
   const sec = d.secondary ? '<button class="alt" data-act="secondary">' + esc(d.secondary.label) + '</button>' : '';
   const foot = d.footnote ? '<p class="conf">' + esc(d.footnote) + '</p>' : '';
-  return '<div>' + attr +
-    (d.headline ? '<h2>' + esc(d.headline) + '</h2>' : '') +
+  const labelledBy = d.headline ? ' aria-labelledby="doorway-card-title"' : '';
+  return '<div role="dialog" aria-modal="true"' + labelledBy + '>' + attr +
+    (d.headline ? '<h2 id="doorway-card-title">' + esc(d.headline) + '</h2>' : '') +
     (d.body ? '<p>' + esc(d.body) + '</p>' : '') +
     '<button class="cta" data-act="primary">' + esc(d.primary.label) + '</button>' +
     sec + foot + '</div>';
