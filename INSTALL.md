@@ -35,7 +35,7 @@ The Door origin is built into the file. It cannot be overridden by an attribute.
 
 ## 2. WordPress
 
-`npm run build` generates `dist/wordpress/doorway/doorway.php` with the SRI hash filled in. Upload it as a plugin, activate it, then **Settings > Doorway** and paste your install id. Your moderation plugin fires `doorway:flag`. *Written and generated, not yet run inside a real WordPress.*
+`npm run build` generates `dist/wordpress/doorway/doorway.php` with the SRI hash filled in. Upload it as a plugin, activate it, then **Settings > Doorway** and paste your install id. Your moderation plugin fires `doorway:flag`. *Run in a real WordPress 7.1 in Chromium, Firefox and WebKit (`docs/09-cms-verification.md`); not yet tried on a hosted WordPress or with a caching plugin.*
 
 ## 3. Discourse
 

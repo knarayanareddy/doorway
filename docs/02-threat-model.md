@@ -138,6 +138,7 @@ Not negotiable, not even for a screenshot.
 ## Accepted trades
 
 - **Storage blocked (L2).** A visitor who blocks storage permanently sees the card, not the legal gate (`shift.js` `DEGRADED`). Showing the strongest intervention on every visit to a private-mode user is the worse failure. Accepted; tested in `door.spec.js`.
+- **Safari and Tab.** By default Safari does not Tab to buttons (Option+Tab does). That is the browser's setting; the card's buttons are ordinary tab stops, and Escape always closes it.
 - **A visitor who looks away and returns is one exposure.** The abandon (`left_page`) record is sent once, so the click-through denominator equals real exposures, at the cost of losing a click that follows a tab switch.
 
 ---
