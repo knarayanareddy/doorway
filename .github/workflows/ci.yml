@@ -29,6 +29,8 @@ jobs:
         run: npx playwright install --with-deps chromium firefox webkit
       - name: "End-to-end in Chromium, Firefox and WebKit (hostile host, network record, installer errors, Desk)"
         run: npm run e2e
+      - name: "Hosted demo: two origins, a real browser (the Dockerfile's server)"
+        run: npm run e2e:hosted
       - name: "Prototype: typecheck, build, and its own end-to-end suite (imports the real core)"
         run: |
           npm ci --prefix prototype

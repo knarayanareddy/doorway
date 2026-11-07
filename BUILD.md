@@ -22,6 +22,7 @@ Numbers in a README drift; this file carries none. `npm run status` prints the l
 | The Glass Door and the Hallway (content sections, opening hours) | `packages/doorway/src/panels.js`, `packages/core/src/hours.js`, `shared/card.js` | `panels.test.js`, `shapes.spec.js` (three browsers); see `docs/12-shapes-and-glass-door.md` |
 | Labs: quick exit, hold-results pattern, Fork, Wave, youth-route gate (off by default) | `packages/doorway/src/labs.js`, `copy-labs.js`, `core/src/route.js`, `mock-platform/labs.html` | `labs.test.js`, `labs.spec.js` (three browsers); see `docs/13-labs.md` |
 | Synthetic demo data for the Desk | `scripts/seed-demo.mjs` | `edge/test/seed-demo.test.js` |
+| Hosted demo (Dockerfile; one image, two roles on two origins) | `Dockerfile`, `scripts/serve-demo.mjs` | `serve-demo.test.js`, `test/hosted/hosted.spec.js`; the image itself is **not yet built** (`docs/15`) |
 | Interactive prototype (imports the real core) | `prototype/` | `npm run e2e:prototype` |
 | Visitor report control | `shared/card.js` `tertiary`, `send.report`, `POST /v1/report` | `door.spec.js`, `host-adversary.spec.js`, `counter.test.js` |
 
@@ -49,6 +50,7 @@ npm run build         # dist/door, dist/v<version>/doorway.min.js (+ SRI), dist/
 npm run sign          # re-sign routes.nl.json after editing routes (needs the signing key)
 npm run check:pilot   # what is still missing before a pilot (expected to fail today)
 npm run demo          # mock platform :8789 + Door/edge :8788
+npm run e2e:hosted    # the hosted demo's server on two different origins, in a real browser (docs/15)
 npm run demo:labs     # the same, with 30 days of synthetic data in the Desk and the labs shapes on (labs.html)
 ```
 
