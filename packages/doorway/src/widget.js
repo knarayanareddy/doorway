@@ -190,9 +190,11 @@ export function createDoorway({
   // is never sent to the help service, and the new tab cannot reach back.
   function openHelp(url) {
     try {
-      const a = (doc || w.document).createElement('a');
-      a.href = url; a.rel = 'noreferrer noopener'; a.target = '_blank';
-      a.click();
+      // Opened in the click's own gesture, so it does not depend on this frame outliving the call (WebKit
+      // needs the opener alive for a moment after an anchor click; an instant settle removed it first).
+      // With noopener the browser returns null whether or not the pop-up opened, so a blocked pop-up cannot be
+      // detected here (the anchor click it replaces could not be either).
+      w.open(url, '_blank', 'noreferrer,noopener');
     } catch { w.location?.assign(url); }
   }
 
