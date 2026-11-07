@@ -16,7 +16,7 @@ import { GLASS, HALLWAY_PHRASES, HALLWAY_FAQ, langOf } from './copy.js';
  *
  * @param {{lang:string, preview:Record<string,string|null>, localCount:number, onWipe:()=>void}} a
  */
-export function glassSection({ lang, preview, localCount, onWipe }) {
+export function glassSection({ lang, preview, localCount, onWipe, extraLocal = null }) {
   const L = langOf(lang);
   const rows = FIELDS.map((k) => ({
     k,
@@ -36,6 +36,7 @@ export function glassSection({ lang, preview, localCount, onWipe }) {
         { type: 'text', text: GLASS.honest[L] },
         { type: 'heading', text: GLASS.localHeading[L] },
         { type: 'text', text: GLASS.local[L](localCount) },
+        ...(extraLocal ? [{ type: 'text', text: extraLocal }] : []),
         { type: 'action', id: 'wipe', label: GLASS.wipe[L], closes: false, onSelect: () => { onWipe(); return { message: GLASS.wiped[L] }; } },
         { type: 'heading', text: GLASS.verifyHeading[L] },
         { type: 'text', text: GLASS.verify[L] },
@@ -87,7 +88,7 @@ export function hallwaySections({ lang, route, selfhelp, now = Date.now(), onAlt
         label: HALLWAY_FAQ.nocallQ[L],
         blocks: [
           { type: 'text', text: HALLWAY_FAQ.nocallA[L] },
-          { type: 'action', id: 'alt', label: HALLWAY_FAQ.altLabel[L], closes: true, onSelect: onAlt },
+          { type: 'action', id: 'alt', label: HALLWAY_FAQ.altLabel[L], closes: true, outcome: 'clicked_help', routeId: selfhelp.id, onSelect: onAlt },
         ],
       },
     });

@@ -35,7 +35,8 @@
     "e2e:chromium": "npm run build:e2e && playwright test --project=chromium",
     "verify:wordpress": "scripts/wp-verify.sh",
     "e2e:prototype": "playwright test -c playwright.prototype.config.js",
-    "build:prototype": "npm --prefix prototype run build"
+    "build:prototype": "npm --prefix prototype run build",
+    "demo:labs": "SEED=1 DOOR_ORIGIN=http://127.0.0.1:8788 node scripts/dev.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

@@ -12,18 +12,30 @@
  * host can always decline to mount the frame, or render a fake card of its own.
  */
 
+import { parseLabs, previewShape, waveSeconds } from './labs.js';
+
 export const DEFAULT_TIMEOUT_MS = 5000;
 
 const SANDBOX = 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox';
+// Labs only: quick exit needs the Door to navigate the host page, but only on a real click or Enter
+// (user activation). Granted ONLY when the platform opted in with data-labs="quick-exit"; the shipped
+// sandbox above is unchanged.
+const QUICK_EXIT_TOKEN = 'allow-top-navigation-by-user-activation';
 // allow-same-origin is safe here and required: the frame is cross-origin to the
 // host, so the host still cannot reach in, and without it the Door would get an
 // opaque origin — no localStorage, and `Origin: null` on every request.
 
-export function doorUrl(doorOrigin, { install, country, legalJurisdiction } = {}) {
+export function doorUrl(doorOrigin, { install, country, legalJurisdiction, labs = [], waveSeconds: ws, preview } = {}) {
   const u = new URL('/v1/', doorOrigin);
   u.searchParams.set('i', install);
   if (/^[A-Za-z]{2}$/.test(country || '')) u.searchParams.set('c', country.toUpperCase());
   if (/^[A-Za-z]{2}$/.test(legalJurisdiction || '')) u.searchParams.set('j', legalJurisdiction.toUpperCase());
+  if (labs.length) {
+    u.searchParams.set('x', labs.join(','));
+    if (ws) u.searchParams.set('ws', String(waveSeconds(ws)));
+    const p = previewShape(preview, labs);
+    if (p) u.searchParams.set('p', p);
+  }
   return u.toString();
 }
 
@@ -37,10 +49,11 @@ export const INSTALL_HINTS = Object.freeze({
 });
 
 export function createLoader({
-  doc = document, win = window, doorOrigin, install, country, legalJurisdiction,
+  doc = document, win = window, doorOrigin, install, country, legalJurisdiction, labs: labsRaw, waveSeconds: waveRaw,
   timeoutMs = DEFAULT_TIMEOUT_MS, log = (m) => console.error(m), fetchImpl = win.fetch?.bind(win),
 } = {}) {
   let current = null;
+  const labs = parseLabs(Array.isArray(labsRaw) ? labsRaw.join(',') : labsRaw);
 
   const problem = !install ? 'missing-install' : !/^inst_[a-z0-9]{6,}$/.test(install) ? 'bad-install' : null;
   if (problem) log(INSTALL_HINTS[problem]);
@@ -53,8 +66,8 @@ export function createLoader({
 
     const prevFocus = doc.activeElement;
     const iframe = doc.createElement('iframe');
-    iframe.src = doorUrl(doorOrigin, { install, country: opts.country ?? country, legalJurisdiction });
-    iframe.setAttribute('sandbox', SANDBOX);
+    iframe.src = doorUrl(doorOrigin, { install, country: opts.country ?? country, legalJurisdiction, labs, waveSeconds: waveRaw, preview: opts.preview });
+    iframe.setAttribute('sandbox', labs.includes('quick-exit') ? SANDBOX + ' ' + QUICK_EXIT_TOKEN : SANDBOX);
     iframe.setAttribute('referrerpolicy', 'no-referrer');
     iframe.setAttribute('title', 'Help');
     iframe.setAttribute('allow', 'clipboard-write'); // only so the "copy this sentence" button works

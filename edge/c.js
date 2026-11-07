@@ -16,7 +16,8 @@
  * construction, so every write is also size-capped, rate-limited and anomaly-flagged,
  * and every number the Desk shows says it is self-reported.
  */
-import { build, buildHeartbeat, buildReport, aggregateKey, deskSummary, flagAnomalies, MAX_BODY_BYTES } from '../packages/core/src/counter.js';
+import { build, buildHeartbeat, buildReport, aggregateKey, deskSummary, deskByFormat, flagAnomalies, MAX_BODY_BYTES } from '../packages/core/src/counter.js';
+import { edgeLabsFormats } from '../packages/doorway/src/labs.js';
 
 const INSTALL_TTL_MS = 60_000;
 const installCache = new Map();
@@ -142,7 +143,8 @@ async function collect(request, env) {
   if (!fromDoor(request, env)) return json({ error: 'origin' }, 403);
   const { body, err } = await readJson(request);
   if (err) return err;
-  const res = build(body);
+  // LABS_FORMATS is unset in production, so reserved shapes (fork, wave) are rejected there.
+  const res = build(body, { extraFormats: edgeLabsFormats(env) });
   if (!res.ok) return json({ error: 'invalid payload', details: res.errors }, 400);
   const p = res.payload;
 
@@ -281,6 +283,9 @@ async function agg(request, url, env) {
   const headline = deskSummary(rows.filter((r) => !flaggedSet.has(r.day)), { flaggedDays: flagged });
 
   const K = headline.k;
+  const shapeRows = (await env.DB.prepare(
+    `SELECT day, format, outcome, SUM(count) AS count FROM agg WHERE install = ? AND day >= ? GROUP BY day, format, outcome`
+  ).bind(id, since).all()).results || [];
   const hb = await env.DB.prepare(`SELECT COALESCE(SUM(dropped),0) AS n FROM heartbeats WHERE install = ? AND day >= ?`).bind(id, since).first();
   const reports = (await env.DB.prepare(
     `SELECT reason, SUM(count) AS count FROM reports WHERE install = ? AND day >= ? GROUP BY reason`
@@ -291,6 +296,7 @@ async function agg(request, url, env) {
     periodDays: days,
     summary: headline,
     days: dayList.map((d) => ({ day: d.day, exposures: d.total < K ? null : d.total, flagged: flaggedSet.has(d.day) })),
+    byFormat: deskByFormat(shapeRows.filter((r) => !flaggedSet.has(r.day)), { k: K }),
     droppedEvents: hb?.n || 0,
     falsePositiveReports: reports.map((r) => (r.count < K ? { reason: r.reason, count: null, suppressed: true } : r)),
   });

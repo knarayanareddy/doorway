@@ -179,3 +179,39 @@ function buildFrom(spec, input = {}) {
 }
 export const buildHeartbeat = (input) => buildFrom(HEARTBEAT, input);
 export const buildReport = (input) => buildFrom(REPORT, input);
+
+
+/**
+ * Per-shape read model for the Desk. Like deskSummary it hides cells under k, and it also hides
+ * the smallest remaining visible cell when exactly one is hidden (secondary suppression), for both
+ * exposures and help clicks, so a hidden value cannot be recovered by subtracting from a total.
+ * Rates are always over every exposure of that shape.
+ */
+const SHAPE_ORDER = ['gate', 'card', 'fork', 'wave', 'hallway', 'door', 'quiet'];
+function hidden(values, k) {
+  const h = values.map((v) => v < k);
+  if (h.filter(Boolean).length === 1) {
+    let best = -1;
+    values.forEach((v, i) => { if (!h[i] && (best < 0 || v < values[best])) best = i; });
+    if (best >= 0) h[best] = true;
+  }
+  return h;
+}
+export function deskByFormat(rows, { k = 10 } = {}) {
+  const by = new Map();
+  for (const r of rows) {
+    const f = by.get(r.format) || { total: 0, clicked: 0 };
+    f.total += r.count;
+    if (r.outcome === 'clicked_help') f.clicked += r.count;
+    by.set(r.format, f);
+  }
+  const names = [...by.keys()].sort((a, b) => (SHAPE_ORDER.indexOf(a) + 1 || 99) - (SHAPE_ORDER.indexOf(b) + 1 || 99));
+  const hideExp = hidden(names.map((n) => by.get(n).total), k);
+  const hideClk = hidden(names.map((n) => by.get(n).clicked), k);
+  return names.map((format, i) => {
+    const f = by.get(format);
+    const exposures = hideExp[i] ? null : f.total;
+    const clicked = hideClk[i] ? null : f.clicked;
+    return { format, exposures, clicked, rate: exposures !== null && clicked !== null ? f.clicked / f.total : null, suppressed: exposures === null || clicked === null };
+  });
+}

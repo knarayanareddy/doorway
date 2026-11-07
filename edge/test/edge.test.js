@@ -236,3 +236,45 @@ test('status tells an installer exactly what is wrong', async () => {
 test('there is no endpoint that is not handled (H6): arrivals and trigger packs do not exist', async () => {
   for (const p of ['/v1/arrivals', '/v1/packs']) assert.equal((await post(p, {})).status, 404);
 });
+
+// ── labs: reserved shapes ──────────────────────────────────────────────────
+const FORK = { ...GOOD, f: 'fork', v: 'harm-01', e: '2' };
+const WAVE = { ...GOOD, f: 'wave', v: 'control-01', e: '3' };
+
+test('labs: a production edge (no LABS_FORMATS) rejects fork and wave, so a labs Door cannot pollute the aggregates', async () => {
+  for (const body of [FORK, WAVE]) {
+    const r = await post('/v1/c', body);
+    assert.equal(r.status, 400);
+    assert.match(JSON.stringify(await r.json()), /invalid f/);
+  }
+  assert.equal(rows('SELECT * FROM agg').length, 0);
+});
+
+test('labs: an edge that names the formats accepts exactly those, and only those', async () => {
+  env.LABS_FORMATS = 'fork';
+  assert.equal((await post('/v1/c', FORK)).status, 204);
+  assert.equal((await post('/v1/c', WAVE)).status, 400, 'wave was not named');
+  assert.equal((await post('/v1/c', { ...GOOD, f: 'blur' })).status, 400, 'an arbitrary format is never accepted');
+  env.LABS_FORMATS = 'fork,wave,quick-exit,card';
+  assert.equal((await post('/v1/c', WAVE)).status, 204);
+  assert.deepEqual(rows('SELECT format FROM agg ORDER BY format').map((r) => r.format), ['fork', 'wave']);
+});
+
+test('desk: per-shape table counts everyone, hides small cells, and leaves flagged days out', async () => {
+  const add = (day, format, outcome, count) => env.DB.raw.prepare(`INSERT INTO agg (key, day, install, variant, format, trigger, bucket, outcome, route, count)
+    VALUES (?, ?, 'inst_abc123', 'legal-01', ?, 'search', '1', ?, 'nl-offlimits', ?)`).run(`k|${day}|${format}|${outcome}`, day, format, outcome, count);
+  const y = yesterday();
+  add(y, 'gate', 'clicked_help', 15); add(y, 'gate', 'left_page', 60); add(y, 'gate', 'dismissed', 25);
+  add(y, 'hallway', 'clicked_help', 22); add(y, 'hallway', 'continued', 78);
+  add(y, 'fork', 'clicked_help', 1); add(y, 'fork', 'dismissed', 12);
+  add(today(), 'gate', 'clicked_help', 90); add(today(), 'gate', 'dismissed', 10);
+  const j = await (await desk()).json();
+  const by = Object.fromEntries(j.byFormat.map((f) => [f.format, f]));
+  assert.equal(by.gate.exposures, 100, 'the forged day is excluded, left_page is included');
+  assert.equal(by.fork.clicked, null, 'a single help click is hidden');
+  assert.equal(by.gate.clicked, null, 'and the smallest visible click count goes with it, so the fork cannot be derived from a total');
+  assert.equal(by.hallway.clicked, 22);
+  assert.equal(by.fork.rate, null);
+  assert.match(j.label, /unauthenticated/);
+  assert.deepEqual(j.byFormat.map((f) => f.format), ['gate', 'fork', 'hallway']);
+});

@@ -13,6 +13,7 @@
 import { isRenderableConfidence, isHuman } from '../../core/src/route.js';
 import { legalRecordFor } from '../../core/src/legal.js';
 import { LEGAL_RECORDS } from './legal-records.js';
+import { labsStrings } from './copy-labs.js';
 
 export const LANGS = Object.freeze(['nl', 'en', 'de']);
 export const langOf = (tag) => {
@@ -342,5 +343,6 @@ export function allStrings() {
     for (const kind of ['selfhelp', 'programme']) out.push({ path: `footnote.${kind}.${L}`, text: footnoteFor({ channel: kind }, L) });
     out.push({ path: `footnote.neutral.${L}`, text: footnoteFor({ channel: 'phone' }, L) });
   }
+  out.push(...labsStrings());
   return out;
 }

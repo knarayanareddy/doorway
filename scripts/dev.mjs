@@ -9,6 +9,8 @@
  * database is node:sqlite instead of Cloudflare D1. Not for production.
  *
  *   npm run demo        build (door origin = :8788) and serve
+ *   npm run demo:labs   the same, with mock data seeded into the Desk and the labs shapes accepted by the edge
+ *                       (open http://127.0.0.1:8789/mock-platform/labs.html)
  */
 import http from 'node:http';
 import fs from 'node:fs';
@@ -16,6 +18,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import worker from '../edge/c.js';
 import { createDb, sha256hex } from '../edge/test/d1-shim.js';
+import { seedDemo } from './seed-demo.mjs';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const DOOR_PORT = Number(process.env.DOOR_PORT || 8788);
@@ -36,6 +39,11 @@ ins.run('inst_wp0001', '127.0.0.1:8790', '2026-11-01T00:00:00Z', 'wp-token', nul
 ins.run('inst_unverif', `127.0.0.1:${PLATFORM_PORT}`, null, 'unverified-token', null, 5000, 120);
 ins.run('inst_otherdom', 'example.org', '2026-11-01T00:00:00Z', 'other-token', null, 5000, 120);
 
+if (process.env.SEED === '1') {
+  const r = seedDemo(DB.raw, { install: 'inst_demo001', days: 30, labs: true });
+  console.log(`seeded mock data: ${r.exposures} synthetic exposures over 30 days; anomaly days ${r.anomalyDays.join(', ')}`);
+}
+
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml' };
 
 function serveStatic(root) {
@@ -50,8 +58,9 @@ function serveStatic(root) {
   };
 }
 
+// The labs formats (fork, wave) are accepted by THIS harness only. A production edge leaves LABS_FORMATS unset and rejects them.
 const env = {
-  DB, DOOR_ORIGIN: DOOR,
+  DB, DOOR_ORIGIN: DOOR, LABS_FORMATS: 'fork,wave',
   ASSETS: { fetch: async (req) => {
     const file = path.join(ROOT, 'dist/door', new URL(req.url).pathname);
     return fs.existsSync(file) ? new Response(fs.readFileSync(file), { headers: { 'content-type': TYPES[path.extname(file)] || 'text/plain' } }) : new Response('nf', { status: 404 });
