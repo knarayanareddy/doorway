@@ -37,6 +37,24 @@ Much better than the desktop for building and hosting things.
 ## Honest fit with the product
 Maritime suits *verification and demonstration* here, not production. The product's privacy argument rests on a small, auditable edge and no third-party processing of real visitors' traffic. Running real traffic through a general-purpose VM host would add a processor to the DPIA for no benefit. Use it only with mock data.
 
+## Plan for trying Discourse (not started)
+
+**What the test is for:** proving that Doorway's one-line Discourse theme-component tag (`dist/discourse/common/head_tag.html`) works in a real Discourse, with the Door served from a second public origin (`docs/15`). Running Discourse is only the means.
+
+**What Discourse needs** (its own install guide): 1 GB RAM minimum with swap and 2 GB or more recommended; **10 GB disk minimum, 20 GB recommended**; Docker. The earlier agent box (2.5 GB RAM, 4.9 GB `/data`) is too small, but Maritime sizes up to 8 GB RAM and 100 GB disk (`maritime create --ram 4096 --cpu 2 --disk 20`).
+
+**Cost:** 4 GB RAM is $2 a month and 20 GB disk adds 15 GB at $0.08, about $3.20 a month in all, roughly half a cent an hour, drawn from the plan credit. A few hours of testing costs cents.
+
+**Why it is not the official one-liner:** the Discourse installer expects ports 80 and 443 and its own Let's Encrypt certificate. A Maritime agent's public HTTPS address is terminated for you and forwarded to `$PORT` (port 8080 is Maritime's forwarder), so Discourse would be built from its lower-level container templates with SSL off and published on `$PORT`.
+
+**Known blockers before it can work:**
+1. Container port publishing is unproven: publishing 8081 on the earlier box returned nothing. Host networking (`--network host`) may avoid it.
+2. A public agent's URL is `https://<agent-id>.mtm.sh`, so Discourse's hostname and its "force HTTPS" setting have to match it.
+3. Email is optional (Discourse ID login), but an admin account has to be created from the command line.
+4. The theme component then has to be installed through the admin interface or a Rails console.
+
+**What the test needs from you:** a key with the `manage` scope (to delete what it creates, and to delete the earlier `doorway-lab-test` agent, which is still on the account), plus agents and, if you want a hosted Doorway Door as well, a verified email for public visibility.
+
 ## What is still unknown
 - Whether a container's published port is reachable from outside the box (port 8081 returned nothing, undebugged).
 - Whether a public agent really wakes on an ordinary web request. Needs a web app with a Dockerfile.
