@@ -111,7 +111,8 @@ export function pick(state = {}, cfg = DEFAULT_CONFIG, now = Date.now(), opts = 
   //   * Otherwise, inside the window -> escalate IN PLACE: the next format as an
   //     inline card (never a modal), and the clock is NOT reset (keepClock).
   const window = intervalFor(n, cfg);
-  if (hours < window) {
+  // `alwaysAdvance` (demo only, the `advance` lab): skip the window entirely, so every pick is the next step.
+  if (!opts.alwaysAdvance && hours < window) {
     const acted = Number.isFinite(state.acted) ? state.acted : 0;
     if (acted && (now - acted) / 3.6e6 < QUIET_HOURS) {
       return {

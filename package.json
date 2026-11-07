@@ -37,6 +37,7 @@
     "e2e:prototype": "playwright test -c playwright.prototype.config.js",
     "build:prototype": "npm --prefix prototype run build",
     "demo:labs": "SEED=1 DOOR_ORIGIN=http://127.0.0.1:8788 node scripts/dev.mjs",
+    "demo:app": "npm run build:prototype && SEED=1 DOOR_ORIGIN=http://127.0.0.1:8788 node scripts/dev.mjs",
     "serve:demo": "node scripts/serve-demo.mjs",
     "e2e:hosted": "playwright test -c playwright.hosted.config.js"
   },

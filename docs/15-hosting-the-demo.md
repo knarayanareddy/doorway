@@ -6,16 +6,17 @@ The repository's `Dockerfile` runs the demo harness as a hosted service, so juro
 
 | Claim | Status |
 |---|---|
-| `scripts/serve-demo.mjs` serves the platform and the Door correctly on two different origins | **Verified locally**, by hand and by `npm run e2e:hosted` (6 browser tests against `localhost` and `127.0.0.1`, plus 20 unit tests of the configuration and the platform handler). |
+| `scripts/serve-demo.mjs` serves the platform and the Door correctly on two different origins | **Verified locally**, by hand and by `npm run e2e:hosted` (browser tests against `localhost` and `127.0.0.1`), plus the unit tests in `edge/test/serve-demo.test.js`. |
 | It exposes nothing it should not (no `/__test/*`, nothing outside `mock-platform/` and the loader, path traversal refused) | **Verified locally.** |
 | The production dependency install is small and the lockfile is consistent | **Verified**: `npm ci --omit=dev` gives 10 MB (it was 243 MB before esbuild was moved to `dependencies`). |
-| **The `Dockerfile` itself builds** | **Not verified.** There is no Docker on the machine that wrote it. Maritime builds from a repository on its own build worker; an agent box with Docker installed (see `docs/14`) could be used to test the build first. |
+| **The `Dockerfile` itself builds** | **Not verified.** There is no Docker on the machine that wrote it, so the `app` stage (which builds the prototype) and the copy into the runtime image have never run. Maritime builds from a repository on its own build worker; an agent box with Docker installed (see `docs/14`) could be used to test the build first. |
+| The prototype builds in the image and `/app/` answers on a sandbox | **Not verified.** The sandbox run below predates this; `/app/` answers 404 there until `npm run build:prototype` is run. |
 | A public Maritime **agent** wakes on an ordinary request, and the first visit after a sleep works | **Documented by Maritime, not yet seen working** here. |
 | The same server, hosted on public **sandbox** ports and used from a laptop over the internet | **Verified** on 7 November 2026 (see above and `docs/14`). |
 
 ## The route that was actually run: a Maritime sandbox
 
-The `Dockerfile` has not been built, but the same server ran on a Maritime **sandbox** on 7 November and was exercised over the internet (`docs/14`). It needs a key with `sandboxes` or `manage`. A sandbox ends by itself, disk included, so the demo exists only for the hours you ask for (at most 24).
+The same server ran on a Maritime **sandbox** on 7 November and was exercised over the internet (`docs/14`). That run had no built app, so `/app/` was 404; the prototype steps below are new and not yet run. It needs a key with `sandboxes` or `manage`. A sandbox ends by itself, disk included, so the demo exists only for the hours you ask for (at most 24).
 
 This is the sequence that ran, assembled from separate steps rather than run as one script:
 
@@ -32,12 +33,15 @@ urls = {p: sb.url(p, token=False) for p in (3000, 3001)}   # token=False makes t
 sudo mkdir -p /opt/node && curl -sL https://nodejs.org/dist/v24.22.2/node-v24.22.2-linux-x64.tar.gz | sudo tar -xz -C /opt/node --strip-components=1
 git clone --depth 1 -b feature/levelled-up https://github.com/knarayanareddy/doorway.git app && cd app
 PATH=/opt/node/bin:$PATH npm ci --omit=dev
-# one process per role, each with its own DIST_DIR; the two origins are the two public port URLs
+# the app that /app/ serves (prototype/dist/index.html); its devDependencies are needed only for this build
+PATH=/opt/node/bin:$PATH npm --prefix prototype ci
+PATH=/opt/node/bin:$PATH npm run build:prototype
+# one process per role, each with its own DIST_DIR; the two origins are the two public port URLs; PROTO_DIST stays unset
 ROLE=door     PORT=3001 DOOR_ORIGIN=<url 3001> PLATFORM_ORIGIN=<url 3000> DIST_DIR=$HOME/dist/d nohup /opt/node/bin/node scripts/serve-demo.mjs &
 ROLE=platform PORT=3000 DOOR_ORIGIN=<url 3001> PLATFORM_ORIGIN=<url 3000> DIST_DIR=$HOME/dist/p nohup /opt/node/bin/node scripts/serve-demo.mjs &
 ```
 
-Open `<url 3000>/` and it redirects to the labs page. Things that bit during the run:
+Open `<url 3000>/app/`, the built app; `/` redirects there. The old labs page is still at `/mock-platform/labs.html`. Things that bit during the run:
 - A port URL is **private by default** (it carries a secret `?token=`); only `token=False` opens it to everyone, so decide that on purpose.
 - The Door of each demo needs its own port, because two roles cannot share an origin.
 - Anything else on the sandbox, such as a Discourse that the loader is installed in, is just another port and another origin.
@@ -54,6 +58,10 @@ The Door is a sandboxed iframe that is only isolated from the page because it li
 
 Both need to know both addresses (`DOOR_ORIGIN`, `PLATFORM_ORIGIN`, each an origin with no path), and the server refuses to start if they are missing or equal. The loader bakes the Door's origin in at build time, so the server builds it at start-up and one image serves any deployment (about a second).
 
+## The app and its Desk
+
+The platform origin serves the built app (`prototype/dist/index.html`, from `npm run build:prototype`) at `/app/`, so the real Door frames inside it. Its Desk tab reads `/__desk/agg` on the same origin, which forwards the query and the Authorization header to the Door's `/v1/agg` and nothing else. That keeps the production edge free of CORS.
+
 ## Environment
 
 | Variable | Needed by | Meaning |
@@ -64,10 +72,11 @@ Both need to know both addresses (`DOOR_ORIGIN`, `PLATFORM_ORIGIN`, each an orig
 | `LABS_FORMATS` | door | defaults to `fork,wave` because this is a demo; a production edge leaves it unset |
 | `DESK_TOKEN` | door | the demo Desk's bearer token; defaults to `desk-demo-token`, which is public on purpose |
 | `SEED` | door | `0` skips the synthetic data |
+| `PROTO_DIST` | platform | where the built app is. The image sets `/app/prototype/dist`; a sandbox leaves it unset (default `prototype/dist`). If `index.html` is missing the platform logs one `app not built` line and `/app/` answers 404 |
 
 ## Steps (not yet run)
 
-Maritime gives an agent its URL at creation, and each deployment needs the other's, so the order is: create both, set the environment, restart.
+Maritime builds the image from the `Dockerfile`, whose `app` stage runs the prototype build, so no separate step is needed. Maritime gives an agent its URL at creation, and each deployment needs the other's, so the order is: create both, set the environment, restart.
 
 ```bash
 # 1. create both from the repository (use -b feature/levelled-up until it is merged)
@@ -76,7 +85,7 @@ maritime create doorway-platform --repo https://github.com/knarayanareddy/doorwa
 # 2. read each agent's id, then:   https://<door-id>.mtm.sh   https://<platform-id>.mtm.sh
 maritime env set doorway-door     ROLE=door     DOOR_ORIGIN=https://<door-id>.mtm.sh PLATFORM_ORIGIN=https://<platform-id>.mtm.sh --no-secret --reload
 maritime env set doorway-platform ROLE=platform DOOR_ORIGIN=https://<door-id>.mtm.sh PLATFORM_ORIGIN=https://<platform-id>.mtm.sh --no-secret --reload
-# 3. open https://<platform-id>.mtm.sh/   (it redirects to the labs page)
+# 3. open https://<platform-id>.mtm.sh/app/   (the app; `/` redirects there)
 ```
 
 Until step 2 the server exits with a clear message listing what is missing, so the first boot of each agent is expected to fail.

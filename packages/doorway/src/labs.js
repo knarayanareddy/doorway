@@ -10,7 +10,9 @@
  */
 import { DEFAULT_CONFIG } from '../../core/src/shift.js';
 
-export const LABS = Object.freeze(['fork', 'wave', 'quick-exit', 'preview']);
+// `advance` (demo only): every trigger shows the next step, regardless of how the last exposure ended.
+// It is a Door behaviour, not a format, so it is deliberately absent from LABS_FORMATS.
+export const LABS = Object.freeze(['fork', 'wave', 'quick-exit', 'preview', 'advance']);
 /** Labs that introduce a new counter format. */
 export const LABS_FORMATS = Object.freeze(['fork', 'wave']);
 export const PREVIEW_SHAPES = Object.freeze(['gate', 'card', 'fork', 'wave', 'hallway', 'door', 'quiet']);

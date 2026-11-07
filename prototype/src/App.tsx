@@ -70,7 +70,7 @@ function Shell() {
         {tab === "desk" && <Desk />}
       </main>
       <footer className="mx-auto max-w-7xl px-4 py-8 text-xs leading-relaxed text-ink-soft lg:px-6">
-        Prototype for Hackathon for Good #8. Synthetic data only; no real search terms exist anywhere in this build. No legal or confidentiality claim is shown unless it comes from a reviewed record (docs/04 V1); the “Reviewed-claims preview (SYNTHETIC)” control is the only way to see one here. Press Esc twice at any time for a quick exit.
+        Prototype for Hackathon for Good #8. Demo data only: the Live tab’s counts come from presses on the demo install, and the synthetic Desk view is invented. No real search terms exist anywhere in this build. No legal or confidentiality claim is shown unless it comes from a reviewed record (docs/04 V1). Every legal record in this build is an unreviewed draft, so the Door shows neutral copy. Press Esc twice at any time for a quick exit.
       </footer>
     </div>
   );

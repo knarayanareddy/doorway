@@ -197,7 +197,7 @@ export function createDoorway({
     // A forced shape exists only for demonstrations (the `preview` lab): it ignores and never writes local state.
     const decision = previewForced
       ? { state: 'PREVIEW', format: previewForced, family: cfg.families[previewForced] || 'harm', bucket: '1' }
-      : pick(st, cfg, now(), { storageBlocked: blocked });
+      : pick(st, cfg, now(), { storageBlocked: blocked, alwaysAdvance: labs.includes('advance') });
     const variant = variantFor(decision.family, st.seen || []);
 
     // Shapes that invite contact prefer a person; resolve() degrades to self-help, and the
@@ -241,7 +241,8 @@ export function createDoorway({
       // Exactly one record per exposure: whichever outcome comes first. A person
       // who looks away and later returns is still ONE exposure, so the
       // click-through denominator equals real exposures.
-      const sent = send.event({
+      // A preview is a demonstration, never an exposure: nothing is sent for it.
+      const sent = previewForced ? Promise.resolve(false) : send.event({
         i: install,
         v: variant,
         f: decision.format,
@@ -271,7 +272,7 @@ export function createDoorway({
         // "This warning was a mistake" (and the Fork's "here for work"): counted as the person continuing,
         // plus a content-free report. The reason is always 'other': the Door never asks a visitor to say
         // who they are; categories come from the platform's admin (Desk).
-        const report = outcome === 'tertiary' || action?.report
+        const report = (outcome === 'tertiary' || action?.report) && !previewForced
           ? send.report({ i: install, p: String(routes?.version || 'unknown').toLowerCase(), t: normaliseType(type), r: 'other' })
           : null;
         exposure.finish(mapped, report);

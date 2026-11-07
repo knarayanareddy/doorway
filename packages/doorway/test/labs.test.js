@@ -146,3 +146,20 @@ test('createDoorway without labs behaves exactly as shipped', () => {
   const d = createDoorway({ routes: { byLanguage: {} }, install: 'inst_abc123', lang: 'en', win: { navigator: { language: 'en' }, addEventListener() {} }, storage: fakeSession(), session: fakeSession(), sender: { event: async () => true, report: async () => true, heartbeat: async () => true } });
   assert.equal(typeof d.trigger, 'function');
 });
+
+// ── the demo-only `advance` token: a Door lab, never a format ─────────────
+test('advance is a known lab token, only when spelled exactly; other spellings are ignored', () => {
+  assert.deepEqual(parseLabs('advance'), ['advance']);
+  assert.deepEqual(parseLabs('ADVANCE, Advance ,advance2,adv,<advance>'), []);
+  assert.deepEqual(parseLabs('fork,advance,advance'), ['fork', 'advance'], 'de-duplicated');
+});
+
+test('advance is not a format: it never reaches the edge, and the edge never accepts it', () => {
+  assert.deepEqual(labsFormats(['advance']), []);
+  assert.deepEqual(labsFormats(['advance', 'fork']), ['fork']);
+  assert.deepEqual(edgeLabsFormats({ LABS_FORMATS: 'advance,fork,wave' }), ['fork', 'wave']);
+});
+
+test('advance does not change the sequence', () => {
+  assert.deepEqual(sequenceFor(['advance']), ['gate', 'card', 'hallway', 'hallway', 'door']);
+});

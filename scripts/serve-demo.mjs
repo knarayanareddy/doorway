@@ -19,6 +19,10 @@
  *   SEED             0 to skip the synthetic data                     (default seeded)
  *   DIST_DIR         where this process builds its bundles            (default ./dist; give each process its own
  *                    directory if two run from one checkout)
+ *   PROTO_DIST       directory holding the built app (default ./prototype/dist); platform role serves its index.html at /app/
+ *
+ * Platform role also answers GET /__desk/agg: a same-origin pass-through to the Door's /v1/agg (query and
+ * Authorization only), so the app needs no CORS on the production edge.
  *
  * Deliberately NOT here, unlike scripts/dev.mjs: the /__test/db and /__test/reset endpoints and a static
  * server over the whole repository. This one is meant to be reachable by anyone.
@@ -53,7 +57,8 @@ export function readConfig(env = process.env) {
   if (!Number.isInteger(port) || port < 1 || port > 65535) problems.push('PORT must be a port number');
   // null unless DIST_DIR is given: the handlers then use <root>/dist, and a test can hand them a temporary root.
   const distDir = env.DIST_DIR ? path.resolve(env.DIST_DIR) : null;
-  return { problems, role, doorOrigin, platformOrigin, port, distDir, labsFormats: env.LABS_FORMATS ?? 'fork,wave', deskToken: env.DESK_TOKEN || 'desk-demo-token', seed: env.SEED !== '0' };
+  const protoDist = env.PROTO_DIST ? path.resolve(env.PROTO_DIST) : null;
+  return { problems, role, doorOrigin, platformOrigin, port, distDir, protoDist, labsFormats: env.LABS_FORMATS ?? 'fork,wave', deskToken: env.DESK_TOKEN || 'desk-demo-token', seed: env.SEED !== '0' };
 }
 
 const security = { 'x-content-type-options': 'nosniff', 'x-robots-tag': 'noindex', 'cache-control': 'no-store' };
@@ -62,15 +67,62 @@ const security = { 'x-content-type-options': 'nosniff', 'x-robots-tag': 'noindex
 // (found when installing it in a real Discourse). Only the loader gets it, never the forum pages.
 const loaderHeaders = { 'access-control-allow-origin': '*', 'cross-origin-resource-policy': 'cross-origin' };
 
-/** Platform role: only the mock forum and the built loader, with the Door's origin substituted into pages. */
+/** The built app's one file: PROTO_DIST/index.html, or prototype/dist/index.html under the root. */
+export function appFile(cfg, root = ROOT) {
+  return path.join(cfg.protoDist || path.join(root, 'prototype', 'dist'), 'index.html');
+}
+
+/** The one start-up line for a platform whose app is not built (the server keeps going); null when it is built. */
+export function appNotBuiltWarning(file) {
+  const built = fs.existsSync(file) && fs.statSync(file).isFile();
+  return built ? null : 'app not built: /app/ will answer 404; run npm run build:prototype';
+}
+
+/** The built app: one static file, GET and HEAD only. Nothing else beside it is served. */
+export function appHandler(file) {
+  return (req, res) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405, security); res.end(); return; }
+    if (!fs.existsSync(file) || !fs.statSync(file).isFile()) {
+      res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8', ...security }); res.end('app not built: run npm run build:prototype'); return;
+    }
+    res.writeHead(200, { 'content-type': TYPES['.html'], ...security });
+    if (req.method === 'HEAD') res.end(); else fs.createReadStream(file).pipe(res);
+  };
+}
+
+/**
+ * GET /__desk/agg on the platform origin: forwards the query string and the Authorization header to the Door's
+ * /v1/agg, and returns only its status, content-type and body. No cookies, no other headers either way.
+ */
+export function deskAggProxy(doorOrigin) {
+  return async (req, res, u) => {
+    if (req.method !== 'GET') { res.writeHead(405, { allow: 'GET', ...security }); res.end(); return; }
+    const headers = req.headers?.authorization ? { authorization: req.headers.authorization } : {};
+    try {
+      const door = await fetch(new URL('/v1/agg' + u.search, doorOrigin), { headers, redirect: 'manual' });
+      const body = Buffer.from(await door.arrayBuffer());
+      const type = door.headers.get('content-type');
+      res.writeHead(door.status, { ...(type ? { 'content-type': type } : {}), ...security });
+      res.end(body);
+    } catch {
+      res.writeHead(502, { 'content-type': 'application/json', ...security }); res.end(JSON.stringify({ error: 'door unreachable' }));
+    }
+  };
+}
+
+/** Platform role: only the mock forum, the built loader and the built app, with the Door's origin substituted into pages. */
 export function platformHandler(cfg, root = ROOT) {
   const distDir = cfg.distDir || path.join(root, 'dist');
   const allowed = [path.join(root, 'mock-platform'), path.join(distDir, 'latest')];
+  const app = appHandler(appFile(cfg, root));
+  const desk = deskAggProxy(cfg.doorOrigin);
   return (req, res) => {
     const u = new URL(req.url, cfg.platformOrigin);
     if (u.pathname === '/health') { res.writeHead(200, { 'content-type': 'text/plain', ...security }); res.end('ok'); return; }
+    if (u.pathname === '/__desk/agg') { desk(req, res, u); return; }
     if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405, security); res.end(); return; }
-    if (u.pathname === '/') { res.writeHead(302, { location: '/mock-platform/labs.html', ...security }); res.end(); return; }
+    if (u.pathname === '/') { res.writeHead(302, { location: '/app/', ...security }); res.end(); return; }
+    if (u.pathname === '/app/' || u.pathname === '/app/index.html') { app(req, res); return; }
     let file;
     try {
       const p = decodeURIComponent(u.pathname);
@@ -141,6 +193,9 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
   if (cfg.problems.length) { console.error('serve-demo: configuration problems:\n  - ' + cfg.problems.join('\n  - ')); process.exit(2); }
   // The loader bakes the Door's origin in at build time. Building at start-up means one image serves any deployment.
   build(cfg);
+  // Only the platform role serves the app. A missing app is a warning, not a failure: the rest still works.
+  const warning = cfg.role === 'platform' ? appNotBuiltWarning(appFile(cfg)) : null;
+  if (warning) console.warn(warning);
   const handler = cfg.role === 'door' ? await doorHandler(cfg) : platformHandler(cfg);
   http.createServer(handler).listen(cfg.port, '0.0.0.0', () => console.log(`serve-demo role=${cfg.role} port=${cfg.port} door=${cfg.doorOrigin} platform=${cfg.platformOrigin}`));
 }

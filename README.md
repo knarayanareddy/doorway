@@ -11,6 +11,7 @@ npm ci
 npm run verify     # shared modules, safety, ESLint privacy tripwire, unit + edge tests, signed routes, privacy gate, copy lint, docs
 npm run e2e        # real Chromium: hostile host page, network record, installer errors, Desk (needs: npx playwright install chromium)
 npm run demo       # mock platform on :8789, the real edge Worker on :8788
+npm run demo:app    # the same, with the built app at http://127.0.0.1:8789/app/ (builds prototype/ first)
 # labs, mock data: http://127.0.0.1:8789/mock-platform/escalate.html (Fork and Wave are unreviewed)
 ```
 

@@ -1,6 +1,9 @@
 import { useState, type ReactNode } from "react";
 import { Search, Lock, Train, MessageSquare } from "lucide-react";
-import type { Lang } from "../../lib/content";
+
+/** The Door picks its language from the browser (nl, en, de). The mock forum follows the same rule, for nl and en. */
+export type Lang = "nl" | "en";
+export const forumLang = (): Lang => (typeof navigator !== "undefined" && navigator.language.toLowerCase().startsWith("nl") ? "nl" : "en");
 
 const THREADS = [
   { t: "Welke locomotief past bij mijn Märklin-baan?", a: "Rob_H0", r: 42, c: "Beginners" },

@@ -8,9 +8,9 @@ import { cn } from "../../utils/cn";
 /* My judgement at 3fbd10b, not a measured result — stated on screen. */
 const SCORE = [
   { c: "Concept", w: 40, now: 7, after: 8.5, why: "Strong thesis, but the surface still reads ‘warning + helpline link’. Agency, post-click drop-off and non-searchers now have a surface." },
-  { c: "Prototype", w: 20, now: 3, after: 8, why: "At 3fbd10b the repo had no screens (‘runnable scaffold, not a product’). Here: a working, bilingual front-end that now imports the repo’s real core." },
-  { c: "Tech feasibility", w: 15, now: 8, after: 8.5, why: "Privacy-by-construction is the repo’s best asset. The shipped schema added two formats (hallway, door) and no identifying field; Fork and Wave stay reserved. Wave/plan need clinical review." },
-  { c: "Product potential", w: 15, now: 6, after: 8, why: "Install story + operator Ladder + study-ready arm make the opportunity legible." },
+  { c: "Prototype", w: 20, now: 3, after: 8, why: "At 3fbd10b the repo had no screens (‘runnable scaffold, not a product’). Here: a working front-end that now imports the repo’s real core and runs the real Door in its Live tab." },
+  { c: "Tech feasibility", w: 15, now: 8, after: 8.5, why: "Privacy-by-construction is the repo’s best asset. The shipped schema added two formats (hallway, door) and no identifying field; Fork and Wave stay unreviewed labs, off in production. Wave/plan need clinical review." },
+  { c: "Product potential", w: 15, now: 6, after: 8, why: "Install story + operator Ladder + a counter that can run the study make the opportunity legible." },
   { c: "Business feasibility", w: 5, now: 4, after: 6, why: "Free core is right; the paid assurance tier and distribution partners are now explicit — still hypotheses." },
   { c: "Wow / pitch", w: 5, now: 4, after: 8, why: "Static docs don’t pitch. The Glass Door and the five-shape cycle are demonstrable in 90 seconds." },
 ];
@@ -68,7 +68,7 @@ export function Verdict() {
             <VerdictCard icon={<AlertTriangle className="h-5 w-5 text-lamp" />} title="At risk of sameness" items={[
               "Surface reads as message + link. The best ideas are invisible in a screenshot.",
               "Leads with deterrence; its own dossier says deterrence is unproven beyond minutes.",
-              "At 3fbd10b the strongest ideas lived in markdown. PR #4 built the Door; Fork and Wave are still only reserved names there.",
+              "At 3fbd10b the strongest ideas lived in markdown. PR #4 built the Door; Fork and Wave exist there only as unreviewed labs behind a flag.",
             ]} />
             <VerdictCard icon={<DoorOpen className="h-5 w-5 text-[#7cc0dd]" />} title="What I did about it" items={[
               "Kept the privacy core and the Shift; changed what the Shift does.",
@@ -98,7 +98,7 @@ export function Verdict() {
             ["Nothing happens after the click", "73.9% of people who found a service still didn’t get help (dossier). Doorway hands off with “no redirect, no measurement” — and then stops caring. That drop-off is the biggest unaddressed number in the repo."],
             ["Reach is one door wide", "Only someone who types a trigger gets anything. The tempted-but-not-acted, and the people around them (personas 01 and 04), have no surface. The dossier cites one survey of dark-web searchers (Nurmi et al., 2024) in which about half said their first contact was accidental, and also reports 65.3% first seeing it under 18 — a single “you’re committing a crime” gate misreads both."],
             ["Every shape is a broadcast", "The Shift changes by counter, never by what the person says they need. Nobody is asked anything. Motivational practice is the opposite: offer choices, don’t argue."],
-            ["The strongest ideas weren’t visible where it’s judged", "At 3fbd10b the best ideas (Shift, privacy) lived in markdown, and a jury can’t see a state machine; it can see a door open. PR #4 has since built the Door itself; Fork and Wave are still unbuilt there, which is what this prototype shows."],
+            ["The strongest ideas weren’t visible where it’s judged", "At 3fbd10b the best ideas (Shift, privacy) lived in markdown, and a jury can’t see a state machine; it can see a door open. PR #4 has since built the Door itself; Fork and Wave exist there only as unreviewed labs behind a flag, and this prototype shows them."],
             ["Adoption has no pull", "The dossier’s own gap doc: voluntary adoption at the long tail has never worked at scale, and there’s no payment rail to lean on. Nothing gives a small operator a reason to install beyond virtue."],
           ].map(([h, b], i) => (
             <li key={h} className="rounded-2xl bg-white p-5 ring-1 ring-line">
@@ -244,8 +244,8 @@ export function Verdict() {
         <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {([
             ["1", "The Glass Door", "Don’t claim anonymity. Let them audit it.", "A button on every shape opens the exact seven-field object that would leave the browser, a crossed-out list of what never will, what stays local (with a wipe button), and how to verify it in DevTools. The 70% who can’t find an anonymous route need evidence, not reassurance.", ScanEye, "gate" as Shape, "See it on the Gate → ‘What does this send?’"],
-            ["2", "The Fork", "Ask, don’t accuse.", "“Which sentence is closest to true right now?” Six honest answers — by accident · want to stop · can’t stop · worried about someone · under 18 · here for work — each leads somewhere different. The choice is sent nowhere (no classifier, no query text). Reserved: not in the shipped sequence.", Compass, "fork" as Shape, "Try each of the six answers"],
-            ["3", "The Wave", "A skill, not a scare.", "An interactive urge-surfing exercise (90 s; 15 s in demo) followed by one preset if–then sentence, kept only until the tab closes. Gamification with the score removed: something to do with breath and hands. Reserved: clinical review pending.", Waves, "wave" as Shape, "Ride the wave"],
+            ["2", "The Fork", "Ask, don’t accuse.", "“Which sentence is closest to true right now?” Six honest answers — by accident · want to stop · can’t stop · worried about someone · under 18 · here for work — each leads somewhere different. The choice is sent nowhere (no classifier, no query text). Unreviewed lab: not in the shipped sequence.", Compass, "fork" as Shape, "Try each of the six answers"],
+            ["3", "The Wave", "A skill, not a scare.", "An interactive urge-surfing exercise (90 s; 15 s in demo) followed by one preset if–then sentence, kept only until the tab closes. Gamification with the score removed: something to do with breath and hands. Unreviewed lab: clinical review pending.", Waves, "wave" as Shape, "Ride the wave"],
             ["4", "The Hallway", "Rehearse the call before making it.", "Addresses the fear of the unknown up front, hands over a first sentence to copy, states a service’s privacy terms only when someone at the service has confirmed them, and shows open or closed only for verified hours. Designed for the 73.9% lost after the click, and for a service that handles ~2.6 contacts a day.", Footprints, "hallway" as Shape, "Walk the hallway"],
             ["5", "The Open Door", "Presence, not pressure.", "By exposure five the threat has failed four times. The form stops pushing: a slim, non-blocking card with one big action and a rotating, non-judgemental line. The door stays open; the person decides.", DoorOpen, "door" as Shape, "Preview the fifth shape"],
           ] as const).map(([n, h, tag, b, Icon, shape, cta]) => (
@@ -261,12 +261,12 @@ export function Verdict() {
             <div className="flex items-center justify-between"><div className="grid h-10 w-10 place-items-center rounded-xl bg-night/10"><Layers className="h-5 w-5" /></div><span className="font-mono text-xs text-night/50">06</span></div>
             <h3 className="font-display mt-4 text-xl font-medium">Ladder + study-ready</h3>
             <div className="mt-0.5 text-sm font-semibold">Ship the test. Gamify the adopter.</div>
-            <p className="mt-2 flex-1 text-sm leading-relaxed text-night/80">Five checkable criteria earn a public badge for operators; an install-level control arm lets platforms run gate-vs-banner without ever randomising a person; a dashboard that suppresses cells under 10 — and says what it can’t tell you.</p>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-night/80">Five checkable criteria form an operator ladder. The live Desk measures three of them from the Door and shows that level, not published; the five-level badge is illustrative, and no one is randomised; a dashboard that suppresses cells under 10 — and says what it can’t tell you.</p>
             <Btn variant="ink" className="mt-4 w-full !justify-between" onClick={() => s.setTab("desk")}>Open The Desk <ArrowRight className="h-4 w-4" /></Btn>
           </article>
         </div>
         <div className="mt-8 rounded-2xl bg-white/5 p-5 text-sm leading-relaxed text-paper/75 ring-1 ring-white/10">
-          <strong className="text-paper">Also added, quietly:</strong> a Quick exit on every shape (and Esc ×2) · a false-alarm path for parents, researchers and moderators — the appeals loop the repo’s own gap doc says nobody has · an under-18 path · an “other people” path for partners and family · NL and EN, language-first routing · and a banner control arm that shows what everyone else ships.
+          <strong className="text-paper">Also added, quietly:</strong> a Quick exit on every shape (and Esc ×2) · a false-alarm path for parents, researchers and moderators — the appeals loop the repo’s own gap doc says nobody has · an under-18 path · an “other people” path for partners and family · NL and EN, language-first routing · and wording that offers the way out, compared with other wording on The Desk as recorded.
         </div>
       </Section>
 
@@ -290,7 +290,7 @@ export function Verdict() {
             <ul className="mt-3 space-y-3 text-sm leading-relaxed text-ink-soft">
               <li><b className="text-ink">Mechanics of agency</b> — choice (the Fork), pacing and a thing to do (the Wave), a sentence you write for yourself (if–then plan). No score, nothing recorded.</li>
               <li><b className="text-ink">Real game mechanics on the system</b> — the operator Ladder: criteria-based levels, a public badge, nobody ranked against anybody. It targets the real blocker: adoption.</li>
-              <li><b className="text-ink">Play for the jury</b> — the five-exposure cycle is a game you play in the demo; the Desk’s k-suppression meters unlock as you act.</li>
+              <li><b className="text-ink">Play for the jury</b> — the five-exposure cycle is a game you play in the demo; the Desk reads back what the Door counted, with small cells hidden.</li>
             </ul>
           </div>
         </div>
@@ -305,8 +305,8 @@ export function Verdict() {
         <div className="grid gap-4 md:grid-cols-2">
           {[
             ["Kept", "sage", ["Seven-field whitelist; no session, query, timestamp, exact count", "k ≥ 10 suppression; numerators over denominators", "Pure, network-free pick() with widening windows (10 min → 6 h → 72 h)", "Language-first routing; links go direct with ?src=doorway", "Honest demo baselines (0.5–1.5%), not the organiser tool’s 15%", "Only fake test-trigger-* terms (SAFETY rule 1)"]],
-            ["Changed", "sky", ["Shift: three forms by count → five shapes in the demo, each answering a question (the shipped sequence is gate, card, hallway, hallway, door)", "Results held on the early shapes, a slim card at 5+", "Copy: warmer ‘je’ voice; accident is named as possible; legal wording only from a reviewed record, neutral by default", "Counter enum: +2 formats (hallway, door) replace chat; fork and wave stay reserved and are rejected by the edge", "Quiet line still exists inside the re-warning window"]],
-            ["Added", "lamp", ["Glass Door (audit panel on every shape)", "Fork with six honest paths; false-alarm and under-18 paths", "Wave + local if–then plan with wipe", "Hallway: first sentences, verified-only privacy and hours, a self-help alternative", "Quick exit + Esc ×2; banner control arm; operator Ladder + badge", "Live k-suppression meters on The Desk"]],
+            ["Changed", "sky", ["Shift: three forms by count → five shapes in the demo, each answering a question (the shipped sequence is gate, card, hallway, hallway, door)", "Results held on the early shapes, a slim card at 5+", "Copy: warmer ‘je’ voice; accident is named as possible; legal wording only from a reviewed record, neutral by default", "Counter enum: +2 formats (hallway, door) replace chat; fork and wave are unreviewed labs, which the production edge rejects", "Quiet line still exists inside the re-warning window"]],
+            ["Added", "lamp", ["Glass Door (audit panel on every shape)", "Fork with six honest paths; false-alarm and under-18 paths", "Wave + local if–then plan with wipe", "Hallway: first sentences, verified-only privacy and hours, a self-help alternative", "Quick exit + Esc ×2; control-wording comparison on The Desk; operator Ladder + badge", "Live k-suppression on The Desk: small cells hidden, not guessed"]],
             ["Cut / refused", "clay", ["Anything that scores, streaks or ranks a person", "Free-text AI on a person’s words", "Any server-side storage of plans or choices", "Email/phone capture of any kind", "Claims of deterrence"]],
           ].map(([h, tone, items]) => (
             <div key={h as string} className="rounded-2xl bg-paper p-5 ring-1 ring-line">
@@ -324,12 +324,12 @@ export function Verdict() {
         <p className="max-w-3xl text-ink-soft">The repo’s best trait is honesty about its limits. A refactor that buried that would be a regression, so here is the same standard applied to this build.</p>
         <ul className="mt-5 grid gap-3 md:grid-cols-2">
           {[
-            ["Front-end only", "The Shift, Counter, route and copy logic are imported from the repo’s real packages; only Fork and Wave are prototype-only. Nothing is sent over a network. This UI has its own Playwright spec; the repo’s suites cover the core."],
+            ["A demo, not a product", "The Live tab runs the real loader and the real Door, in a sandboxed cross-origin frame; the Door counts go to the edge on its own origin, which this page cannot read. The Desk’s live mode reads the edge’s aggregates through a same-origin proxy on the platform. Beyond this origin, only the Door’s own origin is contacted. The Shift, Counter, route and copy logic come from the repo’s packages; Fork and Wave are labs behind a flag. This UI has its own Playwright spec; the repo’s suites cover the core."],
             ["Facts are borrowed, not verified", "No legal or confidentiality claim shows by default: they render only from reviewed records (docs/04 V1), and none is reviewed yet. The route data comes from the repo’s signed bundle. A youth-service route is not in it, so the under-18 path offers no link until one is verified."],
             ["The Wave is a skill, not a treatment", "Urge-surfing and implementation intentions come from addiction and relapse-prevention practice. There is no evidence here that they work for this population. They need clinician review with the prevention-field experts before any pilot — and the copy says ‘not treatment’."],
-            ["The Desk numbers are synthetic", "Chosen from the dossier’s honest range. They illustrate how suppression bites on a small forum; they are not evidence."],
+            ["The Desk’s synthetic numbers are invented", "The synthetic view’s figures are chosen from the dossier’s honest range. They illustrate how suppression bites on a small forum; they are not evidence. The live view shows only what the demo install’s Door has counted, which is demo traffic, not evidence either."],
             ["Capacity is a hard limit", "Offlimits handles roughly 2.6 contacts a day. Success could break it. The Hallway offers self-help alongside, and when verified hours say the line is closed — a formal capacity contract with each service is still needed."],
-            ["Open risks remain", "False positives; displacement to other platforms; whether a held result is a rock or a nudge. That last one is exactly what the control arm is for."],
+            ["Open risks remain", "False positives; displacement to other platforms; whether a held result is a rock or a nudge. That last one is what a randomised test would settle; the Desk’s control-wording comparison is observational and cannot."],
           ].map(([h, b]) => (
             <li key={h} className="rounded-2xl bg-white p-4 ring-1 ring-line">
               <div className="text-sm font-semibold">{h}</div>
@@ -356,7 +356,7 @@ export function Verdict() {
             ["0:45", "Open the Glass Door", "“Here are the seven fields. Nothing else. Check the network tab.” This is your wow moment."],
             ["1:10", "Fork → Wave", "Fire again; choose “I want to stop but I’m not sure I can”. Ride the wave. Write one sentence."],
             ["1:50", "Hallway", "“73.9% are lost after the click. When verified hours say the line is closed, we offer self-help instead of a phone that doesn’t ring.”"],
-            ["2:20", "The Desk", "Ladder, badge, suppression meters, banner-vs-gate arm. “We ship the test with the product.”"],
+            ["2:20", "The Desk", "Ladder, measured level, small cells hidden, control vs other wording (as recorded). “We ship the test with the product.”"],
             ["2:50", "Close", "“Not proven, and nobody’s is.” End on what you refused to build."],
           ].map(([t, h, b]) => (
             <li key={t} className="flex gap-4 rounded-2xl bg-night-2 p-4 ring-1 ring-white/10">

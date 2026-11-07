@@ -50,7 +50,8 @@ test('quick exit: a click leaves the page for a neutral site, and Back does not 
   await context.route('https://www.knmi.nl/**', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<title>Weer</title>' }));
   await page.goto(PLATFORM + '/test/e2e/blank.html');
   await openLabs(page);
-  await preview(page, 'gate');
+  // A real exposure (not a preview, which is never counted): the first visit gives the gate, which has the button.
+  await page.evaluate(() => { window.doorway.trigger('search'); });
   await expect(act(page, 'primary')).toBeVisible();
   await frameOf(page).getByRole('button', { name: 'Snel weg' }).click();
   await page.waitForURL('https://www.knmi.nl/');
@@ -164,14 +165,13 @@ test('fork: six honest paths, each leads somewhere different, and nothing about 
   expect(await storageOf(page)).toEqual({ local: [], session: [] });
   await page.keyboard.press('Escape');
   await expect(page.locator('iframe')).toHaveCount(0);
-  const db = await waitForAgg(request, (d) => d.agg.length > 0);
-  // six exposures, six dismissals, and the rows differ in nothing that encodes which answer was picked
-  expect(db.agg.every((r) => r.format === 'fork')).toBe(true);
-  for (const p of posts.filter((x) => x.path === '/v1/c')) expect(Object.keys(JSON.parse(p.body)).sort()).toEqual(['e', 'f', 'i', 'o', 'r', 't', 'v']);
-  expect(posts.filter((x) => x.path === '/v1/c').map((x) => JSON.parse(x.body).o)).toEqual(Array(6).fill('dismissed'));
+  // A preview is a demonstration: six previews, and not one of them is counted or sends a counter request.
+  expect(posts.filter((x) => x.path === '/v1/c'), 'no counter request for a preview').toEqual([]);
+  const db = await readDb(request);
+  expect(db.agg).toEqual([]);
 });
 
-test('fork: under 18 offers no link (no verified youth service), and "here for work" files a content-free report', async ({ page, context, request }) => {
+test('fork: under 18 offers no link (no verified youth service), and "here for work" is not counted nor reported for a preview', async ({ page, context, request }) => {
   await context.route('https://**/*', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<title>help</title>' }));
   await openLabs(page);
   await preview(page, 'fork');
@@ -188,13 +188,12 @@ test('fork: under 18 offers no link (no verified youth service), and "here for w
   await frameOf(page).locator('.cb', { hasText: 'voor werk' }).click();
   await frameOf(page).locator('[data-act="primary"]').click();
   await expect(page.locator('iframe')).toHaveCount(0);
-  const db = await waitForAgg(request, (d) => d.agg.length >= 2 && d.reports.length > 0);
-  expect(db.agg.map((r) => r.outcome).sort()).toEqual(['continued', 'dismissed']);
-  expect(db.reports).toHaveLength(1);
-  expect(db.reports[0]).toMatchObject({ reason: 'other', trigger: 'search' });
+  const db = await readDb(request);
+  expect(db.agg, 'the preview answer is not counted').toEqual([]);
+  expect(db.reports, 'the preview report is not filed').toEqual([]);
 });
 
-test('fork: the help paths open the allow-listed service and count a help click', async ({ page, context, request }) => {
+test('fork: the help paths open the allow-listed service, and a preview help click is not counted', async ({ page, context, request }) => {
   await context.route('https://**/*', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<title>help</title>' }));
   await openLabs(page);
   await preview(page, 'fork');
@@ -205,8 +204,8 @@ test('fork: the help paths open the allow-listed service and count a help click'
   const p = await pop;
   expect(p.url()).toBe('https://offlimits.nl/?src=doorway');
   await p.close();
-  const db = await waitForAgg(request, (d) => d.agg.length > 0);
-  expect(db.agg[0]).toMatchObject({ format: 'fork', outcome: 'clicked_help', route: 'nl-offlimits' });
+  const db = await readDb(request);
+  expect(db.agg, 'a preview help click is not counted').toEqual([]);
 });
 
 test('fork: a keyboard user can reach the options and move on', async ({ page }) => {

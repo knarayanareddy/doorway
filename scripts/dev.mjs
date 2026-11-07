@@ -11,6 +11,8 @@
  *   npm run demo        build (door origin = :8788) and serve
  *   npm run demo:labs   the same, with mock data seeded into the Desk and the labs shapes accepted by the edge
  *                       (open http://127.0.0.1:8789/mock-platform/labs.html)
+ *   npm run demo:app    builds the prototype app, then the same as demo:labs
+ *                       (open http://127.0.0.1:8789/app/; PROTO_DIST overrides prototype/dist)
  */
 import http from 'node:http';
 import fs from 'node:fs';
@@ -19,6 +21,7 @@ import { spawnSync } from 'node:child_process';
 import worker from '../edge/c.js';
 import { createDb, sha256hex } from '../edge/test/d1-shim.js';
 import { seedDemo } from './seed-demo.mjs';
+import { appHandler, deskAggProxy } from './serve-demo.mjs';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const DOOR_PORT = Number(process.env.DOOR_PORT || 8788);
@@ -87,4 +90,17 @@ http.createServer(async (req, res) => {
   } catch (e) { console.error('request error', req.method, url.pathname, e.code || e.message); res.destroy(); }
 }).listen(DOOR_PORT, '127.0.0.1', () => console.log(`door/edge  ${DOOR}`));
 
-http.createServer(serveStatic(ROOT)).listen(PLATFORM_PORT, '127.0.0.1', () => console.log(`platform   http://127.0.0.1:${PLATFORM_PORT}/mock-platform/index.html`));
+// The built app is one file: PROTO_DIST/index.html if set, else prototype/dist/index.html.
+const protoFile = path.join(process.env.PROTO_DIST ? path.resolve(process.env.PROTO_DIST) : path.join(ROOT, 'prototype/dist'), 'index.html');
+const app = appHandler(protoFile);
+const desk = deskAggProxy(DOOR);
+const statics = serveStatic(ROOT);
+http.createServer((req, res) => {
+  const u = new URL(req.url, 'http://x');
+  if (u.pathname === '/__desk/agg') { desk(req, res, u); return; }
+  if (u.pathname === '/app/' || u.pathname === '/app/index.html') { app(req, res); return; }
+  statics(req, res);
+}).listen(PLATFORM_PORT, '127.0.0.1', () => {
+  console.log(`platform   http://127.0.0.1:${PLATFORM_PORT}/mock-platform/index.html`);
+  console.log(`app        http://127.0.0.1:${PLATFORM_PORT}/app/${fs.existsSync(protoFile) ? '' : '   (not built: npm run build:prototype)'}`);
+});
