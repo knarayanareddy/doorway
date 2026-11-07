@@ -208,7 +208,9 @@ export function mount(d0, { onOutcome, doc = globalThis.document } = {}) {
     } else if (t.dataset.sect) {
       const b = findBlock(t.dataset.sect);
       if (!b) return;
-      if (b.closes) { finish('section:' + b.id, b); if (b.onSelect) b.onSelect(); }
+      // The action runs first: it may navigate the host (quick exit) or open help, and finish() can settle the
+      // Door, after which the loader removes this frame and a navigation it started could be cancelled.
+      if (b.closes) { try { if (b.onSelect) b.onSelect(); } finally { finish('section:' + b.id, b); } }
       else answer(b.onSelect ? b.onSelect() : null, t);
     } else if (t.dataset.choice) {
       const b = findBlock(t.dataset.choice);
