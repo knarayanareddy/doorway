@@ -10,7 +10,37 @@ The repository's `Dockerfile` runs the demo harness as a hosted service, so juro
 | It exposes nothing it should not (no `/__test/*`, nothing outside `mock-platform/` and the loader, path traversal refused) | **Verified locally.** |
 | The production dependency install is small and the lockfile is consistent | **Verified**: `npm ci --omit=dev` gives 10 MB (it was 243 MB before esbuild was moved to `dependencies`). |
 | **The `Dockerfile` itself builds** | **Not verified.** There is no Docker on the machine that wrote it. Maritime builds from a repository on its own build worker; an agent box with Docker installed (see `docs/14`) could be used to test the build first. |
-| A public Maritime agent wakes on an ordinary request, and the first visit after a sleep works | **Documented by Maritime, not yet seen working** here. |
+| A public Maritime **agent** wakes on an ordinary request, and the first visit after a sleep works | **Documented by Maritime, not yet seen working** here. |
+| The same server, hosted on public **sandbox** ports and used from a laptop over the internet | **Verified** on 7 November 2026 (see above and `docs/14`). |
+
+## The route that was actually run: a Maritime sandbox
+
+The `Dockerfile` has not been built, but the same server ran on a Maritime **sandbox** on 7 November and was exercised over the internet (`docs/14`). It needs a key with `sandboxes` or `manage`. A sandbox ends by itself, disk included, so the demo exists only for the hours you ask for (at most 24).
+
+This is the sequence that ran, assembled from separate steps rather than run as one script:
+
+```python
+from maritime import Maritime            # pip install maritime
+client = Maritime(api_key=...)            # read from a file, never printed
+box = client.ephemeral.create_ephemeral(from_="base", size="small", idle_minutes=20, time_limit_minutes=180)
+sb = client.sandboxes.connect(box["id"])
+urls = {p: sb.url(p, token=False) for p in (3000, 3001)}   # token=False makes the port PUBLIC to the internet
+```
+
+```bash
+# inside the sandbox (Ubuntu 24.04; it has no xz, so use the .tar.gz)
+sudo mkdir -p /opt/node && curl -sL https://nodejs.org/dist/v24.22.2/node-v24.22.2-linux-x64.tar.gz | sudo tar -xz -C /opt/node --strip-components=1
+git clone --depth 1 -b feature/levelled-up https://github.com/knarayanareddy/doorway.git app && cd app
+PATH=/opt/node/bin:$PATH npm ci --omit=dev
+# one process per role, each with its own DIST_DIR; the two origins are the two public port URLs
+ROLE=door     PORT=3001 DOOR_ORIGIN=<url 3001> PLATFORM_ORIGIN=<url 3000> DIST_DIR=$HOME/dist/d nohup /opt/node/bin/node scripts/serve-demo.mjs &
+ROLE=platform PORT=3000 DOOR_ORIGIN=<url 3001> PLATFORM_ORIGIN=<url 3000> DIST_DIR=$HOME/dist/p nohup /opt/node/bin/node scripts/serve-demo.mjs &
+```
+
+Open `<url 3000>/` and it redirects to the labs page. Things that bit during the run:
+- A port URL is **private by default** (it carries a secret `?token=`); only `token=False` opens it to everyone, so decide that on purpose.
+- The Door of each demo needs its own port, because two roles cannot share an origin.
+- Anything else on the sandbox, such as a Discourse that the loader is installed in, is just another port and another origin.
 
 ## Why two deployments
 

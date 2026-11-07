@@ -28,38 +28,38 @@ Much better than the desktop for building and hosting things.
 | Open item | Would Maritime help? | How |
 |---|---|---|
 | The 15-minute install by a non-developer, on camera | **Yes, with preparation.** | The takeover link and a visible Chromium work on a **desktop**, but a desktop has no root, so no PHP. PHP does install on an **agent box** (root). So the setup would be a desktop with a browser pointed at a WordPress served from an agent box. Untested end to end. Hand over a ready setup, because the agent is locked out once the person takes control. Still needs the person. |
-| Discourse | **Plausible on an agent box.** | On a desktop: no Docker or root. On an agent box: root, Docker runs containers, 4.9 GB persistent disk, 2.5 GB memory. Discourse itself is **not yet installed or tried**, and 2.5 GB is at the low end for it; reaching a container from outside is unverified (above). |
-| A public demo for jurors | **Plausible.** | Documented: a public agent gets `https://<agent-id>.mtm.sh/`, sleeps when idle and wakes on any request. Needs a repo with a Dockerfile (this repo has none) and two agents, because the Door must be a different origin from the platform page. The wake behaviour is documented but **not yet seen working**. Mock data only. |
+| Discourse | **Yes, shown working.** | A medium sandbox ran Discourse's own installer; Doorway loaded and opened inside it with Discourse's CSP on. Needs a key with `sandboxes` or `manage`. |
+| A public demo for jurors | **Yes, shown working, for up to 24 hours at a time.** | The demo harness ran on public sandbox ports and was exercised from a laptop. It ends with the sandbox, so start it shortly before it is needed. Mock data only; the Desk token is public on purpose. |
 | Real Safari and iOS | **No.** | Linux, Windows and AOSP Android only: no macOS, no iOS, no Safari. Android would add a mobile Chromium or Firefox, not Safari. |
 | Deploying the edge to Cloudflare | **No.** | The edge is a Cloudflare Worker with D1. Maritime runs containers and VMs; it is not a substitute and would change the architecture. |
 | Counsel, service confirmation, a named reviewer, the five decisions | **No.** | These are about people, not infrastructure. |
 
 ## Honest fit with the product
-Maritime suits *verification and demonstration* here, not production. The product's privacy argument rests on a small, auditable edge and no third-party processing of real visitors' traffic. Running real traffic through a general-purpose VM host would add a processor to the DPIA for no benefit. Use it only with mock data.
+Maritime suits *verification and demonstration* here, not production. It has now done both for real: it hosted the demo and a working Discourse. The product's privacy argument rests on a small, auditable edge and no third-party processing of real visitors' traffic. Running real traffic through a general-purpose VM host would add a processor to the DPIA for no benefit. Use it only with mock data.
 
-## Plan for trying Discourse (not started)
+## What was measured on a sandbox (7 Nov 2026): the result that matters
 
-**What the test is for:** proving that Doorway's one-line Discourse theme-component tag (`dist/discourse/common/head_tag.html`) works in a real Discourse, with the Door served from a second public origin (`docs/15`). Running Discourse is only the means.
+A **sandbox** is the right machine for this project. It needs a key with the `sandboxes` scope (or `manage`, which includes it); a key with only `provision`, `deploy` and `secrets` cannot make one. See "Getting a key that works" below.
 
-**What Discourse needs** (its own install guide): 1 GB RAM minimum with swap and 2 GB or more recommended; **10 GB disk minimum, 20 GB recommended**; Docker. The earlier agent box (2.5 GB RAM, 4.9 GB `/data`) is too small, but Maritime sizes up to 8 GB RAM and 100 GB disk (`maritime create --ram 4096 --cpu 2 --disk 20`).
+- **Speed and size.** A small sandbox (2 vCPU, 4 GB, 12 GB disk) started in 3 seconds; a medium (4 vCPU, 8 GB, **50 GB disk**) is $0.044 an hour. Ubuntu 24.04, `sudo` without a password, outbound HTTPS works.
+- **Public URLs per port.** `sandbox.url(port)` returns `https://<port>-sbx-<id>.<host>.sb.mtm.sh`. **By default it carries a secret `?token=` and the port stays private**, so a visitor or a cross-origin frame cannot use it. `sandbox.url(port, token=False)` makes the port **public to the whole internet**. Different ports are different origins, which is exactly what the Door needs.
+- **Cleanup is built in.** A sandbox ends, disk included, after its idle time (requests through a port URL count as activity) or at its time limit (at most 24 hours).
+- **Docker works, with two fixes.** (1) Ubuntu's `iptables` uses nftables, which this kernel lacks: `update-alternatives --set iptables /usr/sbin/iptables-legacy`. (2) Docker 29 wants an iptables `raw` table the kernel lacks: set `{"allow-direct-routing": true}` in `/etc/docker/daemon.json`. Then containers run, have outbound network, and **a published container port is reachable** (the item that failed on the agent box).
+- **The hosted demo runs here, with no Dockerfile.** Node 24 from nodejs.org's `.tar.gz` (the machine has no `xz`), `git clone`, `npm ci --omit=dev`, and four `scripts/serve-demo.mjs` processes on public ports: the platform and Door for the labs page, and a Door and a loader host for Discourse. Checked from a laptop over the internet with a real browser: the page and the Door are different origins; the Desk answers with its token and returns 401 without it; a write with a forged `Origin` is refused with 403; no browser console errors.
+- **Discourse works, and Doorway works inside it.** Discourse's own `launcher bootstrap` succeeded on the medium sandbox in about 6 minutes (disk used: 7 GB of 50), served on public port 8080 with `DISCOURSE_FORCE_HTTPS` and no redirect loop. Doorway was installed the way a Discourse owner would: as a **theme component** with the tag in its `head_tag` field (added through a Rails runner here; the admin UI does the same). With Discourse's **Content-Security-Policy enabled** (`script-src 'nonce-…' 'strict-dynamic'`, no `frame-src`) the loader ran, the Door opened as a cross-origin frame, rendered the gate, and closed. The Desk's `gate` count went from 22 to 23 and the one POST was the seven-field payload to the Door's origin. Chromium only.
+- **A real bug this found and we fixed:** with `integrity` and `crossorigin="anonymous"` the browser fetches the loader with CORS, so whoever serves it must send `Access-Control-Allow-Origin`. The first Discourse run was blocked by CORS because the test server did not. The server now sends it for the loader only, `INSTALL.md` states the requirement, and a unit test covers it.
+- **Cost of everything above:** about a quarter of an hour of sandbox time, billed as 0 cents against the plan's credit.
 
-**Cost:** 4 GB RAM is $2 a month and 20 GB disk adds 15 GB at $0.08, about $3.20 a month in all, roughly half a cent an hour, drawn from the plan credit. A few hours of testing costs cents.
+## Getting a key that works
 
-**Why it is not the official one-liner:** the Discourse installer expects ports 80 and 443 and its own Let's Encrypt certificate. A Maritime agent's public HTTPS address is terminated for you and forwarded to `$PORT` (port 8080 is Maritime's forwarder), so Discourse would be built from its lower-level container templates with SSL off and published on `$PORT`.
+Keys are made under Settings, API keys. A key made **without opening Advanced** gets `provision`, `deploy`, `secrets` and `manage`, and `manage` covers deleting, sandboxes and computers. Opening Advanced and ticking `provision`, `deploy` and `secrets` produces a key with **no `manage`**, which can create agents but not delete them. The Advanced panel offers only those three boxes, so it cannot grant `sandboxes` or `computers`.
 
-**Known blockers before it can work:**
-1. Container port publishing is unproven: publishing 8081 on the earlier box returned nothing. Host networking (`--network host`) may avoid it.
-2. A public agent's URL is `https://<agent-id>.mtm.sh`, so Discourse's hostname and its "force HTTPS" setting have to match it.
-3. Email is optional (Discourse ID login), but an admin account has to be created from the command line.
-4. The theme component then has to be installed through the admin interface or a Rails console.
-
-**What the test needs from you:** a key with the `manage` scope (to delete what it creates, and to delete the earlier `doorway-lab-test` agent, which is still on the account), plus agents and, if you want a hosted Doorway Door as well, a verified email for public visibility.
-
-## What is still unknown
-- Whether a container's published port is reachable from outside the box (port 8081 returned nothing, undebugged).
-- Whether a public agent really wakes on an ordinary web request. Needs a web app with a Dockerfile.
-- Whether Discourse installs and runs in 2.5 GB.
-- Whether a sandbox differs from an agent box. The keys tried never had the `sandboxes` scope.
+## What is still unknown or untested
+- **Wake on a web request.** Public agents are documented to sleep and wake on any request, but that was never seen working. It does not apply to sandboxes, which end instead; a sandbox demo lives only until its time limit.
+- **Firefox and WebKit inside Discourse.** The Discourse run used Chromium only.
+- **Installing through Discourse's admin screens.** The component was created with a Rails runner; the screens that do the same were not clicked through.
+- **Whether `docker.io` plus the two fixes survives a different sandbox image or a future kernel.** It worked on 7 November.
+- **The `Dockerfile` itself has still never been built.** The sandbox path avoids needing it.
 
 ## Handling the key
 A key pasted into a chat is exposed to that chat. Prefer `maritime onboard`, which signs in by a short code and never shows the key, or put it in a file outside the repository and revoke it afterwards. The key used for this test was kept in an owner-only file outside the repository, never in a command line, and deleted afterwards; revoke it anyway.

@@ -41,7 +41,7 @@ The Door origin is built into the file. It cannot be overridden by an attribute.
 
 ## 3. Discourse
 
-Add `dist/discourse/common/head_tag.html` to a theme component and replace `inst_xxxxxx` with your install id. *Not yet run inside a real Discourse.*
+Create a theme component (Admin, Customize, Themes, Install, Create new, type Component), paste the contents of `dist/discourse/common/head_tag.html` into its **Common, `</head>`** field with your install id, and add the component to your active theme. If the loader is not on your own domain, its host must send `Access-Control-Allow-Origin: *` (see above). *Run in a real Discourse with its Content-Security-Policy on (`docs/09`), in Chromium, with the component created by script rather than these screens.*
 
 ## 4. UNICRI plug-in contract
 
