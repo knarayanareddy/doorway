@@ -4,10 +4,9 @@ compatibility_date = "2026-11-01"
 
 # U8 Hardening: explicitly disable Workers observability and logging so IP
 # addresses and client headers are never stored.
-[observability]
-enabled = false
+logpush = false
 
-[logpush]
+[observability]
 enabled = false
 
 # D1 database for daily aggregate counts

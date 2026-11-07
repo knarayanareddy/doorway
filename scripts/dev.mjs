@@ -32,6 +32,7 @@ const DB = createDb();
 const hash = await sha256hex(DESK_TOKEN);
 const ins = DB.raw.prepare(`INSERT INTO installs (id, domain, verified_at, verify_token, desk_token_hash, daily_cap, rate_per_min) VALUES (?,?,?,?,?,?,?)`);
 ins.run('inst_demo001', `127.0.0.1:${PLATFORM_PORT}`, '2026-11-01T00:00:00Z', 'demo-token', hash, 100000, 100000);
+ins.run('inst_wp0001', '127.0.0.1:8790', '2026-11-01T00:00:00Z', 'wp-token', null, 100000, 100000); // the WordPress check (test/e2e/wordpress.spec.js)
 ins.run('inst_unverif', `127.0.0.1:${PLATFORM_PORT}`, null, 'unverified-token', null, 5000, 120);
 ins.run('inst_otherdom', 'example.org', '2026-11-01T00:00:00Z', 'other-token', null, 5000, 120);
 
@@ -64,12 +65,17 @@ http.createServer(async (req, res) => {
     res.writeHead(200, { 'content-type': 'application/json', 'access-control-allow-origin': '*' }); res.end(JSON.stringify(out)); return;
   }
   if (url.pathname === '/__test/reset') { DB.raw.exec('DELETE FROM agg; DELETE FROM heartbeats; DELETE FROM reports; DELETE FROM rate;'); res.writeHead(204, { 'access-control-allow-origin': '*' }); res.end(); return; }
-  const chunks = []; for await (const c of req) chunks.push(c);
-  const body = chunks.length ? Buffer.concat(chunks) : undefined;
-  const r = await worker.fetch(new Request(url, { method: req.method, headers: req.headers, body }), env);
-  const headers = {}; r.headers.forEach((v, k) => { headers[k] = v; });
-  res.writeHead(r.status, headers);
-  res.end(Buffer.from(await r.arrayBuffer()));
+  // Browsers abort in-flight requests when a page unloads (that is the point of
+  // keepalive); an aborted request must never take the server down.
+  if (process.env.DEV_TRACE) console.log(new Date().toISOString().slice(17,23), req.method, url.pathname, req.headers['content-length'] || '');
+  try {
+    const chunks = []; for await (const c of req) chunks.push(c);
+    const body = chunks.length ? Buffer.concat(chunks) : undefined;
+    const r = await worker.fetch(new Request(url, { method: req.method, headers: req.headers, body }), env);
+    const headers = {}; r.headers.forEach((v, k) => { headers[k] = v; });
+    res.writeHead(r.status, headers);
+    res.end(Buffer.from(await r.arrayBuffer()));
+  } catch (e) { console.error('request error', req.method, url.pathname, e.code || e.message); res.destroy(); }
 }).listen(DOOR_PORT, '127.0.0.1', () => console.log(`door/edge  ${DOOR}`));
 
 http.createServer(serveStatic(ROOT)).listen(PLATFORM_PORT, '127.0.0.1', () => console.log(`platform   http://127.0.0.1:${PLATFORM_PORT}/mock-platform/index.html`));

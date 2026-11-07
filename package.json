@@ -30,13 +30,17 @@
     "verify:all": "npm run verify && npm run e2e",
     "vendor:verify": "shasum -a 256 -c vendor/MANIFEST.sha256",
     "check:docs": "node scripts/check-docs.mjs",
-    "status": "node scripts/status.mjs"
+    "status": "node scripts/status.mjs",
+    "smoke:workerd": "node scripts/run-smoke-workerd.mjs",
+    "e2e:chromium": "npm run build:e2e && playwright test --project=chromium",
+    "verify:wordpress": "scripts/wp-verify.sh"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@playwright/test": "^1.65.0",
     "esbuild": "^0.28.2",
     "eslint": "^9.39.5",
-    "globals": "^17.14.0"
+    "globals": "^17.14.0",
+    "wrangler": "^4.158.0"
   }
 }

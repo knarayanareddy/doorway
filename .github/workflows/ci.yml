@@ -23,9 +23,11 @@ jobs:
       # unit + edge tests, signed-routes check, privacy gate, copy lint, docs check.
       - name: verify
         run: npm run verify
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
-      - name: "End-to-end (the evidence layer - hostile host, network record, installer errors, Desk)"
+      - name: Real Workers runtime (workerd + local D1), no account needed
+        run: npm run smoke:workerd
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+      - name: "End-to-end in Chromium, Firefox and WebKit (hostile host, network record, installer errors, Desk)"
         run: npm run e2e
       - uses: actions/upload-artifact@v4
         if: failure()
