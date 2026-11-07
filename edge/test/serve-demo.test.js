@@ -131,6 +131,13 @@ test('readConfig: I_UNDERSTAND_THIS_IS_A_PUBLIC_DEMO=1 is the explicit way to ru
   assert.notDeepEqual(readConfig({ ...base, DOOR_ORIGIN: 'http://door.example.org', I_UNDERSTAND_THIS_IS_A_PUBLIC_DEMO: 'yes' }).problems, [], 'only the exact value 1 counts');
 });
 
+test('readConfig: DOOR_INTERNAL_URL is optional, must be a bare origin, and defaults to nothing', () => {
+  assert.equal(readConfig({ ...base, ROLE: 'platform' }).doorInternal, null);
+  assert.equal(readConfig({ ...base, ROLE: 'platform', DOOR_INTERNAL_URL: 'http://127.0.0.1:3001/' }).doorInternal, 'http://127.0.0.1:3001');
+  assert.match(readConfig({ ...base, ROLE: 'platform', DOOR_INTERNAL_URL: 'http://127.0.0.1:3001/x' }).problems.join('\n'), /DOOR_INTERNAL_URL must be an origin/);
+  assert.match(readConfig({ ...base, ROLE: 'platform', DOOR_INTERNAL_URL: 'nope' }).problems.join('\n'), /DOOR_INTERNAL_URL must be an origin/);
+});
+
 // ── platformHandler ──────────────────────────────────────────────────────────
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'serve-demo-test-'));
