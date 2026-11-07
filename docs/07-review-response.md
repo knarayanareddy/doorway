@@ -54,6 +54,14 @@ Run, rather than assumed: Firefox and WebKit, the Worker on workerd with a local
 
 Still not possible without you: deploying (needs your Cloudflare account), the on-camera install (needs a person), Discourse (needs a heavier stack), and naming the false-positive reviewer.
 
+## Third pass: the levelled-up design
+
+A second reviewer produced a prototype (`Doorway levelled up`) with a stronger idea set and its own review. What was taken, what was fixed, and what is parked:
+
+- **Taken into the real Door:** one shape per exposure (gate, card, hallway, hallway, door) on top of `shift.js` with the H1 in-place escalation kept; the **Glass Door** (the exact payload, what never leaves, what stays local with a wipe button, an honest note about the network address); the **Hallway** (copyable first sentences, a self-help alternative counted against its own route, and a service's privacy wording and opening hours only through verified-record predicates). Tests: `panels.test.js`, `shapes.spec.js` in three browsers. `card.js` gained generic content sections and a focus trap that looks up its controls on each keypress.
+- **Fixed in the prototype** (now in `prototype/`, importing the real core): third-party fonts removed; no hard-coded legal or confidentiality claims; routes only from the verified bundle and the allow-list (the Helpwanted link is gone); the seven-field contract; no quiet-right-after-exposure; the Wave has no free text and keeps nothing beyond the tab; the Verdict text re-baselined.
+- **Parked behind decisions** (`docs/11-open-decisions.md`): quick exit (cannot navigate the host from a sandbox), holding results (conflicts with treating the host as an adversary), the Fork's self-identification, the Wave's clinical review, and a verified youth route.
+
 ## New open items this work surfaced
 
 - **V15 — real Safari and mobile.** The suite now runs in Chromium, Firefox and WebKit, but Playwright's WebKit is not Safari. Safari's Intelligent Tracking Prevention may restrict third-party `localStorage` in ways it does not; in the worst case the Door cannot keep state, and the DEGRADED path (card, not gate) applies. Needs a pass on real Safari (macOS and iOS).
