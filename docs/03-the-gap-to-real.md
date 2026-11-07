@@ -71,12 +71,12 @@ Detailed because this is where the product actually lives, and because a jury is
 A real product has a support burden nobody budgets for:
 
 - **A response time for breakage.** A forum installs this on a Friday and their search breaks because the trigger list matched something legal. Who answers, in what time, and what happens when nobody does?
-- **A false-positive appeals loop.** The module blocks a search that a journalist, a survivor or a parent legitimately made. There must be a path where a platform reports this, it gets reviewed, and the list changes. **No deployment in the literature has this and it is the most obvious way Doorway does harm.**
+- **A false-positive appeals loop.** The module blocks a search that a journalist, a survivor or a parent legitimately made. There must be a path where a platform reports this, it gets reviewed, and the list changes. **No deployment in the literature has this and it is the most obvious way Doorway does harm.** *(7 Nov: the mechanical half now exists — `POST /v1/report`, a closed reason list, and a Desk table. The human half, a named reviewer who acts on it monthly, does not.)*
 - **Term-list stewardship that fires a human.** Slang in Dutch and English changes monthly. Someone has to own that, and it cannot be the same person who built the module.
 
 ### The legal artefacts
 
-- **A DPIA.** Even with eight aggregate fields, a tool that observes searches in a child-protection context needs one in the Netherlands, and it needs updating when the fields change.
+- **A DPIA.** Even with seven aggregate fields, a tool that observes searches in a child-protection context needs one in the Netherlands, and it needs updating when the fields change.
 - **A data-processing agreement.** The platform's relationship with whoever hosts the counter. Who is the controller, who is the processor, and what happens when a Dutch court asks for the aggregates.
 - **A licence that says what it means.** MIT is in the repo, and a UN platform may need something else. A product has this settled.
 

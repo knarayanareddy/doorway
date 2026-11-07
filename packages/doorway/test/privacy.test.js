@@ -5,13 +5,13 @@ import fs from 'node:fs';
 
 const GOOD = {
   i: 'inst_7f3a2c', v: 'legal-01', f: 'gate', t: 'search',
-  o: 'clicked_help', r: 'nl-offlimits', e: '5+', b: 14,
+  o: 'clicked_help', r: 'nl-offlimits', e: '5+',
 };
 
-test('the payload is exactly eight fields', () => {
+test('the payload is exactly seven fields', () => {
   const r = build(GOOD);
   assert.equal(r.ok, true);
-  assert.equal(Object.keys(r.payload).length, 8);
+  assert.equal(Object.keys(r.payload).length, 7);
   assert.deepEqual(Object.keys(r.payload), FIELDS);
 });
 

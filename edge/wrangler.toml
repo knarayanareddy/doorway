@@ -2,20 +2,27 @@ name = "doorway-edge"
 main = "c.js"
 compatibility_date = "2026-11-01"
 
-# U8 Hardening: Explicitly disable Cloudflare Workers default observability,
-# telemetry, and logging so that IP addresses and client headers are never stored.
+# U8 Hardening: explicitly disable Workers observability and logging so IP
+# addresses and client headers are never stored.
+logpush = false
+
 [observability]
 enabled = false
 
-[logpush]
-enabled = false
-
-# D1 Database binding for daily aggregate counts
+# D1 database for daily aggregate counts
 [[d1_databases]]
 binding = "DB"
 database_name = "doorway-agg"
 database_id = "00000000-0000-0000-0000-000000000000"
 
-# Production deployments should scope ALLOWED_ORIGIN to the specific platform domain:
+# The Door (door.js) is a static asset served from this same Worker, so the Door
+# page and the counter share one origin and the Door's CSP can say connect-src 'self'.
+[assets]
+directory = "../dist/door"
+binding = "ASSETS"
+run_worker_first = true
+
 [vars]
-# ALLOWED_ORIGIN = "https://your-platform.org"
+# The exact origin of this Worker. Writes are accepted only from this origin
+# (the sandboxed iframe), never from a platform's own page. No wildcard, no regex.
+DOOR_ORIGIN = "https://door.doorway.example"

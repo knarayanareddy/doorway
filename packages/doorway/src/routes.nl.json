@@ -1,6 +1,5 @@
 {
- "version": "2026.11.06",
- "sig": "UNSIGNED-PLACEHOLDER-NEEDS-SIGNING-INFRASTRUCTURE",
+ "version": "2026.11.07",
  "byLanguage": {
   "nl": {
    "default": {
@@ -14,12 +13,21 @@
     "hours": "Mo-Fr 09:00-22:00; Sa-Su 09:30-18:00",
     "phone": "0800 266 64 36",
     "url": "https://offlimits.nl/?src=doorway",
-    "conf": "Anonymous and free. Callers do not need to identify themselves. Offlimits states that nothing is reported to law enforcement; the general Dutch duty to report acute danger does not extend to anonymous helpline conversations (as stated by Offlimits / organisers' legal-confidentiality data). Confirm wording on site — docs/04 V1.",
-    "confBasis": "offlimits-service-guarantee",
+    "conf": {
+     "text": "Anonymous and free. Callers do not need to identify themselves. Offlimits states that nothing is reported to law enforcement; the general Dutch duty to report acute danger does not extend to anonymous helpline conversations (as stated by Offlimits / organisers' legal-confidentiality data).",
+     "basis": "offlimits-service-guarantee",
+     "sourceUrl": null,
+     "verifiedBy": null,
+     "verifiedAt": null,
+     "expiresAt": null
+    },
     "countries": [
      "NL",
      "BE"
-    ]
+    ],
+    "reviewBy": "2027-02-06",
+    "verifiedAt": null,
+    "agreement": null
    },
    "alternatives": [
     {
@@ -34,7 +42,10 @@
      "countries": [
       "NL",
       "BE"
-     ]
+     ],
+     "reviewBy": "2027-02-06",
+     "verifiedAt": null,
+     "agreement": null
     }
    ]
   },
@@ -53,7 +64,10 @@
      "es"
     ],
     "url": "https://www.redirection.fi/?src=doorway",
-    "countries": []
+    "countries": [],
+    "reviewBy": "2027-02-06",
+    "verifiedAt": null,
+    "agreement": null
    },
    "alternatives": [
     {
@@ -66,12 +80,21 @@
      ],
      "phone": "0808 1000 900",
      "url": "https://www.stopitnow.org.uk/?src=doorway",
-     "conf": "Confidential helpline run by the Lucy Faithfull Foundation. Sourced from service guarantee.",
-     "confBasis": "service-published",
+     "conf": {
+      "text": "Confidential helpline run by the Lucy Faithfull Foundation. Sourced from service guarantee.",
+      "basis": "service-published",
+      "sourceUrl": null,
+      "verifiedBy": null,
+      "verifiedAt": null,
+      "expiresAt": null
+     },
      "countries": [
       "GB",
       "IE"
-     ]
+     ],
+     "reviewBy": "2027-02-06",
+     "verifiedAt": null,
+     "agreement": null
     },
     {
      "id": "us-stopitnow",
@@ -84,12 +107,21 @@
      ],
      "phone": "1-888-773-8368",
      "url": "https://www.stopitnow.org/?src=doorway",
-     "conf": "Confidential helpline guidance provided by Stop It Now coalition with narrow statutory exceptions for imminent child harm.",
-     "confBasis": "service-published",
+     "conf": {
+      "text": "Confidential helpline guidance provided by Stop It Now coalition with narrow statutory exceptions for imminent child harm.",
+      "basis": "service-published",
+      "sourceUrl": null,
+      "verifiedBy": null,
+      "verifiedAt": null,
+      "expiresAt": null
+     },
      "countries": [
       "US",
       "CA"
-     ]
+     ],
+     "reviewBy": "2027-02-06",
+     "verifiedAt": null,
+     "agreement": null
     },
     {
      "id": "au-stopitnow",
@@ -101,12 +133,21 @@
      ],
      "phone": "1800 272 831",
      "url": "https://www.stopitnow.org.au/?src=doorway",
-     "conf": "Confidential prevention helpline operated by the Australian Centre for Child Protection (ACCP).",
-     "confBasis": "service-published",
+     "conf": {
+      "text": "Confidential prevention helpline operated by the Australian Centre for Child Protection (ACCP).",
+      "basis": "service-published",
+      "sourceUrl": null,
+      "verifiedBy": null,
+      "verifiedAt": null,
+      "expiresAt": null
+     },
      "countries": [
       "AU",
       "NZ"
-     ]
+     ],
+     "reviewBy": "2027-02-06",
+     "verifiedAt": null,
+     "agreement": null
     }
    ]
   },
@@ -121,11 +162,20 @@
     ],
     "phone": "020-44 22 00",
     "url": "https://www.preventell.se/?src=doorway",
-    "conf": "Free, anonymous national helpline operated by Karolinska Institutet. Protected under Swedish healthcare statutory secrecy (OSL 25:1).",
-    "confBasis": "statutory-medical-secrecy",
+    "conf": {
+     "text": "Free, anonymous national helpline operated by Karolinska Institutet. Protected under Swedish healthcare statutory secrecy (OSL 25:1).",
+     "basis": "statutory-medical-secrecy",
+     "sourceUrl": null,
+     "verifiedBy": null,
+     "verifiedAt": null,
+     "expiresAt": null
+    },
     "countries": [
      "SE"
-    ]
+    ],
+    "reviewBy": "2027-02-06",
+    "verifiedAt": null,
+    "agreement": null
    },
    "alternatives": [
     {
@@ -139,7 +189,10 @@
       "fi"
      ],
      "url": "https://www.redirection.fi/?src=doorway",
-     "countries": []
+     "countries": [],
+     "reviewBy": "2027-02-06",
+     "verifiedAt": null,
+     "agreement": null
     }
    ]
   },
@@ -148,16 +201,26 @@
     "id": "de-kein-taeter",
     "name": "Kein Täter werden / Dunkelfeld",
     "url": "https://www.kein-taeter-werden.de/?src=doorway",
-    "channel": "phone",
-    "capacity": "human",
+    "channel": "programme",
+    "capacity": "programme",
     "countries": [
      "DE"
     ],
     "languages": [
      "de"
     ],
-    "conf": "Free, confidential prevention programme for people who are attracted to children and want help before anything happens. Treatment is confidential; the programme states it does not report participants to police. Confirm wording on site - docs/04 V1.",
-    "confBasis": "programme-published"
+    "conf": {
+     "text": "Free, confidential prevention programme for people who are attracted to children and want help before anything happens. Treatment is confidential; the programme states it does not report participants to police.",
+     "basis": "programme-published",
+     "sourceUrl": null,
+     "verifiedBy": null,
+     "verifiedAt": null,
+     "expiresAt": null
+    },
+    "reviewBy": "2027-02-06",
+    "verifiedAt": null,
+    "intake": true,
+    "agreement": null
    },
    "alternatives": []
   }
@@ -165,5 +228,7 @@
  "selfHelpAlways": [
   "nl-stoppen",
   "fi-redirection"
- ]
+ ],
+ "validUntil": "2027-02-06T00:00:00Z",
+ "sig": "9p30Pnm0vqTGZynlCBTN3WN-GFmqQI__HVeUITwYsuSst7YwsCAol4-HH4pnBNnKF0MVkYGWyijih_tSTpHmDQ"
 }

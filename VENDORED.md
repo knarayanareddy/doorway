@@ -46,11 +46,12 @@ are the swap `contract/PLUGIN_CONTRACT.md` tells an integrator to make:
 +  <link rel="stylesheet" href="./demo-standin.css">
 
 -  <script type="module" src="/starter-widget/widget.js"></script>
-+  <script type="module" src="/packages/doorway/src/sbis-adapter-entry.js"></script>
++  <script src="/dist/latest/doorway.min.js" data-install="inst_demo001" data-country="NL" defer></script>
 ```
 
 Why the second one: upstream's mock platform loads the *starter* widget, which
-is an example, not a product. Ours is the product. This line is the whole point
+is an example, not a product. Ours is the product, loaded as the built script-tag
+install (`npm run build`), which mounts the Door in a sandboxed iframe. This line is the whole point
 of the vendoring — it is what makes the demo "Doorway running in the mock
 platform" rather than "the mock platform running itself".
 
@@ -75,7 +76,7 @@ Two hunks. If there are more, someone edited vendored code.
 | `starter-widget/` | Ours is stronger (shadow DOM, focus trap, five formats). Vendor it and we would have two widgets and one ambiguity. |
 | `starter-backend/` | Express. Our edge is Cloudflare Workers + D1; a second server is a second thing to run. |
 | `tools/check-safety.js` | Needs Ajv. Reimplemented dependency-free as `scripts/check-safety.mjs` — same rules, from `safety.config.json`. |
-| `tools/dashboard/` | Six aggregate counts. Ours carries eight fields with suppression. |
+| `tools/dashboard/` | Six aggregate counts. Ours carries seven fields with suppression. |
 | `data/*.json` | We have the same facts in `packages/doorway/src/routes.nl.json`, with language-first alternatives. We fixed one bad URL from their copy (`stoppenismogelijk.nl` → `.eu`). |
 | `research/`, `BRIEF.md` | Already absorbed into `research/` and `docs/`; ours is longer. |
 | `CLAUDE.md` | Assistant context for a different tool. |

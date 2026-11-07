@@ -1,98 +1,74 @@
-# Installing and Integrating Doorway
+# Installing Doorway
 
-Doorway provides plug-and-play CSAM prevention and help routing for platforms (forums, search engines, image boards). It records zero personal data, performs no tracking, and uses client-side state machines.
+Doorway is the **response layer**: when your platform decides a search or message needs a warning, Doorway shows it and routes the person to help. It does not detect anything and never receives what was typed. See `docs/08-trigger-adapters.md` for where a trigger comes from.
 
----
-
-## 1. Quickstart Drop-in (Under 3 Minutes)
-
-Add this module to your search or forum page:
+## 1. Script tag (no JavaScript to write)
 
 ```html
-<script type="module">
-  import { createDoorway } from './packages/doorway/src/widget.js';
-  import routes from './packages/doorway/src/routes.nl.json' with { type: 'json' };
-
-  // Initialize the widget
-  const doorway = createDoorway({
-    routes,
-    endpoint: {
-      url: 'https://edge.yourdomain.com/v1/c',
-      install: 'inst_your_platform_id',
-    },
-    lang: navigator.language || 'en',
-  });
-
-  // Attach to your search form
-  const form = document.getElementById('search-form');
-  form.addEventListener('submit', (e) => {
-    const input = document.getElementById('search-input');
-    if (isTriggerTerm(input.value)) {
-      e.preventDefault();
-      doorway.trigger({ type: 'search' });
-    }
-  });
-</script>
+<script src="https://cdn.example.org/v0.2.0/doorway.min.js"
+        integrity="sha384-…"
+        crossorigin="anonymous"
+        data-install="inst_xxxxxx"
+        data-trigger-event="doorway:flag"
+        data-country="NL"
+        data-legal-jurisdiction="NL"
+        defer></script>
 ```
 
----
+`npm run build` prints this tag with the real URL and SRI hash filled in (`dist/v<version>/manifest.json`). The URL is versioned and immutable: a new release is a new URL.
 
-## 2. Integrating with the Plug-in Contract (`sbis:trigger`)
+Whatever your platform uses to flag a search then fires one event, passing the trigger **kind** (`search`, `chat` or `nav`), never the query:
 
-If your platform uses the UNICRI plug-in contract (`contract/PLUGIN_CONTRACT.md`):
-
-```html
-<script type="module">
-  import { createDoorway } from './packages/doorway/src/widget.js';
-  import { attach } from './packages/doorway/src/sbis-adapter.js';
-  import routes from './packages/doorway/src/routes.nl.json' with { type: 'json' };
-
-  const doorway = createDoorway({ routes });
-  attach({ doc: document, doorway, routes });
-</script>
+```js
+document.dispatchEvent(new CustomEvent('doorway:flag', { detail: { type: 'search' } }));
+// or, equivalently:  window.doorway.trigger('search')
 ```
 
-Your backend or client simply dispatches `sbis:trigger` when a matched pattern is detected:
+| Attribute | Required | Meaning |
+|---|---|---|
+| `data-install` | yes | Your install id. |
+| `data-trigger-event` | no | The document event that opens the Door. |
+| `data-country` | no | Two letters. Filters which help service is offered; never overrides language. |
+| `data-legal-jurisdiction` | no | Two letters. Only shows a legal statement if a *reviewed* record exists for it. Never inferred. Leave empty otherwise. |
 
-```javascript
-document.body.dispatchEvent(new CustomEvent('sbis:trigger', {
-  detail: {
-    type: 'search',
-    severity: 'high',
-    country: 'NL',
-    language: 'nl',
-    timestamp: new Date().toISOString()
-  }
-}));
-```
+The Door origin is built into the file. It cannot be overridden by an attribute.
 
----
+## 2. WordPress
 
-## 3. Deploying the Anonymous Edge Counter
+`npm run build` generates `dist/wordpress/doorway/doorway.php` with the SRI hash filled in. Upload it as a plugin, activate it, then **Settings > Doorway** and paste your install id. Your moderation plugin fires `doorway:flag`. *Run in a real WordPress 7.1 in Chromium, Firefox and WebKit (`docs/09-cms-verification.md`); not yet tried on a hosted WordPress or with a caching plugin.*
 
-The counter endpoint runs on Cloudflare Workers with a D1 SQLite database:
+## 3. Discourse
 
-```bash
-cd edge
-wrangler d1 execute doorway-db --file=schema.sql
-wrangler deploy
-```
+Add `dist/discourse/common/head_tag.html` to a theme component and replace `inst_xxxxxx` with your install id. *Not yet run inside a real Discourse.*
 
-The edge worker validates the strict eight-field payload (`i, v, f, t, o, r, e, b`), strips client connection metadata, and increments daily coarsened aggregates with write-time k-anonymity.
+## 4. UNICRI plug-in contract
 
----
+If your platform already dispatches `sbis:trigger` on `document.body`, the script tag listens for it with no extra code. The `sbis:result` you get back says the overlay settled; its `outcome` is always `"continued"` and `helpServiceId` is null. That is deliberate: your page is treated as untrusted, and what the person did must not reach it (`docs/02` R9).
 
-## 4. Repository Layout & Architecture
+## 5. Make your install writable
 
-To navigate this repository:
+An install counts events only after it is verified:
 
-* **Production Packages:**
-  * `packages/core/`: Deterministic, pure algorithms (`shift.js` state machine, `route.js` honest directory lookup, `counter.js` whitelist validator). Zero external dependencies.
-  * `packages/doorway/`: Shadow DOM user interface (`widget.js`), event adapter (`sbis-adapter.js`), and verified routes bundle (`routes.nl.json`).
-  * `packages/shared/`: Shared decision surface (`card.js`), accessibility controls (`a11y.js`), and metrics validation (`validate.js`, `loop.js`).
-  * `edge/`: Cloudflare Worker (`c.js`) and D1 database schema (`schema.sql`).
-* **Specifications & Research (Reference Material):**
-  * `DOORWAY-blueprint.html`: Complete theoretical system specification (83 KB).
-  * `research/`: Literature reviews and academic evaluations of warning efficacy (Ahmia, Google, ReDirection).
-  * `docs/`: Threat model (`02-threat-model.md`), product gap analysis (`03-the-gap-to-real.md`), and verification ledgers (`04-open-verifications.md`).
-  * `organiser/`: Upstream UNICRI hackathon challenge kit and test fixtures.
+1. Put `<meta name="doorway-verify" content="YOUR-TOKEN">` in your page head, or a DNS TXT record at `_doorway.your-domain` containing the token.
+2. `curl -X POST https://door.example.org/v1/verify -H 'content-type: application/json' -d '{"i":"inst_xxxxxx"}'`
+
+The Door will only load on the exact domain registered for the install (`frame-ancestors`).
+
+## 6. Troubleshooting (also printed in the browser console)
+
+| You see | Cause | Fix |
+|---|---|---|
+| `no install id` | missing `data-install` | add `data-install="inst_xxxxxx"` |
+| `install id looks wrong` | typo | it is `inst_` plus 6+ lowercase letters or digits |
+| `not registered` | wrong id | check the id you were given |
+| `not been verified yet` | step 5 not done | add the meta tag or DNS record, then call verify |
+| `the Door did not start` | wrong or different domain, or your CSP blocks it | embed only on the registered domain; allow the Door origin in `frame-src` |
+| Nothing at all | your platform never fired the event | call `window.doorway.trigger('search')` from your console to test |
+
+## 7. The numbers
+
+`https://door.example.org/desk` — enter your install id and Desk token. Every figure is labelled *self-reported by the install's page, unauthenticated*; cells under 10 are hidden. The Desk also shows how many events the Door could not send, and a form to report a mistaken warning (no search text, no time finer than a day).
+
+## 8. Running your own edge
+
+See `BUILD.md` → *Deploying the edge*.

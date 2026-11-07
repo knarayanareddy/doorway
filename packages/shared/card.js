@@ -11,7 +11,7 @@
  */
 
 export const VARIANTS = Object.freeze(['gate', 'blur', 'card', 'chat', 'quiet']);
-export const ACTION_KINDS = Object.freeze(['primary', 'secondary', 'dismiss']);
+export const ACTION_KINDS = Object.freeze(['primary', 'secondary', 'dismiss', 'tertiary']);
 
 export function buildCard({
   variant = 'card',
@@ -19,6 +19,7 @@ export function buildCard({
   body = '',
   primary,
   secondary = null,
+  tertiary = null,
   attribution = null,
   footnote = null,
   lang = 'en',
@@ -27,7 +28,7 @@ export function buildCard({
     variant, lang,
     headline: String(headline ?? '').trim(),
     body: String(body ?? '').trim(),
-    primary, secondary, attribution, footnote,
+    primary, secondary, tertiary, attribution, footnote,
   };
   const v = validate(d);
   if (!v.ok) throw new Error('invalid card: ' + v.errors.join('; '));
@@ -45,6 +46,7 @@ export function validate(d = {}) {
   if (d.primary && d.primary.kind && !ACTION_KINDS.includes(d.primary.kind)) {
     errors.push('primary.kind must be one of ' + ACTION_KINDS.join('|'));
   }
+  if (d.tertiary && (typeof d.tertiary.label !== 'string' || !d.tertiary.label.trim())) errors.push('tertiary action needs a label');
   if (d.body && d.body.length > 420) errors.push('body over 420 chars — will need scrolling');
   return { ok: errors.length === 0, errors };
 }
@@ -88,6 +90,8 @@ export function mount(d, { onOutcome, doc = globalThis.document } = {}) {
   if (p) p.addEventListener('click', () => { finish('primary'); if (d.primary.onSelect) d.primary.onSelect(); });
   const s = root.querySelector('[data-act="secondary"]');
   if (s) s.addEventListener('click', () => { finish('secondary'); if (d.secondary.onSelect) d.secondary.onSelect(); });
+  const t3 = root.querySelector('[data-act="tertiary"]');
+  if (t3) t3.addEventListener('click', () => { finish('tertiary'); if (d.tertiary.onSelect) d.tertiary.onSelect(); });
   const x = root.querySelector('[data-act="dismiss"]');
   if (x) x.addEventListener('click', () => finish('dismiss'));
 
@@ -143,13 +147,14 @@ function render(d) {
       '<button class="x" data-act="dismiss" aria-label="Close dialog">\u00d7</button></div>'
     : '<div class="bar"><span></span><button class="x" data-act="dismiss" aria-label="Close dialog">\u00d7</button></div>';
   const sec = d.secondary ? '<button class="alt" data-act="secondary">' + esc(d.secondary.label) + '</button>' : '';
+  const rep = d.tertiary ? '<button class="rep" data-act="tertiary">' + esc(d.tertiary.label) + '</button>' : '';
   const foot = d.footnote ? '<p class="conf">' + esc(d.footnote) + '</p>' : '';
   const labelledBy = d.headline ? ' aria-labelledby="doorway-card-title"' : '';
   return '<div role="dialog" aria-modal="true"' + labelledBy + '>' + attr +
     (d.headline ? '<h2 id="doorway-card-title">' + esc(d.headline) + '</h2>' : '') +
     (d.body ? '<p>' + esc(d.body) + '</p>' : '') +
     '<button class="cta" data-act="primary">' + esc(d.primary.label) + '</button>' +
-    sec + foot + '</div>';
+    sec + rep + foot + '</div>';
 }
 
 const CSS = [
@@ -167,7 +172,10 @@ const CSS = [
   'p{font-size:15px;line-height:1.5;margin:0 0 12px;color:#3d3934}',
   '.cta{display:block;width:100%;background:#1f4e79;color:#fff;border:0;border-radius:9px;font-size:16px;font-weight:650;padding:15px 16px;margin-top:16px;cursor:pointer;min-height:48px}',
   '.cta:focus-visible{outline:3px solid #1b1a18;outline-offset:2px}',
-  '.alt{display:block;width:100%;background:none;border:1px solid #d2cbc0;border-radius:9px;font-size:14px;color:#3d3934;padding:12px;margin-top:9px;cursor:pointer;min-height:44px}',
+  '.alt{display:block;width:100%;background:#fff;border:2px solid #1f4e79;border-radius:9px;font-size:16px;font-weight:650;color:#1f4e79;padding:13px 16px;margin-top:12px;cursor:pointer;min-height:48px}',
+  '.alt:focus-visible{outline:3px solid #1b1a18;outline-offset:2px}',
+  '.rep{display:block;margin:14px auto 0;background:none;border:0;padding:12px 8px;min-height:44px;font-size:14px;color:#1f4e79;text-decoration:underline;cursor:pointer}',
+  '.rep:focus-visible{outline:3px solid #1b1a18;outline-offset:2px}',
   '.conf{font-size:12px;color:#6d665e;margin-top:14px;border-top:1px solid #e2ddd4;padding-top:11px}',
   '.quiet{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:#26241f;color:#f5f1e8;font-size:13px;padding:11px 16px;border-radius:999px;z-index:2147483000;max-width:92vw}',
   '@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}',

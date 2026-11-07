@@ -27,7 +27,7 @@ A Dutch hobby forum with 20,000 members and one part-time moderator wants a warn
 | No classification model | The strongest predictor in the literature is frequency, and frequency is a counter. |
 | No deterrence claim | Ahmia randomised 3.1 million warnings over 140 days and found no detectable reduction in searching. |
 
-**What leaves the browser: eight fields.** No session, no timestamp, no exact exposure count — only the hour, and only a bucket. Demonstrable live in the network panel.
+**What leaves the browser: seven fields.** No session, no timestamp, no local hour, no exact exposure count — only a bucket. Demonstrable live in the network panel.
 
 ## The ask
 

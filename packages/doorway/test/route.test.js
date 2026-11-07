@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { resolve, baseLang, assertHonest } from '../../core/src/route.js';
+import { resolve, baseLang, assertHonest, isAllowedDestination, dropDisallowed } from '../../core/src/route.js';
 import fs from 'node:fs';
 
 const table = JSON.parse(fs.readFileSync(new URL('../src/routes.nl.json', import.meta.url)));
@@ -28,29 +28,45 @@ test('when a human is needed but unavailable, self-help is offered rather than a
   assert.ok(r.route.id !== 'uk-stopitnow' || r.lang === 'en');
 });
 
-test('the honesty gate catches a route that claims confidentiality with no basis', () => {
-  // The shipped table now carries a basis on every route that makes a
-  // confidentiality claim (V1 evidence, docs/04), so it passes cleanly. The gate
-  // is tested against a synthetic table — otherwise a passing gate and a broken
-  // gate look identical from here.
-  const unverified = {
-    byLanguage: {
-      nl: { default: { id: 'nl-x', name: 'X', channel: 'phone', capacity: 'human', conf: 'VERIFY' } },
-      en: { default: { id: 'en-x', name: 'Y', channel: 'phone', capacity: 'human' } },
-    },
-  };
-  const problems = assertHonest(unverified);
-  // nl-x carries `conf: 'VERIFY'` → flagged as unverified.
-  // en-x carries no `conf` at all → flagged as a human route with no statement.
-  assert.equal(problems.length, 2, JSON.stringify(problems));
-  assert.match(problems.join(), /unverified/);
-  assert.match(problems.join(), /no confidentiality statement/);
+test('the honesty gate catches unsafe routes: free-text conf, dead phone, stale review, off-list host', () => {
+  const NOW = Date.parse('2026-11-07');
+  const mk = (r) => ({ byLanguage: { nl: { default: { id: 'x', name: 'X', capacity: 'human', url: 'https://offlimits.nl/', reviewBy: '2027-01-01', ...r } } } });
+  const problems = (r) => assertHonest(mk(r), NOW);
+  assert.deepEqual(problems({ channel: 'chat' }), []);
+  assert.match(problems({ channel: 'chat', conf: 'Anonymous. Confirm wording on site.' }).join(), /structured record/);
+  assert.match(problems({ channel: 'phone' }).join(), /no phone number/);
+  assert.match(problems({ channel: 'programme', phone: '1' }).join(), /not a helpline/);
+  assert.match(problems({ channel: 'chat', reviewBy: '2026-01-01' }).join(), /reviewBy .* has passed/);
+  assert.match(problems({ channel: 'chat', reviewBy: undefined }).join(), /no reviewBy/);
+  assert.match(problems({ channel: 'chat', url: 'https://evil.example/' }).join(), /allow-list/);
+  assert.match(problems({ channel: 'chat', url: 'http://offlimits.nl/' }).join(), /allow-list/);
+  assert.match(problems({ channel: 'chat', conf: { text: 'x' } }).join(), /missing basis/);
 });
 
 test('the shipped table passes the honesty gate', () => {
-  // Shipped routes carry real, sourced confidentiality statements. assertHonest
-  // must return clean so the table can render.
-  assert.deepEqual(assertHonest(table), [], 'every confidentiality claim cites a basis');
+  assert.deepEqual(assertHonest(table, Date.parse('2026-11-07')), []);
+});
+
+test('the shipped German programme is not labelled a phone line', () => {
+  const de = table.byLanguage.de.default;
+  assert.equal(de.channel, 'programme');
+  assert.equal(de.phone, undefined);
+  assert.equal(resolve('de', table, { need: 'human', country: 'DE' }).route.id, 'de-kein-taeter');
+});
+
+test('destinations are exact https hosts, never wildcards, userinfo or lookalikes', () => {
+  assert.equal(isAllowedDestination('https://offlimits.nl/?src=doorway'), true);
+  for (const u of ['http://offlimits.nl/', 'https://offlimits.nl.evil.example/', 'https://evil.example/?u=offlimits.nl',
+    'https://offlimits.nl@evil.example/', 'javascript:alert(1)', 'https://sub.offlimits.nl/', 'not a url', '']) {
+    assert.equal(isAllowedDestination(u), false, u);
+  }
+});
+
+test('dropDisallowed removes any route outside the allow-list, signed or not', () => {
+  const t = { byLanguage: { nl: { default: { id: 'bad', url: 'https://evil.example/' }, alternatives: [{ id: 'ok', url: 'https://offlimits.nl/' }] } } };
+  const r = dropDisallowed(t);
+  assert.equal(r.byLanguage.nl.default.id, 'ok');
+  assert.equal(dropDisallowed({ byLanguage: { nl: { default: { id: 'bad', url: 'https://evil.example/' } } } }).byLanguage.nl, undefined);
 });
 
 test('baseLang handles malformed input', () => {

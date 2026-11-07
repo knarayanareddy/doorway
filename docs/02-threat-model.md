@@ -8,7 +8,7 @@ This document exists because a coverage check against the brief found that one o
 
 ## R1 · No session identifier. No user identifier. No device fingerprint.
 
-**What we do instead.** Everything that requires knowing *this person* lives in `localStorage` on their device and never crosses a network boundary. What leaves is eight fields, none of which is unique to an individual.
+**What we do instead.** Everything that requires knowing *this person* lives in `localStorage` on their device and never crosses a network boundary. What leaves is seven fields, none of which is unique to an individual.
 
 **Why.** A random, session-scoped identifier — which the organisers' own `PLUGIN_CONTRACT.md` specifies — stops being anonymous the moment it appears twice. Two events sharing an ID link those events; three sessions sharing an install ID link the sessions. The kit's privacy note is accurate that the ID is never persisted; the aggregation layer nevertheless holds it for the window in which linkage happens.
 
@@ -41,6 +41,8 @@ Packs are curated privately, distributed as signed bundles to verified installs,
 **Why.** The brief is explicit: publishing exactly what triggers a warning teaches people to avoid it. A community-maintained pack — which an earlier version of my own advice recommended — is a public trigger list with extra steps.
 
 **What an attacker gains if dropped.** A published map of what to avoid, which converts the intervention into an evasion guide.
+
+**Consequence, stated plainly: Doorway is the response layer only.** It does not detect anything. A trigger is a *kind* (`search`, `chat`, `nav`) that the platform's own tooling supplies; Doorway is never told, and never ships, what matched. Client-side matching would hand the list to every visitor; server-side matching would hand it to the platform that R9 treats as an adversary. Both break this rule, so neither is built. No term-list file exists in the repo or in any bundle, and `npm run gate:privacy` fails the build if one appears. See `08-trigger-adapters.md` for how platforms connect their own sources.
 
 ---
 
@@ -76,11 +78,32 @@ Not negotiable, not even for a screenshot.
 
 ---
 
-## R9 · Host platform as an untrusted adversary (U1).
+## R9 · Host platform as an untrusted adversary (U1, review B1).
 
-**The threat.** The host platform owns the webpage, the user session (`sessionScopedId`), and the search box. If the intervention module dispatches an event (`sbis:result`) reporting that a user selected `clicked_help` or names the specific helpline, any host that logs that event constructs a list of users seeking CSAM help.
+**The threat.** The host owns the webpage, the user session and the search box. Anything that runs in the host's JavaScript realm is readable by the host: it can wrap `fetch`, read `localStorage`, or receive callbacks. Redacting a field from an event does not help if the same field is visible in the request body or in storage. A host that logs "this visitor clicked Offlimits" beside its own session id has built a list of suspects — the thing this product refuses to produce.
 
-**What we do instead.** The widget isolates help navigation in a detached browsing context (`rel="noreferrer noopener"`) so the host search query never leaks in HTTP `Referer` (U7). On the contract event seam (`sbis:result`), the specific helpline ID is completely redacted (`helpServiceId: null`) and granular interaction states are shielded from host session logs.
+**What we do instead.** The Door never runs in the host's realm.
+
+- The host page runs only a stateless **loader**. When the platform decides a trigger fired, the loader mounts `<iframe sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox">` from the Doorway origin. The frame is cross-origin to the host, so the host cannot read its DOM, its storage or its network calls.
+- `localStorage["doorway:v1"]` and the counter `POST` live inside the frame. Browsers partition third-party storage per top-level site, which is the scope the Shift wants.
+- The seam is `postMessage` with a fixed vocabulary: host → door `{trigger: true, type}`, door → host `{ready: true}` and `{settled: true}`. No outcome, route, variant, format or count ever crosses. `type` is the trigger *kind*, never the query.
+- The Door page is served with `frame-ancestors` set to the install's own domain, so a different site cannot embed it, and with `default-src 'none'; connect-src 'self'` so the browser refuses any other network call from it.
+- The link to the help service opens detached (`rel="noreferrer noopener"`), so the host's URL (which may carry the query) is not sent as `Referer`.
+
+**Evidence, not assertion.** `test/e2e/host-adversary.spec.js` runs a hostile host page that wraps `fetch`, XHR, `sendBeacon`, `Storage`, `postMessage` and a DOM observer, tries to read the frame every way it can, and asserts it learned nothing beyond `{ready}` and `{settled}`. `test/e2e/network.spec.js` records every request the Door makes.
+
+**Deviations from the review's sketch, deliberately.**
+1. The sandbox includes `allow-same-origin`. Without it the frame has an opaque origin: no `localStorage`, and every request would carry `Origin: null`. It is safe because the frame is cross-origin to the host; the usual danger of `allow-scripts` + `allow-same-origin` applies only when the frame is same-origin with its embedder.
+2. The vocabulary has a third value, `{ready: true}`, content-free. Without it a mis-installed Door (wrong domain, unverified install) would leave an invisible full-screen layer over the platform's page, and the installer would get no diagnostics.
+3. `sbis:result` is still dispatched for the UNICRI contract, but its `outcome` is fixed to `"continued"` and means only "the overlay has settled". `helpServiceId` is null, `variantId` is omitted.
+
+**Residuals that are inherent and must be said out loud.**
+- The host knows it decided to trigger, and when.
+- The host can decline to mount the frame, or remove it.
+- A hostile host can render a fake card of its own pointing anywhere. The signed bundle (R11) protects the Doorway Door, not a page the host fakes. SRI on the loader protects against a compromised CDN, not against the host.
+- The iframe is a full-viewport layer for every format, so the host cannot infer the format from its size; the cost is that the quiet pill also blocks the page for its few seconds.
+- The Doorway origin sees the IP of each visitor *whose trigger fired* (not of every page view: the Door loads only on a trigger). R10 covers that.
+- The loader script itself is fetched on every page view of an installed platform. It is static and cacheable; platforms can self-host it with the SRI hash.
 
 ---
 
@@ -91,6 +114,32 @@ Not negotiable, not even for a screenshot.
 **What we do instead.** 
 1. **Edge Hardening:** Workers Observability and Logpush are explicitly disabled in `wrangler.toml`.
 2. **Oblivious HTTP (OHTTP / RFC 9458):** For high-threat environments, client payloads are encrypted using HPKE and proxied through an independent third-party Relay (e.g. Cloudflare Privacy Gateway). The Relay sees the client IP but cannot decrypt the payload; the Gateway Worker decrypts the payload but sees only the Relay's IP address.
+
+---
+
+## R11 · The routes bundle is signed, expiring, and allow-listed (review B4).
+
+**The threat.** The help button is the highest-harm surface in the product: a person who has just decided to ask for help is handed a URL by a trusted-looking card. If a tampered bundle could change that URL, the privacy design would protect nothing.
+
+**What we do.** The bundle is canonical JSON signed with Ed25519; the public key is pinned in the Door; verification (WebCrypto) runs before any route is used. A bundle that is unsigned, mis-signed or past `validUntil` yields *no routes*: neutral help copy with no link. Independently of the signature, a route whose destination is not an exact `https` hostname on the allow-list (`packages/core/src/route.js`) is dropped. `npm run check:routes` fails CI if the committed bundle does not verify or is within two weeks of expiry.
+
+**Open.** The pinned key is a **dev key** until the release owner generates a production key offline (`scripts/sign-routes.mjs`, `04-open-verifications.md` V14).
+
+---
+
+## R12 · Aggregates are self-reported, and are labelled that way (review B2).
+
+**The threat.** The install id is public by construction (it is in the platform's page source), so anyone can try to write to any install's counter. Aggregates are the product's only evidence; a forged 100% click-through would show a pilot funder fiction.
+
+**What we do.** Writes are accepted only from the Door's own origin (exact match, no wildcard), capped at 512 bytes before any database read, rate-limited per install per minute, and bounded by a per-install daily cap. The browser binds the Door to the install's domain through `frame-ancestors`. `Origin` is still only a hint: a non-browser can forge it, so every Desk figure is labelled *"Self-reported by the install's page, unauthenticated"*, days with implausible click-through or a 10× volume jump are flagged and excluded from headline rates, and cells under *k* (with secondary suppression) are hidden. Minute-level limiter rows are deleted within minutes so no per-minute history persists.
+
+---
+
+## Accepted trades
+
+- **Storage blocked (L2).** A visitor who blocks storage permanently sees the card, not the legal gate (`shift.js` `DEGRADED`). Showing the strongest intervention on every visit to a private-mode user is the worse failure. Accepted; tested in `door.spec.js`.
+- **Safari and Tab.** By default Safari does not Tab to buttons (Option+Tab does). That is the browser's setting; the card's buttons are ordinary tab stops, and Escape always closes it.
+- **A visitor who looks away and returns is one exposure.** The abandon (`left_page`) record is sent once, so the click-through denominator equals real exposures, at the cost of losing a click that follows a tab switch.
 
 ---
 

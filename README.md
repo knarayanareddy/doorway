@@ -1,12 +1,16 @@
 # Doorway — UNICRI, *Stop Before It Starts*
 
-A free, self-serve install that turns on the detection tools a small platform would never find, puts a gate in front of the search rather than a banner beside it, changes shape every time it fires, and hands the person to the right help service in the right language — without the platform, or anyone else, learning who they are.
+A free, self-serve **response layer** for small platforms. When the platform's own tooling flags a search, Doorway puts a gate in front of it rather than a banner beside it, changes shape every time it fires, and hands the person to the right help service in the right language — without the platform, or anyone else, learning who they are.
 
-**Status: runnable scaffold, not a product.** The pure core, the shared spine, the privacy gates, the plug-in adapter and 72 tests are real and green. The interface layer is not built — see `BUILD.md` for exactly what exists and what does not, and `docs/03-the-gap-to-real.md` for what stands between this and a product.
+**What it is not: a detector.** Doorway does not find anything. A trigger is a *kind* (`search`, `chat`, `nav`) that your platform, a hotline's member list or a moderation queue supplies; Doorway is never told what matched and never ships a term list (`docs/02` R4, `docs/08`).
+
+**Status: a working response layer with a real install path, not yet a pilot.** The Door runs in a sandboxed cross-origin iframe, the routes bundle is signed, the edge counter and a minimal Desk are written and tested, and a script-tag install is built. What stands between this and a pilot is listed, honestly, in [`docs/07-review-response.md`](docs/07-review-response.md): external confirmations (service wording, Dutch counsel, written OKs), a production signing key, a deployed edge, and the recorded non-developer install. Numbers drift, so they are not written here: run `npm run status`.
 
 ```bash
-npm run verify     # 72 tests, spine check, safety check, privacy gate, copy lint — all green
-npm run e2e        # the mock platform in a real browser (needs Chromium)
+npm ci
+npm run verify     # spine, safety, ESLint privacy tripwire, unit + edge tests, signed routes, privacy gate, copy lint, docs
+npm run e2e        # real Chromium: hostile host page, network record, installer errors, Desk (needs: npx playwright install chromium)
+npm run demo       # mock platform on :8789, the real edge Worker on :8788
 ```
 
 ---
@@ -37,16 +41,18 @@ npm run e2e        # the mock platform in a real browser (needs Chromium)
 ## The five things that must be true
 
 1. A non-developer can install it in under fifteen minutes, on camera, without documentation.
-2. The network panel shows eight fields and zero cookies.
-3. Five spaced triggers produce five visibly different responses (a burst inside the doubling interval collapses to gate, quiet, quiet, quiet, quiet by design) — **verified**: five spaced exposures yield `gate/legal-01`, `gate/legal-02`, `card/harm-01`, `card/harm-02`, `chat/control-01` in a real browser; `npm run e2e` asserts both.
-4. The confidentiality copy cites a source you can name.
+2. The network panel shows seven fields and zero cookies.
+3. Five consecutive triggers produce five visibly different responses. A retry inside the re-warning window escalates in place as an inline card (`gate → card → card → card → chat`) and never answers with a pill unless the person has already acted; `packages/doorway/test/shift.test.js` asserts both the spaced and the burst sequence.
+4. Confidentiality and legal wording renders only from a structured record naming who confirmed it and when; until a service confirms its own wording, copy is neutral. This is enforced by one predicate (`isRenderableConfidence`) and checked in CI.
 5. Somebody can answer "does it work?" without flinching. The answer is *not proven, and nobody's is.*
 
 ---
 
 ## What this is not
 
-Nothing here is a working product. There is no `build/` directory with code in it yet — the blueprint specifies the build, it does not contain it. The gap between the two is documented honestly in [`docs/03-the-gap-to-real.md`](docs/03-the-gap-to-real.md).
+- Not a detector, and not a classifier. There is no model, no score and no term list.
+- Not proven to work. Nobody's is: see `research/` and `docs/03-the-gap-to-real.md`. The Desk shows only what each install's own page reported and says so.
+- Not deployed. The edge has been run against the real schema and Worker code locally; it has not been deployed to Cloudflare.
 
 ---
 

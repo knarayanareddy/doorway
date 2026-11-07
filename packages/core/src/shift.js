@@ -8,6 +8,9 @@
  *   exhaustion      -> CONTROL (threat has failed 4x; offer the exit)
  */
 
+/** After the person acts, repeat exposures are quiet for this long. */
+export const QUIET_HOURS = 72;
+
 export const BUCKETS = ['1', '2', '3', '4', '5+'];
 
 export const DEFAULT_CONFIG = Object.freeze({
@@ -78,16 +81,39 @@ export function pick(state = {}, cfg = DEFAULT_CONFIG, now = Date.now(), opts = 
   const last = Number.isFinite(state.last) ? state.last : 0;
   const hours = last ? (now - last) / 3.6e6 : Infinity;
 
-  // Anti-nagging: inside the re-warning window, degrade rather than repeat loudly.
-  // The window itself widens with exposure count (see DEFAULT_CONFIG.intervalHours).
+  // Anti-nagging, narrowed (review H1). The re-warning clock exists to stop a
+  // daily user being nagged — not to answer a second search inside the first
+  // minute with a one-line strip. Re-searching right after a warning is the
+  // strongest behavioural signal the system sees.
+  //
+  //   * Person has already clicked help / dismissed / continued, and that was
+  //     under QUIET_HOURS ago  -> true quiet.
+  //   * Otherwise, inside the window -> escalate IN PLACE: the next format as an
+  //     inline card (never a modal), and the clock is NOT reset (keepClock).
   const window = intervalFor(n, cfg);
   if (hours < window) {
+    const acted = Number.isFinite(state.acted) ? state.acted : 0;
+    if (acted && (now - acted) / 3.6e6 < QUIET_HOURS) {
+      return {
+        state: 'HABITUATED',
+        format: 'quiet',
+        family: cfg.families.quiet,
+        bucket: bucketOf(n),
+        keepClock: true,
+        reason: `person already acted ${Math.round((now - acted) / 6e4)} min ago; quiet for ${QUIET_HOURS}h`,
+      };
+    }
+    const upNext = n + 1;
+    const family = upNext <= cfg.gateUntil ? cfg.families.gate
+      : upNext < cfg.chatFrom ? cfg.families.card
+        : cfg.families.chat;
     return {
-      state: 'HABITUATED',
-      format: 'quiet',
-      family: cfg.families.quiet,
-      bucket: bucketOf(n),
-      reason: `inside the ${window}h re-warning interval at exposure ${n}`,
+      state: 'ESCALATING',
+      format: upNext >= cfg.chatFrom ? 'chat' : 'card',
+      family,
+      bucket: bucketOf(upNext),
+      keepClock: true,
+      reason: `retry inside the ${window}h window — escalate in place, clock not reset`,
     };
   }
 
@@ -102,8 +128,12 @@ export function pick(state = {}, cfg = DEFAULT_CONFIG, now = Date.now(), opts = 
   return { state: 'PERSISTENT', format: 'chat', family: cfg.families.chat, bucket: bucketOf(next) };
 }
 
-/** Advance local state after an exposure. Never transmitted. */
-export function advance(state = {}, variant, now = Date.now()) {
+/**
+ * Advance local state after an exposure. Never transmitted.
+ * `keepClock` counts the exposure but leaves the re-warning clock where it was,
+ * so an in-place escalation cannot postpone the next full-strength warning.
+ */
+export function advance(state = {}, variant, now = Date.now(), opts = {}) {
   const seen = Array.isArray(state.seen) ? state.seen.slice(-4) : [];
   let filtered = seen;
   if (variant) {
@@ -111,7 +141,15 @@ export function advance(state = {}, variant, now = Date.now()) {
     filtered = seen.filter((v) => v !== variant);
     filtered.push(variant);
   }
-  return { n: (state.n || 0) + 1, last: now, seen: filtered };
+  const last = opts.keepClock && Number.isFinite(state.last) && state.last ? state.last : now;
+  const next = { n: (state.n || 0) + 1, last, seen: filtered };
+  if (Number.isFinite(state.acted)) next.acted = state.acted;
+  return next;
+}
+
+/** Record that the person clicked help, dismissed or continued. Local only. */
+export function markActed(state = {}, now = Date.now()) {
+  return { ...state, acted: now };
 }
 
 /** Choose the variant id for a family, avoiding the last few already seen. */
