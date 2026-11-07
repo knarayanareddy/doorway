@@ -82,7 +82,7 @@ Worth recording, because it is evidence for the pitch rather than for us:
 
 - **Our privacy design matches theirs on every substantive point.** Their contract
   says: no query text, no persistent user IDs, no cookies, no fingerprinting, no
-  IP logging, aggregate-only metrics, suppress counts below 10. Our counter: eight
+  IP logging, aggregate-only metrics, suppress counts below 10. Our counter: seven
   fields, no session id, hour-of-day rather than timestamp, `5+` bucket, k=10
   suppression, and a strict whitelist that *rejects* unknown keys rather than
   stripping them. Two independent designs converged.
@@ -105,10 +105,10 @@ Worth recording, because it is evidence for the pitch rather than for us:
 
 ## The adapter
 
-`packages/doorway/src/sbis-adapter.js` — eight tests, all green.
+`packages/doorway/src/sbis-adapter.js` — maps the contract onto the loader (see `docs/02` R9 for the deliberate `outcome` departure).
 
 It maps the contract's `sbis:trigger` onto the Shift, maps the Shift's format
-onto the contract's five outcomes, and emits the eight-field counter payload.
+onto the contract's five outcomes, and hands the trigger to the loader; the counter payload is built inside the Door.
 Three deliberate choices:
 
 - **`low` severity never interrupts.** The contract's own schema defines low as
@@ -139,7 +139,7 @@ submodule. It is a test harness, not a foundation.
 
 **UNICRI** — `mock-platform/` (take), `contract/` (take), `tools/generate-traffic.js`
 (useful for demoing volume; take if cheap), `tools/dashboard/` (ours is better —
-eight fields versus their six aggregate counts), `starter-widget/` (ours is
+seven fields versus their six aggregate counts), `starter-widget/` (ours is
 stronger: shadow DOM, focus trap, five formats), `starter-backend/` (ours is
 Cloudflare Workers + D1; theirs is Express — no reason to move),
 `integrations/` (WordPress PHP plugin we do not have; our blueprint specifies
@@ -261,3 +261,16 @@ Netherlands still does not get a Dutch-only line, and a test holds that.
 Seven new tests. The lesson generalises: **a contract field that is read and then
 ignored is more dangerous than one that is missing**, because the code looks
 correct at every level.
+
+---
+
+## Superseded, 7 Nov
+
+The paragraph above ("five triggers *two seconds* apart produce `gate, quiet, quiet,
+quiet, quiet`. That is the anti-nagging rule working") is **no longer true, and was
+wrong to call it working.** The review (H1) pointed out that re-searching right after a
+warning is the strongest signal the system ever sees, and it was being answered with
+the weakest response. Inside the re-warning window the Shift now escalates in place as
+an inline card and does not reset the clock; true quiet is reserved for someone who has
+already clicked, dismissed or continued, and only for 72 hours. The burst is now
+`gate/legal, card/legal, card/harm, card/harm, chat/control` (`shift.test.js`).

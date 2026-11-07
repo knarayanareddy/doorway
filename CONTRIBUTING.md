@@ -2,7 +2,7 @@
 
 ## The rule that matters
 
-**Never add a field to the counter.** Eight fields, and the three omissions — no session id, no timestamp, only an exposure bucket — are the entire privacy argument. If a feature needs more, it is the wrong feature. See `docs/02-threat-model.md`.
+**Never add a field to the counter.** Seven fields, and the omissions — no session id, no timestamp, no local hour, only an exposure bucket — are the entire privacy argument. If a feature needs more, it is the wrong feature. See `docs/02-threat-model.md`.
 
 ## Before you push
 

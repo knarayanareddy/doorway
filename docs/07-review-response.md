@@ -1,0 +1,52 @@
+# Response to the review (B1–B8, H1–H7, M1–M6, L1–L3)
+
+Status of every finding at this commit, with the evidence and what is still open. "Done" means fixed in code **and** covered by a test that fails without the fix. Anything that needs an outside party is listed as open, not as done.
+
+Run `npm run verify` and `npm run e2e` to reproduce. `npm run status` prints live counts.
+
+## Blockers
+
+| # | Status | What changed | Evidence | Still open |
+|---|---|---|---|---|
+| **B1** host runs the widget | **Done** | The Door runs in a sandboxed cross-origin iframe. State and the counter `POST` live inside it. The seam is `postMessage`: `{trigger,type}` in, `{ready}` / `{settled}` out. Threat model R9 rewritten with the residuals. | `host-adversary.spec.js` (hostile host wraps fetch, XHR, sendBeacon, Storage, postMessage, a DOM observer, and probes the frame; asserts only `{ready}`/`{settled}` crossed). `loader.test.js`. | Chromium only: Safari and Firefox third-party storage behaviour is unverified (V15 below). Deviations from the review's sketch are listed in `docs/02` R9: `allow-same-origin` is required, and a content-free `{ready}` was added. |
+| **B2** anyone can write | **Done** | Exact-match Door origin only (no regex); 512-byte cap before any DB read; per-install per-minute limiter and daily cap; install lookups cached 60 s; Door page served with `frame-ancestors <install domain>`; Desk labels every number unauthenticated, flags anomalous days, applies k-suppression with secondary suppression. | `edge.test.js`: foreign origin, platform origin, suffix tricks, flood (70 forged → 20 accepted), daily cap, oversize, pruning; `door.spec.js`: a site that is not the install's domain cannot embed the Door. | Origin is still only a hint: a non-browser can forge it. The limiter bounds the damage; it does not authenticate. This is stated in the Desk and in R12. The review's patched check (`host === install.domain`) does not apply as written, because writes now come from the Door origin; the domain binding is `frame-ancestors`. |
+| **B3** unverified wording passes | **Done in code** | One predicate, `isRenderableConfidence()`, used by the widget, `assertHonest()` and CI. Free-text `conf` is rejected; the record is `{text, basis, sourceUrl, verifiedBy, verifiedAt, expiresAt}`. No shipped route has a verified record, so all copy is neutral. All visitor copy was rewritten to carry no confidentiality or anonymity wording; a service's own words appear only through the verified record. | `copy.test.js`, `lint-copy.mjs`, `route.test.js`. | **External:** V1 and V1b (service confirmation, with date and contact). V2 now has its own question. |
+| **B4** unsigned bundle | **Done, dev key** | Ed25519 over canonical JSON; public key pinned in the Door; WebCrypto verification before any route is used; `validUntil`; exact-host destination allow-list that drops routes even when signed; `check:routes` in CI. | `bundle.test.js` (tamper, other key, placeholder, expired, off-list host). | **Production key** (V14). There is no remote-fetch path for a fresh bundle yet, so "fall back to last-known-good" has nothing to fall back *from*: the embedded bundle is the only one. |
+| **B5** nothing installable | **Partly done** | `npm run build` → single-file `doorway.min.js` (no import attributes) + SHA-384 SRI + versioned immutable path + generated WordPress plugin and Discourse tag. Script-tag install with data attributes only. Installer error states in the console with one-line fixes. | `install.spec.js` (SRI accepted and tampering refused; trigger via data attribute), `door.spec.js` (unverified, unknown, wrong domain, missing id). | The 15-minute on-camera install with a non-developer has **not** been run. WordPress and Discourse packages have not been run in WordPress or Discourse. Installer states are not yet shown in the Desk. |
+| **B6** measurement | **Done** | `left_page` on `pagehide`/`visibilitychange` with `keepalive`, once per exposure; one `normaliseType()`; adapter `inst_placeholder` and its dead payload builder deleted, so there is one send path; failed sends increment a local dropped-events counter reported by heartbeat (count only); `/v1/agg` + a Desk page with the real denominator. | `counter.test.js` (every type and outcome through the real send path; drops counted), `door.spec.js` (left_page, nav), `edge.test.js`, `desk.spec.js`. | Whether `left_page` means "did not seek help" is unproven (V11). |
+| **B7** detection half | **Reframed** | README, `docs/02` R4 and a new `docs/08` say Doorway is the response layer only. No term list exists; `gate:privacy` fails if one appears. | `gate-privacy.mjs`. | **External:** the three reference adapters are described, not built; partnerships are months. |
+| **B8** legal claims | **Done in code** | Legal copy moved into reviewed records (`legal-records.js`). It renders only for an *explicitly declared* `legalJurisdiction` with a record that has a named reviewer, a date inside twelve months and an unexpired `expiresAt`. Otherwise, neutral harm copy. A CI check forbids number-plus-time-unit in copy. | `copy.test.js`, `lint-copy.mjs`. | **External:** Dutch counsel sign-off (V12). Until then no one sees a statute or a penalty. |
+
+## High
+
+| # | Status | Notes |
+|---|---|---|
+| **H1** immediate retry | **Done** | In-window retries escalate in place as an inline card and keep the clock; quiet only after the person acted, for 72 h. `shift.test.js` (burst), `door.spec.js`. |
+| **H2** field the server discards | **Done** | `b` removed from contract, widget, adapter, docs. Seven fields. `edge-contract-width`. |
+| **H3** privacy gate | **Done** | ESLint AST rules + AST identifier scan + endpoint↔handler check; Door CSP; Playwright network record. `gate.test.js` appends each leak the review used (XHR, Image, sendBeacon, cookie, WebSocket, off-domain fetch, eval, stray storage) and asserts it is caught. BUILD.md now says the gate is a tripwire and the e2e is the evidence. It still cannot see dynamic property access. |
+| **H4** false-positive path | **Partly done** | `POST /v1/report` (closed reason list, no text), Desk table, Desk form; the exit button is now visually equal to the primary action (shared `card.js`). **Open:** a named human reviewer; a visitor-facing report control (needs design and copy); and "keyboard-reachable first" was not changed, because it would move focus off the help button — a product decision, not a bug fix. Both buttons are one Tab apart and Escape exits. |
+| **H5** implied partnership | **Done in code** | "Shown by this site · help from X, an independent service". Routes have an `agreement` field; `npm run check:pilot` lists what is missing. **External:** the written OKs (V13). |
+| **H6** dead tables and endpoints | **Done** | `arrivals` and `trigger_packs` deleted; `heartbeats` now has a writer; whitelist consistency is checked in CI. Decision: `?src=doorway` stays identical on every link (no per-platform tag), so the arrivals number is **not** attributable per platform and relies on each service's own reporting. This is the privacy-preserving choice; revisit only with the services' agreement. |
+| **H7** untested rendering layer | **Done** | Playwright suite (gate, card, quiet, keyboard-only, 320 px, reduced motion, blocked storage, hostile host, network, installer errors, Desk, script tag/SRI); the real edge Worker tested against the real schema; one test command; copy lint per language over the real strings. **Open:** native-speaker review of nl/de. |
+
+## Medium and Low
+
+| # | Status | Notes |
+|---|---|---|
+| **M1** doc drift | **Done** | `check-docs.mjs`: links, no hard-coded test counts, no repeated paragraph, every Closed row has a source, no stale field count. V1/V2 rewritten as separate questions. |
+| **M2** quiet copy dead | **Done** | Copy keyed by format first (`copyFor`). `copy.test.js`, `door.spec.js`. |
+| **M3** route review dates, DE phone | **Done in code** | `reviewBy` on every route (CI fails when passed); `de-kein-taeter` is `channel: "programme"` with no phone; `assertHonest` flags phone/channel mismatch. **Open:** monthly human review, and `verifiedAt` is null on every route until someone verifies it. |
+| **M4** install verification | **Done** | `POST /v1/verify` (meta tag or DNS TXT), 60 s cache. Tested with stubbed fetch; not against a live DNS resolver. |
+| **M5** plain language | **Done** | Every string in every language is checked at 20 words; offending sentences split. |
+| **M6** copy promises a person | **Done** | Control copy keyed by route kind: human, programme, self-help, none. |
+| **L1** wide whitelist | **Done** | `blur`, `ai`, `selfhelp`, `upload` removed. |
+| **L2** storage-blocked downgrade | **Documented** | Accepted trade, in `docs/02`. Tested. |
+| **L3** licence | **Open, a decision** | MIT in the repo; `organiser/unicri` has its own. Decide the target with the fiscal sponsor before outside contributions (V9). |
+
+## New open items this work surfaced
+
+- **V15 — other browsers.** The e2e suite runs Chromium only. Safari (ITP) and Firefox partition or restrict third-party `localStorage` differently; in the worst case the Door cannot keep state, and the DEGRADED path (card, not gate) applies. Needs a real-browser pass.
+- **Shared spine.** `packages/shared/card.js` changed (the exit button's weight). `check-spine --write` updated the fingerprint; the sister repo's copy must be updated too, or the "one spine" claim stops being true.
+- **Edge not deployed.** Everything about the Worker was exercised locally with `node:sqlite` standing in for D1. `RETURNING` and the upsert syntax are standard D1, but a first deploy may still surface differences.
+- **Node ≥ 22.13** is now required to run the tests (`node:sqlite`).
+- **The quiet pill blocks the page for its few seconds**, because the frame is full-viewport for every format so that its size does not reveal the format. Noted in `docs/02` R9.

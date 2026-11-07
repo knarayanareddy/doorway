@@ -10,61 +10,59 @@
 
 ### V1 · Dutch confidentiality: what Offlimits actually promises
 
-**The claim.** The organisers' `data/legal-confidentiality.json` block `confidentiality-nl-1` asserts that nothing is reported to police or justice. I have not verified this.
+**The claim.** The organisers' `data/legal-confidentiality.json` block `confidentiality-nl-1` asserts that nothing is reported to law enforcement. We have not verified this with the service.
 
-**Why it matters.** The brief lists *"be honest about … what is confidential"* as a **Should**, and explicitly warns that fear of being reported keeps people from seeking help. This is the single line most likely to be challenged by a juror from the sector, and getting it wrong would be worse than saying nothing.
+**Why it matters.** Whether a caller will be reported is the single most decision-relevant fact for someone considering a call. A wrong or unconfirmed claim is worse than none.
 
-**Ask:** Emma Persson (UNICRI, on site) or the Offlimits prevention line directly. Precisely: *under what circumstances does the preventielijn share information with police or justice, and how is that stated to a caller?*
+**What ships until this closes:** neutral copy ("Help, free."). The Dutch and German routes carry a *draft* confidentiality record that cannot render: `isRenderableConfidence()` requires a named person at the service, a confirmation date inside twelve months, a source URL and an unexpired record. There is one predicate and no second regex.
 
-**Status:** still open, but **downgraded from blocker to confirm-on-site**, 6 Nov.
+**To close it:** quote the service's own words with the date and the contact, then fill `conf.verifiedBy`, `verifiedAt`, `expiresAt` and `sourceUrl` on `nl-offlimits` in `routes.nl.json`, and re-sign (`npm run sign`).
 
-The organisers' own `data/legal-confidentiality.json` block `confidentiality-nl-1`
-asserts: *"Callers do not need to identify themselves and nothing is reported to
-law enforcement"*, with the basis given as a service-level confidentiality
-guarantee by Offlimits, and exceptions noted as *"No mandatory reporting
-obligation for the prevention line. General duty to report acute danger to
-children applies to all citizens under Dutch law, but this does not extend to
-anonymous helpline conversations."*
+**Ask:** Emma Persson (UNICRI) or the Offlimits prevention line directly. *Under what circumstances does the preventielijn share information with police or justice, and how is that stated to a caller?*
 
-That is their assertion with their own source, not ours — which satisfies this
-file's rule that a confidentiality claim must cite a named source, provided our
-copy says **who** asserts it rather than presenting it as established fact. Still
-worth one question to Emma Persson on site, because the phrase "general duty to
-report acute danger" is doing real work and a Dutch juror will know exactly how
-load-bearing it is.
+**Status:** open · blocking for any confidentiality wording.
 
-**Ask (unchanged):** Emma Persson (UNICRI, on site) or the preventielijn directly —
-*under what circumstances does the preventielijn share information with police or
-justice, and how is that stated to a caller?*
+### V1b · The German programme: confidentiality and intake
+
+**The claim.** `de-kein-taeter` is a clinical programme with an intake appointment, not a drop-in helpline (`channel: "programme"`, no phone number). The draft record says treatment is confidential and participants are not reported to police.
+
+**Ask:** the programme's own published statement, confirmed by a named contact. This is a **different** question from V1: Germany's professional-secrecy rules and the Dutch prevention line's guarantee are different mechanisms.
+
+**Status:** open · blocking for any confidentiality wording on this route.
 
 ### V2 · Whether the prevention line serves English
 
 **The claim.** The routes table sends non-Dutch browsers to ReDirection and Stop It Now UK rather than to Offlimits in English.
 
-**Why it matters.** If Offlimits does serve English, Dutch forums route their English members away from the nearest and best service for no reason.
+**Why it matters.** If Offlimits does serve English, Dutch forums route their English-speaking members away from the nearest and best service for no reason.
 
-**Ask:** same contact. *Do you take contacts in English?*
+**Ask:** Offlimits, same contact as V1. *Do you take contacts in English, by chat or phone, and in which hours?* This question is independent of V1.
 
-**Status:** still open, but **downgraded from blocker to confirm-on-site**, 6 Nov.
+**Status:** open · confirm on site.
 
-The organisers' own `data/legal-confidentiality.json` block `confidentiality-nl-1`
-asserts: *"Callers do not need to identify themselves and nothing is reported to
-law enforcement"*, with the basis given as a service-level confidentiality
-guarantee by Offlimits, and exceptions noted as *"No mandatory reporting
-obligation for the prevention line. General duty to report acute danger to
-children applies to all citizens under Dutch law, but this does not extend to
-anonymous helpline conversations."*
+### V12 · Dutch counsel sign-off on the legal gate
 
-That is their assertion with their own source, not ours — which satisfies this
-file's rule that a confidentiality claim must cite a named source, provided our
-copy says **who** asserts it rather than presenting it as established fact. Still
-worth one question to Emma Persson on site, because the phrase "general duty to
-report acute danger" is doing real work and a Dutch juror will know exactly how
-load-bearing it is.
+**The claim.** The legal copy asserts article 252 Sr, a 1 July 2024 start date, a penalty range and a verb ("searching and viewing" versus "deliberately seeking access").
 
-**Ask (unchanged):** Emma Persson (UNICRI, on site) or the preventielijn directly —
-*under what circumstances does the preventielijn share information with police or
-justice, and how is that stated to a caller?*
+**Where it lives now.** `packages/doorway/src/legal-records.js`, as a draft record with `reviewedBy: null`. It cannot render. Without a reviewed record for an **explicitly declared** `legalJurisdiction`, every visitor sees the neutral harm copy. The jurisdiction is never inferred from locale or from the routing country.
+
+**To close it:** Dutch counsel reviews every number and verb; fill `reviewedBy`, `reviewedAt`, `expiresAt`; record the reviewer and date in this file's Closed table.
+
+**Status:** open · blocking for any statute or penalty wording.
+
+### V13 · Written OK from each help service
+
+**The claim.** Naming a service on a platform it never agreed to is a partnership implication. The attribution now says "Shown by this site · help from X, an independent service", but each route should also carry a named contact and a written OK, plus the expected volume shared with the service (the capacity contract in `03-the-gap-to-real.md`).
+
+**To close it:** fill `agreement: { contact, okRef, okAt }` on each route. `npm run check:pilot` lists what is missing and is expected to fail until the outreach is done.
+
+**Status:** open · blocking for a pilot.
+
+### V14 · Production signing key
+
+The pinned public key (`packages/doorway/src/pubkey.js`) is a **dev** key generated for this repo. Before any pilot: generate the production key offline, pin its public half, store the private half where only the release owner can reach it, and re-sign.
+
+**Status:** open · blocking for a pilot.
 
 ---
 
@@ -132,17 +130,17 @@ Both appear live and functioning in the repo's `help-services.json`, so the flag
 
 ## Low — worth knowing, not worth blocking
 
-### V9 · UNICRI's preferred licence and hosting for anything going on the hub
+### V9 · UNICRI's preferred licence and hosting for anything going on the hub (review L3)
 
-MIT is in the repo. A UN platform may have its own requirements. Ask before claiming the artifact is reusable.
+MIT is in the repo; `organiser/unicri` carries its own LICENSE. A UN platform may need something else. Decide the target licence with the fiscal sponsor **before** outside contributions arrive, and ask before claiming the artifact is reusable. This is a decision, not code.
 
 ### V10 · How the check-safety tooling treats a modified contract
 
-The kit ships `tools/check-safety.js` and a seven-schema contract. Removing `sessionScopedId` — which we do deliberately — may fail its own validation. **Test this early; if it fails, document the departure rather than patching around it silently.**
+The kit ships `tools/check-safety.js` and a seven-schema contract. Removing `sessionScopedId` — which we do deliberately — may fail its own validation. **Test this early; if it fails, document the departure rather than patching around it silently.** Since the iframe change there is a second documented departure: `sbis:result.outcome` is always `"continued"` (see `02-threat-model.md` R9).
 
 ### V11 · The exact semantics of the `timeout` outcome
 
-Whether a user who closes the tab is distinguishable from one who navigates away. This affects whether the arrival numbers are honest.
+Whether a user who closes the tab is distinguishable from one who navigates away. **Partly closed 7 Nov:** a tab close or navigation while the card is open is now recorded as `left_page` (`pagehide` / `visibilitychange` with `keepalive`), so the denominator is real exposures. A person who looks away and later returns is still one exposure, and a click after that is not recorded. Whether `left_page` can be read as "did not seek help" is still unproven.
 
 ---
 
@@ -163,4 +161,4 @@ Whether a user who closes the tab is distinguishable from one who navigates away
 
 ---
 
-*Last updated 6 November 2026. Closed items moved here with the source that closed them.*
+*Last updated 7 November 2026. Closed items moved here with the source that closed them.*
