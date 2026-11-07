@@ -4,8 +4,9 @@
 .keys
 .env
 .env.*
-node_modules
-prototype
+**/node_modules
+# prototype/ is built inside the image (Dockerfile stage "app"); only its local install and output stay out.
+prototype/dist
 organiser
 research
 vendor

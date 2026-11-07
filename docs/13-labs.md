@@ -34,6 +34,8 @@ Only a platform can opt in, with an attribute on the script tag. Unknown values 
 
 **A labs Door pointed at a production edge fails safely.** The production edge leaves `LABS_FORMATS` unset and rejects the `fork` and `wave` formats, so those events are dropped and counted in the Desk's "events the Door could not send". They never reach the aggregates.
 
+A preview is never counted: it sends no event or report and changes no device memory.
+
 ## What each one does, what is tested, what is still open
 
 ### Quick exit (D1)

@@ -1,0 +1,91 @@
+{
+ "status": "UNVERIFIED. Not shipped, not signed, never rendered. Moved out of packages/doorway/src/routes.nl.json on 2026-11-07 (security review item 2).",
+ "why": "Each record below has verifiedBy, verifiedAt and expiresAt null (or no sourceUrl). The Door renders a confidentiality claim only when isRenderableConfidence() in packages/core/src/route.js is true, so none of these was ever on screen; but the signed production bundle used to contain them, where anyone who opened the file could read them.",
+ "toShip": "To use one of these claims: a named person at the service must confirm the wording in writing; then add a conf record with text, basis, an https sourceUrl, verifiedBy, verifiedAt (within 12 months) and a future expiresAt to that route in routes.nl.json, run npm run sign, then npm run check:routes. Until then it stays here.",
+ "claims": [
+  {
+   "route": "nl-offlimits",
+   "where": "nl/default",
+   "lang": "nl",
+   "channel": "chat",
+   "conf": {
+    "text": "Anonymous and free. Callers do not need to identify themselves. Offlimits states that nothing is reported to law enforcement; the general Dutch duty to report acute danger does not extend to anonymous helpline conversations (as stated by Offlimits / organisers' legal-confidentiality data).",
+    "basis": "offlimits-service-guarantee",
+    "sourceUrl": null,
+    "verifiedBy": null,
+    "verifiedAt": null,
+    "expiresAt": null
+   }
+  },
+  {
+   "route": "uk-stopitnow",
+   "where": "en/alt0",
+   "lang": "en",
+   "channel": "phone",
+   "conf": {
+    "text": "Confidential helpline run by the Lucy Faithfull Foundation. Sourced from service guarantee.",
+    "basis": "service-published",
+    "sourceUrl": null,
+    "verifiedBy": null,
+    "verifiedAt": null,
+    "expiresAt": null
+   }
+  },
+  {
+   "route": "us-stopitnow",
+   "where": "en/alt1",
+   "lang": "en",
+   "channel": "phone",
+   "conf": {
+    "text": "Confidential helpline guidance provided by Stop It Now coalition with narrow statutory exceptions for imminent child harm.",
+    "basis": "service-published",
+    "sourceUrl": null,
+    "verifiedBy": null,
+    "verifiedAt": null,
+    "expiresAt": null
+   }
+  },
+  {
+   "route": "au-stopitnow",
+   "where": "en/alt2",
+   "lang": "en",
+   "channel": "phone",
+   "conf": {
+    "text": "Confidential prevention helpline operated by the Australian Centre for Child Protection (ACCP).",
+    "basis": "service-published",
+    "sourceUrl": null,
+    "verifiedBy": null,
+    "verifiedAt": null,
+    "expiresAt": null
+   }
+  },
+  {
+   "route": "se-preventell",
+   "where": "sv/default",
+   "lang": "sv",
+   "channel": "phone",
+   "conf": {
+    "text": "Free, anonymous national helpline operated by Karolinska Institutet. Protected under Swedish healthcare statutory secrecy (OSL 25:1).",
+    "basis": "statutory-medical-secrecy",
+    "sourceUrl": null,
+    "verifiedBy": null,
+    "verifiedAt": null,
+    "expiresAt": null
+   }
+  },
+  {
+   "route": "de-kein-taeter",
+   "where": "de/default",
+   "lang": "de",
+   "channel": "programme",
+   "conf": {
+    "text": "Free, confidential prevention programme for people who are attracted to children and want help before anything happens. Treatment is confidential; the programme states it does not report participants to police.",
+    "basis": "programme-published",
+    "sourceUrl": null,
+    "verifiedBy": null,
+    "verifiedAt": null,
+    "expiresAt": null
+   }
+  }
+ ]
+}

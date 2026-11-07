@@ -18,7 +18,7 @@ export const DEFAULT_CONFIG = Object.freeze({
   // exposure, 6 hours between 2nd and 3rd, then 72 hours — the original value.
   //
   // Why this and not a flat 72: the Shift's whole argument is that the FORM
-  // should change as repetition continues (gate -> card -> chat). A flat 72h
+  // should change as repetition continues (gate -> card -> hallway -> door). A flat 72h
   // window returns `quiet` before the counter is ever consulted, so the first
   // form repeats and the argument never runs. That showed up only in a real
   // browser — five triggers in two seconds produced gate,quiet,quiet,quiet,quiet
@@ -111,7 +111,8 @@ export function pick(state = {}, cfg = DEFAULT_CONFIG, now = Date.now(), opts = 
   //   * Otherwise, inside the window -> escalate IN PLACE: the next format as an
   //     inline card (never a modal), and the clock is NOT reset (keepClock).
   const window = intervalFor(n, cfg);
-  if (hours < window) {
+  // `alwaysAdvance` (demo only, the `advance` lab): skip the window entirely, so every pick is the next step.
+  if (!opts.alwaysAdvance && hours < window) {
     const acted = Number.isFinite(state.acted) ? state.acted : 0;
     if (acted && (now - acted) / 3.6e6 < QUIET_HOURS) {
       return {

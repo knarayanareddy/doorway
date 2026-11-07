@@ -13,14 +13,6 @@
     "hours": "Mo-Fr 09:00-22:00; Sa-Su 09:30-18:00",
     "phone": "0800 266 64 36",
     "url": "https://offlimits.nl/?src=doorway",
-    "conf": {
-     "text": "Anonymous and free. Callers do not need to identify themselves. Offlimits states that nothing is reported to law enforcement; the general Dutch duty to report acute danger does not extend to anonymous helpline conversations (as stated by Offlimits / organisers' legal-confidentiality data).",
-     "basis": "offlimits-service-guarantee",
-     "sourceUrl": null,
-     "verifiedBy": null,
-     "verifiedAt": null,
-     "expiresAt": null
-    },
     "countries": [
      "NL",
      "BE"
@@ -80,14 +72,6 @@
      ],
      "phone": "0808 1000 900",
      "url": "https://www.stopitnow.org.uk/?src=doorway",
-     "conf": {
-      "text": "Confidential helpline run by the Lucy Faithfull Foundation. Sourced from service guarantee.",
-      "basis": "service-published",
-      "sourceUrl": null,
-      "verifiedBy": null,
-      "verifiedAt": null,
-      "expiresAt": null
-     },
      "countries": [
       "GB",
       "IE"
@@ -107,14 +91,6 @@
      ],
      "phone": "1-888-773-8368",
      "url": "https://www.stopitnow.org/?src=doorway",
-     "conf": {
-      "text": "Confidential helpline guidance provided by Stop It Now coalition with narrow statutory exceptions for imminent child harm.",
-      "basis": "service-published",
-      "sourceUrl": null,
-      "verifiedBy": null,
-      "verifiedAt": null,
-      "expiresAt": null
-     },
      "countries": [
       "US",
       "CA"
@@ -133,14 +109,6 @@
      ],
      "phone": "1800 272 831",
      "url": "https://www.stopitnow.org.au/?src=doorway",
-     "conf": {
-      "text": "Confidential prevention helpline operated by the Australian Centre for Child Protection (ACCP).",
-      "basis": "service-published",
-      "sourceUrl": null,
-      "verifiedBy": null,
-      "verifiedAt": null,
-      "expiresAt": null
-     },
      "countries": [
       "AU",
       "NZ"
@@ -162,14 +130,6 @@
     ],
     "phone": "020-44 22 00",
     "url": "https://www.preventell.se/?src=doorway",
-    "conf": {
-     "text": "Free, anonymous national helpline operated by Karolinska Institutet. Protected under Swedish healthcare statutory secrecy (OSL 25:1).",
-     "basis": "statutory-medical-secrecy",
-     "sourceUrl": null,
-     "verifiedBy": null,
-     "verifiedAt": null,
-     "expiresAt": null
-    },
     "countries": [
      "SE"
     ],
@@ -209,14 +169,6 @@
     "languages": [
      "de"
     ],
-    "conf": {
-     "text": "Free, confidential prevention programme for people who are attracted to children and want help before anything happens. Treatment is confidential; the programme states it does not report participants to police.",
-     "basis": "programme-published",
-     "sourceUrl": null,
-     "verifiedBy": null,
-     "verifiedAt": null,
-     "expiresAt": null
-    },
     "reviewBy": "2027-02-06",
     "verifiedAt": null,
     "intake": true,
@@ -230,5 +182,5 @@
   "fi-redirection"
  ],
  "validUntil": "2027-02-06T00:00:00Z",
- "sig": "9p30Pnm0vqTGZynlCBTN3WN-GFmqQI__HVeUITwYsuSst7YwsCAol4-HH4pnBNnKF0MVkYGWyijih_tSTpHmDQ"
+ "sig": "bbQ7CDaveQxWZIIF7_QZd4vO2CyC5RfLdmYQVoaj8QnSmgj_VzhIWa2NVxQnMM1jZGIMOw_hbe2wPhwLzE1ABw"
 }

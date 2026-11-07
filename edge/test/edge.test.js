@@ -1,6 +1,6 @@
-import { test, beforeEach } from 'node:test';
+import { test, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import worker, { __clearInstallCache } from '../c.js';
+import worker, { __clearInstallCache, __installCacheSize, getInstall } from '../c.js';
 import { createDb, sha256hex } from './d1-shim.js';
 
 const DOOR = 'https://door.test';
@@ -365,6 +365,87 @@ test('desk breakdowns: control-family wording is its own arm, and a small arm hi
   assert.equal(j.summary.exposures, 91, 'the headline still counts every unflagged exposure');
 });
 
+// ── read-side limits: Desk token guessing and status enumeration ───────────
+// The clock is fixed mid-minute so the limits are deterministic; mock.timers resets it after each test.
+const MID = '2026-11-07T10:00:30Z';
+const withClock = (fn) => async () => {
+  mock.timers.enable({ apis: ['Date'], now: Date.parse(MID) });
+  try { await fn(); } finally { mock.timers.reset(); }
+};
+const deskWith = (token, id = 'inst_abc123') =>
+  worker.fetch(new Request(`https://door.test/v1/agg?i=${id}`, { headers: { authorization: `Bearer ${token}` } }), env);
+const statusOf = (id) => worker.fetch(new Request('https://door.test/v1/status?i=' + id), env);
+
+test('desk: ten wrong tokens in a minute lock the install out, and the right token is refused too', withClock(async () => {
+  for (let i = 0; i < 10; i++) assert.equal((await deskWith('wrong' + i)).status, 401);
+  const blocked = await desk();
+  assert.equal(blocked.status, 429, 'the eleventh request is refused even with the right token');
+  assert.deepEqual(await blocked.json(), { error: 'too many attempts' });
+  assert.equal(blocked.headers.get('retry-after'), '30', 'seconds to the next minute');
+}));
+
+test('desk: the lockout ends with the minute, and the count starts again', withClock(async () => {
+  for (let i = 0; i < 10; i++) await deskWith('wrong' + i);
+  assert.equal((await desk()).status, 429);
+  mock.timers.setTime(Date.parse('2026-11-07T10:01:00Z'));
+  assert.equal((await desk()).status, 200, 'a new minute');
+  for (let i = 0; i < 9; i++) await deskWith('wrong' + i);
+  assert.equal((await desk()).status, 200, 'the earlier ten do not carry over; nine more fails are under the limit');
+}));
+
+test('desk: a lockout on one install does not touch another', withClock(async () => {
+  env.DB.raw.prepare(`INSERT INTO installs (id, domain, verified_at, verify_token, desk_token_hash)
+                      VALUES ('inst_other1','other.test','2026-11-01T00:00:00Z','tokx',?)`).run(await sha256hex('other-secret'));
+  for (let i = 0; i < 10; i++) await deskWith('wrong' + i);
+  assert.equal((await desk()).status, 429);
+  assert.equal((await deskWith('other-secret', 'inst_other1')).status, 200);
+}));
+
+test('desk: 60 successful reads a minute, then the same 429 and Retry-After', withClock(async () => {
+  for (let i = 0; i < 60; i++) assert.equal((await desk()).status, 200, `read ${i + 1}`);
+  const r = await desk();
+  assert.equal(r.status, 429);
+  assert.equal(r.headers.get('retry-after'), '30');
+  assert.deepEqual(await r.json(), { error: 'too many attempts' });
+}));
+
+test('desk: unknown install ids share one bucket, so the rate table does not grow per junk id', withClock(async () => {
+  for (let i = 0; i < 10; i++) assert.equal((await deskWith('x', `inst_nope${i}xx`)).status, 401);
+  assert.equal((await deskWith('x', 'inst_nope99xx')).status, 429, 'the eleventh junk id shares the bucket');
+  for (let i = 0; i < 40; i++) await deskWith('x', `inst_more${i}xx`);
+  assert.deepEqual(rows(`SELECT k FROM rate`).map((r) => r.k), ['f:unknown-install:2026-11-07T10:00']);
+  assert.equal((await desk()).status, 200, 'real installs are not locked out by junk ids');
+}));
+
+test('desk and writes use separate counters: a Desk lockout does not block the Door, and the write limit is unchanged', withClock(async () => {
+  await setup({ rate: 2 });
+  for (let i = 0; i < 10; i++) await deskWith('wrong' + i);
+  assert.equal((await desk()).status, 429);
+  assert.equal((await post('/v1/c', GOOD)).status, 204, 'writes still have their own budget');
+  assert.equal((await post('/v1/c', GOOD)).status, 204);
+  assert.equal((await post('/v1/c', GOOD)).status, 429, 'the write limit (2 a minute) is unchanged');
+}));
+
+test('desk and status bodies never carry the Desk token or its hash', async () => {
+  const hash = await sha256hex('desk-secret');
+  for (const r of [await deskWith('nope'), await desk(), await statusOf('inst_abc123'), await statusOf('inst_nope99xx')]) {
+    const body = await r.text();
+    assert.ok(!body.includes('desk-secret') && !body.includes(hash), `${r.status} body`);
+  }
+});
+
+test('status: 120 a minute per install id, then 429 with Retry-After; ids that do not exist share one bucket', withClock(async () => {
+  for (let i = 0; i < 120; i++) assert.equal((await statusOf('inst_abc123')).status, 200);
+  const blocked = await statusOf('inst_abc123');
+  assert.equal(blocked.status, 429);
+  assert.equal(blocked.headers.get('retry-after'), '30');
+  assert.equal(blocked.headers.get('access-control-allow-origin'), '*', 'the installer can still read the refusal');
+  for (let i = 0; i < 120; i++) assert.equal((await statusOf(`inst_junk${i}xx`)).status, 200);
+  assert.equal((await statusOf('inst_junk999xx')).status, 429, 'junk ids share the unknown bucket');
+  assert.deepEqual(rows(`SELECT k FROM rate WHERE k LIKE 's:%' ORDER BY k`).map((r) => r.k),
+    ['s:inst_abc123:2026-11-07T10:00', 's:unknown-install:2026-11-07T10:00']);
+}));
+
 test('desk response: no key names an hour, a session, a user, a person or an address', async () => {
   put(yesterday(), 'clicked_help', 12); put(yesterday(), 'dismissed', 40, { trigger: 'chat', variant: 'control-01', format: 'door', bucket: '5+', route: 'xx-none' });
   put(today(), 'dismissed', 5);
@@ -377,4 +458,96 @@ test('desk response: no key names an hour, a session, a user, a person or an add
   })(body);
   assert.ok(keys.includes('byTrigger') && keys.includes('byRoute') && keys.includes('byEscalation') && keys.includes('variantArms'));
   assert.deepEqual(keys.filter((k) => /hour|session|user|person|ip/i.test(k)), []);
+});
+
+// ── the install cache: bounded, verified rows only, a short negative cache (uses the clock from above) ──
+const installReads = () => env.DB.log.filter((q) => /FROM installs/.test(q)).length;
+
+test('a verified install is served from the cache for one minute, then read again', withClock(async () => {
+  await getInstall(env, 'inst_abc123');
+  env.DB.log.length = 0;
+  mock.timers.tick(59_000);
+  await getInstall(env, 'inst_abc123');
+  assert.equal(installReads(), 0, 'inside the minute');
+  mock.timers.tick(2_000);
+  await getInstall(env, 'inst_abc123');
+  assert.equal(installReads(), 1, 'after the minute');
+}));
+
+test('an unverified install is never served from the cache: every lookup reads D1, so a verify is seen at once', async () => {
+  assert.equal((await getInstall(env, 'inst_pending')).verified_at, null);
+  assert.equal((await getInstall(env, 'inst_pending')).verified_at, null);
+  assert.equal(installReads(), 2, 'both lookups read the row');
+  env.DB.raw.prepare(`UPDATE installs SET verified_at = '2026-11-07T10:00:00Z' WHERE id = 'inst_pending'`).run(); // another isolate verifies
+  assert.ok((await getInstall(env, 'inst_pending')).verified_at, 'the next lookup sees the verification');
+  assert.equal(__installCacheSize().verified, 1, 'and now the verified row is cached');
+});
+
+test('a missing id is remembered for five seconds, then looked up again', withClock(async () => {
+  assert.equal(await getInstall(env, 'inst_later1'), null);
+  env.DB.raw.prepare(`INSERT INTO installs (id, domain, verified_at, verify_token) VALUES ('inst_later1','late.test','2026-11-01T00:00:00Z','tokl')`).run();
+  env.DB.log.length = 0;
+  mock.timers.tick(4_000);
+  assert.equal(await getInstall(env, 'inst_later1'), null, 'the miss is still remembered');
+  assert.equal(installReads(), 0);
+  mock.timers.tick(2_000);
+  assert.ok((await getInstall(env, 'inst_later1')).verified_at, 'read again after five seconds');
+}));
+
+test('the cache is bounded: junk ids cannot grow the miss map, and verified entries go oldest first', async () => {
+  for (let i = 0; i < 200; i++) await getInstall(env, `inst_junk${i}xx`);
+  assert.ok(__installCacheSize().missed <= 64, `missed=${__installCacheSize().missed}`);
+  const ins = env.DB.raw.prepare(`INSERT INTO installs (id, domain, verified_at, verify_token) VALUES (?, 'many.test', '2026-11-01T00:00:00Z', 't')`);
+  for (let i = 0; i < 600; i++) { ins.run(`inst_v${i}xx`); await getInstall(env, `inst_v${i}xx`); }
+  assert.equal(__installCacheSize().verified, 500, 'the verified map stops at its bound');
+  env.DB.log.length = 0;
+  await getInstall(env, 'inst_v0xx');
+  assert.equal(installReads(), 1, 'the oldest entry was evicted, so it is read again');
+  env.DB.log.length = 0;
+  await getInstall(env, 'inst_v599xx');
+  assert.equal(installReads(), 0, 'the newest is still cached');
+});
+
+// ── the daily cap: check and increment are one statement, so concurrent writes cannot overshoot ──
+test('the daily cap holds under concurrency: 20 writes at once against a cap of 5 accept exactly 5', async () => {
+  await setup({ cap: 5, rate: 1000 });
+  const statuses = (await Promise.all(Array.from({ length: 20 }, () => post('/v1/c', GOOD)))).map((r) => r.status);
+  assert.equal(statuses.filter((s) => s === 204).length, 5, statuses.join(','));
+  assert.equal(statuses.filter((s) => s === 429).length, 15);
+  assert.equal(rows('SELECT SUM(count) n FROM agg')[0].n, 5, 'exactly the accepted events are aggregated');
+  assert.equal(await (await post('/v1/c', GOOD)).status, 429, 'and the cap stays closed afterwards');
+});
+
+test('the daily cap is per install: a full install does not close another', async () => {
+  await setup({ cap: 1, rate: 1000 });
+  env.DB.raw.prepare(`INSERT INTO installs (id, domain, verified_at, verify_token, daily_cap, rate_per_min) VALUES ('inst_other2','two.test','2026-11-01T00:00:00Z','tok2',5,1000)`).run();
+  assert.equal((await post('/v1/c', GOOD)).status, 204);
+  assert.equal((await post('/v1/c', GOOD)).status, 429);
+  assert.equal((await post('/v1/c', { ...GOOD, i: 'inst_other2' })).status, 204);
+});
+
+// ── the wrangler.toml placeholder: writes and status refuse until DOOR_ORIGIN is a real origin ──
+test('the .example placeholder refuses every write with a 503 and a fixed body, and writes nothing', async () => {
+  env.DOOR_ORIGIN = 'https://door.doorway.example';
+  const origin = 'https://door.doorway.example';
+  for (const [path, body] of [['/v1/c', GOOD], ['/v1/heartbeat', { i: 'inst_abc123', v: '0.2.0', d: 1 }], ['/v1/report', { i: 'inst_abc123', p: '2026.11.07', t: 'search', r: 'journalist' }], ['/v1/verify', { i: 'inst_pending' }]]) {
+    const r = await post(path, body, { origin });
+    assert.equal(r.status, 503, path);
+    assert.deepEqual(await r.json(), { error: 'door origin not configured' }, path);
+  }
+  assert.equal(rows('SELECT * FROM agg').length, 0);
+});
+
+test('the placeholder answers /v1/status with the same message', async () => {
+  env.DOOR_ORIGIN = 'https://door.doorway.example';
+  const r = await statusOf('inst_abc123');
+  assert.equal(r.status, 503);
+  assert.deepEqual(await r.json(), { error: 'door origin not configured' });
+});
+
+test('a real origin is not refused for containing "example" as a label, and a missing DOOR_ORIGIN is refused', async () => {
+  env.DOOR_ORIGIN = 'https://door.example.org';
+  assert.equal((await post('/v1/c', GOOD, { origin: 'https://door.example.org' })).status, 204);
+  env.DOOR_ORIGIN = undefined;
+  assert.equal((await post('/v1/c', GOOD, { origin: 'https://door.example.org' })).status, 503);
 });

@@ -10,12 +10,17 @@ export default defineConfig({
   timeout: 30_000,
   fullyParallel: false,
   workers: 1,
+  retries: 0, // CI does not retry failed browser tests (BUILD.md)
   reporter: 'list',
   use: { baseURL: 'http://localhost:9111', locale: 'nl-NL', trace: 'retain-on-failure' },
   projects: [
     // Both origins are loopback, which Chrome's Local Network Access check would otherwise treat as a
     // private-network request. A real deployment's origins are public. Same flags as playwright.config.js.
     { name: 'chromium', use: { ...devices['Desktop Chrome'], launchOptions: { args: ['--disable-features=LocalNetworkAccessChecks,PrivateNetworkAccessRespectPreflightResults'] } } },
+    // test/hosted/hosted.spec.js uses only cross-origin checks, frame locators and the request fixture, so it runs
+    // in the same three engines as the e2e suite. Local Network Access is a Chrome-only check: the flags above are not repeated.
+    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
   ],
   webServer: [
     {

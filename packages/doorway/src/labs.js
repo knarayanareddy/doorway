@@ -10,14 +10,29 @@
  */
 import { DEFAULT_CONFIG } from '../../core/src/shift.js';
 
-export const LABS = Object.freeze(['fork', 'wave', 'quick-exit', 'preview']);
+/**
+ * DEMO-ONLY labs. `advance`: every trigger shows the next step, regardless of how the last exposure ended.
+ * `preview`: a forced shape, never counted. Both are Door behaviours, not formats, so they are absent from
+ * LABS_FORMATS. A shipped Door must not honour them, so they exist only in a build where DEMO_LABS is on:
+ * scripts/build.mjs defines __DEMO_LABS__ = true for DEMO_ROUTES=1 (the demo) and for the local harness.
+ * Outside a bundle (Node, the tests) the constant is undefined, which means false.
+ */
+const SHIPPED_LABS = Object.freeze(['fork', 'wave', 'quick-exit']);
+const DEMO_ONLY_LABS = Object.freeze(['preview', 'advance']);
+/** True only in a demo build. The one place a shipped Door could gain `advance` or `preview`. */
+export const DEMO_LABS = typeof __DEMO_LABS__ !== 'undefined' && __DEMO_LABS__ === true;
+/** The labs a build accepts in `x=`: the shipped list, plus the demo-only ones when `demo` is true. */
+export const labsFor = (demo) => (demo ? Object.freeze([...SHIPPED_LABS, ...DEMO_ONLY_LABS]) : SHIPPED_LABS);
+export const LABS = labsFor(DEMO_LABS);
 /** Labs that introduce a new counter format. */
 export const LABS_FORMATS = Object.freeze(['fork', 'wave']);
 export const PREVIEW_SHAPES = Object.freeze(['gate', 'card', 'fork', 'wave', 'hallway', 'door', 'quiet']);
 
-export function parseLabs(value) {
+/** Parses `x=`. Unknown tokens, and demo-only tokens in a shipped build, are dropped. */
+export function parseLabs(value, demo = DEMO_LABS) {
+  const allowed = labsFor(demo);
   const out = [];
-  for (const t of String(value || '').split(',').map((x) => x.trim())) if (LABS.includes(t) && !out.includes(t)) out.push(t);
+  for (const t of String(value || '').split(',').map((x) => x.trim())) if (allowed.includes(t) && !out.includes(t)) out.push(t);
   return out;
 }
 export const labsFormats = (labs) => labs.filter((l) => LABS_FORMATS.includes(l));

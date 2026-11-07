@@ -42,6 +42,7 @@ Run `npm run verify` and `npm run e2e` to reproduce. `npm run status` prints liv
 | **L1** wide whitelist | **Done** | `blur`, `ai`, `selfhelp`, `upload` removed. |
 | **L2** storage-blocked downgrade | **Documented** | Accepted trade, in `docs/02`. Tested. |
 | **L3** licence | **Open, a decision** | MIT in the repo; `organiser/unicri` has its own. Decide the target with the fiscal sponsor before outside contributions (V9). |
+| **S1** Desk token guessing, status enumeration | **Done in code** | `GET /v1/agg`: 10 failed Bearer attempts per install per minute lock it for that minute (checked before the token); 60 successful reads a minute. `GET /v1/status`: 120 a minute per id; unknown ids share one bucket. Own key prefixes, so the write limiter is unchanged. | `edge.test.js` (lockout, reset, other install, 60 reads, junk ids, write path, no token in bodies). | Token strength is an operator instruction in BUILD.md, not enforced (only the hash is stored). A lockout can be triggered by anyone who knows an id. Status still reveals registered vs unverified ids, by design (INSTALL.md section 6). |
 
 ## What changed in the second pass
 
@@ -69,6 +70,20 @@ The five parked decisions now exist as switched-off, tested labs with mock data 
 ## Fifth pass: Maritime, run for real
 
 With a key that has `manage`, the Maritime assessment moved from "plausible" to measured (`docs/14`). A sandbox hosted the demo on public URLs and ran Discourse's own installer; Doorway loaded and worked inside that Discourse with its CSP on. That found one real bug, now fixed: a loader served with `integrity` and `crossorigin` needs CORS headers on its host. Nothing is left running except a short-lived demo sandbox that ends itself.
+
+## Sixth pass: the engineering review (the edge, the harnesses, the Desk)
+
+A code review scored the engineering 6 of 10. These are the items it named, fixed. The "install lookups cached 60 s" wording in B2 above is superseded by E1.
+
+| # | Status | What changed | Evidence | Still open |
+|---|---|---|---|---|
+| **E1** install cache | **Done** | The cache is bounded. A verified row is kept for 60 s (at most 500 rows, least recently used out first). An unverified row is never served from the cache, so every lookup of one reads D1 and a verification on another isolate is seen at once. This is stricter than the 5 s the review allowed. A missing id is remembered for 5 s, in a map of at most 64. | `edge.test.js`: the one-minute cache, unverified rows read every time, the 5 s miss cache, the bounds | A new install can read as unknown for up to 5 s after it is created. |
+| **E2** daily cap race | **Done** | The check and the increment are one statement: `INSERT … ON CONFLICT DO UPDATE … WHERE n < cap RETURNING n`. No row back means the cap is reached. If the event write fails after the slot is taken, the slot stays used: the count can only be low. | `edge.test.js` "holds under concurrency": 20 simultaneous writes against a cap of 5 accept exactly 5. The previous check-then-increment code accepted all 20 in that test. | None known. |
+| **E3** demo-only labs in production | **Done** | `parseLabs` drops `advance` and `preview` unless the build defines `__DEMO_LABS__`. `build.mjs` sets it for `DEMO_ROUTES=1` and for `DEMO_LABS=1`. The second switch is a deviation from the review, which asked for `DEMO_ROUTES` alone: the e2e suite needs `preview` on the local harness build and must not switch to the demo routes. The harness, `scripts/dev.mjs`, sets it. | `labs.test.js` bundles `labs.js` with each define value and checks what each one accepts. | The e2e suite runs with the demo-only labs on, because it runs on the local harness. So the shipped gate is checked only by the unit test, not in a browser. |
+| **E4** the hosted demo's defaults | **Done** | `serve-demo.mjs` refuses to start if `DOOR_ORIGIN` or `PLATFORM_ORIGIN` is plain http and not localhost, and `DESK_TOKEN` is the public default, unless `I_UNDERSTAND_THIS_IS_A_PUBLIC_DEMO=1`. | `serve-demo.test.js`: the refusal, the message, the loopback and https cases, and the exact value `1`. | `LABS_FORMATS` still defaults to `fork,wave`, because this is a demo. An https public origin with the public token still starts, because the hosted demo is public on purpose. |
+| **E5** the `.example` placeholder | **Done** | While `DOOR_ORIGIN` is unset or a `.example` host, every write and `/v1/status` answer `503 {"error":"door origin not configured"}`, with no logging. | `edge.test.js`: each write path, status, a real `example.org` origin not refused, a missing origin refused. | This is a runtime refusal, not a failed deploy. `wrangler deploy` still succeeds with the placeholder. |
+| **E6** the dev test endpoints | **Done** | `/__test/db` and `/__test/reset` send no CORS header, and refuse any request with `Sec-Fetch-Site` set to anything but `none`, which is what a browser page sends. No spec calls them from a page: all use Playwright's request fixture (`test/e2e/helpers.js`, `desk.spec.js`, `host-adversary.spec.js`, `labs.spec.js`, `door.spec.js`, `door-panel.spec.js`). | A grep of `test/`: no `page.evaluate` or page `fetch` reaches `__test`. | Not exercised: the harness was not started here. The Sec-Fetch-Site rule assumes Playwright's request fixture does not send that header. |
+| **E7** the Desk's error messages | **Done** | 429: "Too many attempts. Wait a minute and try again." 401: "Wrong install id or token. Check both and try again." A network error: "Could not reach the counter…". All set with `textContent`. | `node --check` and ESLint only. No browser test was run for this change. | Not seen in a browser yet. |
 
 ## New open items this work surfaced
 

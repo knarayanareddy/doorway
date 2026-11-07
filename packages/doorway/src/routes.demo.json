@@ -1,0 +1,187 @@
+{
+ "version": "2026.11.07-demo",
+ "byLanguage": {
+  "nl": {
+   "default": {
+    "id": "nl-offlimits",
+    "name": "Offlimits preventielijn (voorheen Stop it Now)",
+    "channel": "chat",
+    "capacity": "human",
+    "languages": [
+     "nl"
+    ],
+    "hours": "Mo-Fr 09:00-22:00; Sa-Su 09:30-18:00",
+    "phone": "0800 266 64 36",
+    "url": "https://offlimits.nl/?src=doorway",
+    "countries": [
+     "NL",
+     "BE"
+    ],
+    "reviewBy": "2027-02-06",
+    "verifiedAt": "2026-11-07T00:00:00Z",
+    "agreement": null,
+    "demo": true
+   },
+   "alternatives": [
+    {
+     "id": "nl-stoppen",
+     "name": "Stoppen is mogelijk",
+     "channel": "selfhelp",
+     "capacity": "selfhelp",
+     "languages": [
+      "nl"
+     ],
+     "url": "https://stoppenismogelijk.eu/?src=doorway",
+     "countries": [
+      "NL",
+      "BE"
+     ],
+     "reviewBy": "2027-02-06",
+     "verifiedAt": null,
+     "agreement": null
+    }
+   ]
+  },
+  "en": {
+   "default": {
+    "id": "fi-redirection",
+    "name": "ReDirection (Protect Children)",
+    "channel": "selfhelp",
+    "capacity": "selfhelp",
+    "languages": [
+     "en",
+     "fi",
+     "sv",
+     "de",
+     "fr",
+     "es"
+    ],
+    "url": "https://www.redirection.fi/?src=doorway",
+    "countries": [],
+    "reviewBy": "2027-02-06",
+    "verifiedAt": null,
+    "agreement": null
+   },
+   "alternatives": [
+    {
+     "id": "uk-stopitnow",
+     "name": "Stop It Now! UK & Ireland",
+     "channel": "phone",
+     "capacity": "human",
+     "languages": [
+      "en"
+     ],
+     "phone": "0808 1000 900",
+     "url": "https://www.stopitnow.org.uk/?src=doorway",
+     "countries": [
+      "GB",
+      "IE"
+     ],
+     "reviewBy": "2027-02-06",
+     "verifiedAt": null,
+     "agreement": null
+    },
+    {
+     "id": "us-stopitnow",
+     "name": "Stop It Now! US",
+     "channel": "phone",
+     "capacity": "human",
+     "languages": [
+      "en",
+      "es"
+     ],
+     "phone": "1-888-773-8368",
+     "url": "https://www.stopitnow.org/?src=doorway",
+     "countries": [
+      "US",
+      "CA"
+     ],
+     "reviewBy": "2027-02-06",
+     "verifiedAt": null,
+     "agreement": null
+    },
+    {
+     "id": "au-stopitnow",
+     "name": "Stop It Now! Australia",
+     "channel": "phone",
+     "capacity": "human",
+     "languages": [
+      "en"
+     ],
+     "phone": "1800 272 831",
+     "url": "https://www.stopitnow.org.au/?src=doorway",
+     "countries": [
+      "AU",
+      "NZ"
+     ],
+     "reviewBy": "2027-02-06",
+     "verifiedAt": null,
+     "agreement": null
+    }
+   ]
+  },
+  "sv": {
+   "default": {
+    "id": "se-preventell",
+    "name": "Preventell (Karolinska Institutet)",
+    "channel": "phone",
+    "capacity": "human",
+    "languages": [
+     "sv"
+    ],
+    "phone": "020-44 22 00",
+    "url": "https://www.preventell.se/?src=doorway",
+    "countries": [
+     "SE"
+    ],
+    "reviewBy": "2027-02-06",
+    "verifiedAt": null,
+    "agreement": null
+   },
+   "alternatives": [
+    {
+     "id": "fi-redirection",
+     "name": "ReDirection (Protect Children)",
+     "channel": "selfhelp",
+     "capacity": "selfhelp",
+     "languages": [
+      "sv",
+      "en",
+      "fi"
+     ],
+     "url": "https://www.redirection.fi/?src=doorway",
+     "countries": [],
+     "reviewBy": "2027-02-06",
+     "verifiedAt": null,
+     "agreement": null
+    }
+   ]
+  },
+  "de": {
+   "default": {
+    "id": "de-kein-taeter",
+    "name": "Kein Täter werden / Dunkelfeld",
+    "url": "https://www.kein-taeter-werden.de/?src=doorway",
+    "channel": "programme",
+    "capacity": "programme",
+    "countries": [
+     "DE"
+    ],
+    "languages": [
+     "de"
+    ],
+    "reviewBy": "2027-02-06",
+    "verifiedAt": null,
+    "intake": true,
+    "agreement": null
+   },
+   "alternatives": []
+  }
+ },
+ "selfHelpAlways": [
+  "nl-stoppen",
+  "fi-redirection"
+ ],
+ "validUntil": "2027-02-06T00:00:00Z",
+ "sig": "K4G0lt5sI2iMh3ZEfZFkusmR-0sEqIOXF8O95kUd68bJYMGLmSNrfsjUtup72_gXrwSPGBS1r70chjuWPDSfBg"
+}

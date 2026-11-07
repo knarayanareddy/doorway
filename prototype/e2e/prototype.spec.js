@@ -1,364 +1,306 @@
-import { readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
-import { DESTINATION_ALLOWLIST, isAllowedDestination } from '../../packages/core/src/route.js';
-import { FIELDS } from '../../packages/core/src/counter.js';
+import { DOOR, PLATFORM, resetDb, readDb, waitForAgg, frameOf, act, settle } from '../../test/e2e/helpers.js';
 
-const routes = JSON.parse(readFileSync(new URL('../../packages/doorway/src/routes.nl.json', import.meta.url), 'utf8'));
+// The Live prototype tab, against the REAL loader and the REAL Door (the edge Worker on DOOR, served with the
+// platform at PLATFORM/app/, built with DEMO_ROUTES=1 by `npm run demo:app`). Every press of "Fire a trigger"
+// shows the next shape of the Door's `advance` lab, whatever the last exposure did. These tests press, close
+// the Door with its own controls, and read what the page and the edge did. Selectors mirror the real specs
+// (test/e2e/escalate.spec.js, test/e2e/door-panel.spec.js, test/e2e/labs.spec.js).
+const APP = '/app/';
+const SHAPES = ['gate', 'fork', 'wave', 'hallway', 'door'];
+const LABELS = ['Gate', 'Fork', 'Wave', 'Hallway', 'Door'];
+const ALLOWED_FIELDS = ['e', 'f', 'i', 'o', 'r', 't', 'v'];
+const FIRE = /Fire a trigger/;
+const NEXT_DOOR = 'Next: Door. It stays on the Door from here.';
+const ALREADY_OPEN = 'The Door is already open. This press was not counted.';
+// Saturday 2026-11-07: 11:00 in Amsterdam is inside the demo hours (09:30-18:00).
+const SAT_OPEN = new Date('2026-11-07T10:00:00Z');
 
-const SHAPES = ['Gate', 'Fork', 'Wave', 'Hallway', 'Open door'];
-const SEVEN = ['i', 'v', 'f', 't', 'o', 'r', 'e'];
-const BUNDLE_IDS = new Set(Object.values(routes.byLanguage).flatMap((e) => [e.default, ...e.alternatives].map((r) => r.id)));
+test.setTimeout(120_000);
+test.beforeEach(async ({ request }) => { await resetDb(request); });
+test.afterEach(async ({ page }) => { await settle(page); });
 
-const FORBIDDEN = ['artikel 252', 'article 252', 'strafbaar', 'criminal offence', 'anoniem', 'anonymous', 'vertrouwelijk', 'confidential', 'politie', 'police', 'helpwanted'];
-
-const T = {
-  nl: {
-    lang: 'Nederlands',
-    leave: 'Terug naar het forum',
-    glass: 'Wat verstuurt dit?',
-    skip: 'Sla over',
-    dontKeep: 'Niet bewaren',
-    keep: 'Bewaar tot dit tabblad sluit',
-    work: 'Ik ben hier voor werk, onderzoek of zorg.',
-    forkOptions: [
-      'Ik kwam hier per ongeluk terecht.',
-      'Ik heb hiernaar gezocht en ik wil stoppen.',
-      'Ik wil stoppen, maar ik weet niet of dat lukt.',
-      'Ik maak me zorgen over iemand anders.',
-      'Ik ben jonger dan 18.',
-      'Ik ben hier voor werk, onderzoek of zorg.',
-    ],
-  },
-  en: {
-    lang: 'English',
-    leave: 'Back to the forum',
-    glass: 'What does this send?',
-    skip: 'Skip',
-    dontKeep: 'Don’t keep',
-    keep: 'Keep until I close this tab',
-    work: 'I’m here for work, research or care.',
-    forkOptions: [
-      'I ended up here by accident.',
-      'I’ve been looking, and I want to stop.',
-      'I want to stop, but I’m not sure I can.',
-      'I’m worried about someone else.',
-      'I’m under 18.',
-      'I’m here for work, research or care.',
-    ],
-  },
+// The Live prototype is the default tab (no ?tab parameter).
+const openApp = async (page) => {
+  await page.goto(PLATFORM + APP);
+  await expect(page.getByRole('button', { name: FIRE })).toBeEnabled({ timeout: 15_000 });
+  await page.waitForFunction(() => typeof window.doorway?.trigger === 'function');
 };
-
-const doorway = (page) => page.getByTestId('doorway');
-const tab = (page, name) => page.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name }).click();
-const shape = (page, label) => page.getByTitle(new RegExp(`^${label}:`)).click();
-const fire = (page) => page.getByRole('button', { name: /Fire a trigger/ }).click();
-const setLang = (page, lang) => page.getByRole('button', { name: T[lang].lang, exact: true }).click();
-const setSynthetic = async (page, on) => {
-  const sw = page.getByRole('switch', { name: /Reviewed-claims preview/ });
-  if ((await sw.getAttribute('aria-checked')) !== String(on)) await sw.click();
+const fire = (page) => page.getByRole('button', { name: FIRE }).click();
+const card = (page) => frameOf(page).locator('[data-core-card]');
+const cardKind = (page) => card(page).getAttribute('data-core-card');
+const pressCount = (page) => page.getByTestId('press-count').textContent();
+const currentStep = (page) => page.locator('[data-step][aria-current="step"]').getAttribute('data-step');
+const reached = (page) => page.locator('[data-reached="true"]').count();
+const nextHint = (page) => page.locator('[aria-live="polite"]').filter({ hasText: /^Next:/ });
+// Escape reaches the Door only when the Door's frame has focus (the platform's own keydown listener is on the parent).
+const closeDoor = async (page) => {
+  await page.locator('iframe').focus();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('iframe')).toHaveCount(0);
 };
-const readLocal = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('doorway.local.v3') || 'null'));
-const readEvents = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('doorway.demo.events') || '[]'));
+// Each Door ends with one record. Waiting for it keeps a late beacon out of the next test's database.
+const recorded = (request, outcome, n = 1) => waitForAgg(request, (d) => d.agg.filter((r) => r.outcome === outcome).length >= n, 6000);
+const sessionCount = (page) => page.evaluate(() => sessionStorage.getItem('doorway.demo.presses'));
 
-test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
-    window.__opened = [];
-    window.open = (u) => { window.__opened.push(String(u)); return null; };
+test('the real loader is injected from /dist/latest, and window.doorway is that loader', async ({ page }) => {
+  await openApp(page);
+  const src = await page.evaluate(() => {
+    const s = document.querySelector('script[src="/dist/latest/doorway.min.js"]');
+    return s && { install: s.dataset.install, country: s.dataset.country, legal: s.dataset.legalJurisdiction, labs: s.dataset.labs, wave: s.dataset.waveSeconds };
   });
-  await page.goto('/');
-  await tab(page, 'Live prototype');
+  expect(src).toEqual({ install: 'inst_demo001', country: 'NL', legal: 'NL', labs: 'fork,wave,preview,advance', wave: '15' });
+  await expect(page.getByText('Loaded from /dist/latest')).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(0);
 });
 
-/** Open the Glass Door if the shape has one, then return the full text of the rendered Door. */
-async function doorText(page, lang) {
-  const dw = doorway(page);
-  await expect(dw).toBeVisible();
-  const g = dw.getByRole('button', { name: T[lang].glass });
-  if (await g.count()) await g.click();
-  return dw.textContent();
-}
+test('Fire a trigger shows the real Door, on the Door origin, at the gate, and the timeline follows', async ({ page }) => {
+  await openApp(page);
+  await fire(page);
+  await expect(page.locator('iframe')).toHaveCount(1);
+  await expect(page.locator('iframe')).toHaveAttribute('src', new RegExp(`^${DOOR.replace(/\./g, '\\.')}/v1/`));
+  await expect(card(page)).toHaveCount(1);
+  expect(await cardKind(page)).toBe('gate');
+  expect(await currentStep(page)).toBe('1');
+  expect(await reached(page)).toBe(1);
+  expect(await pressCount(page)).toBe('1');
+  await expect(nextHint(page)).toHaveText('Next: Fork');
+  await expect(act(page, 'primary')).toBeFocused({ timeout: 3000 });
+  await closeDoor(page);
+  // Closing the Door does not move the count: the next press is the next shape, whatever happened here.
+  expect(await pressCount(page)).toBe('1');
+  await expect(nextHint(page)).toHaveText('Next: Fork');
+});
 
-/** Every Door state the app can render in one language: five shapes, quiet, banner, the Fork's six paths, the Wave's plan step. */
-async function collectTexts(page, lang) {
-  const texts = [];
-  for (const s of SHAPES) {
-    await shape(page, s);
-    texts.push(await doorText(page, lang));
-  }
-  for (const name of ['Quiet', 'Banner']) {
-    await page.getByRole('button', { name, exact: true }).click();
-    texts.push(await doorText(page, lang));
-  }
-  for (const option of T[lang].forkOptions) {
-    await shape(page, 'Fork');
-    await doorway(page).getByRole('button', { name: option }).click();
-    texts.push(await doorText(page, lang));
-  }
-  await shape(page, 'Wave');
-  await doorway(page).getByRole('button', { name: T[lang].skip }).first().click();
-  texts.push(await doorText(page, lang));
-  await doorway(page).getByRole('button', { name: T[lang].dontKeep }).click();
-  texts.push(await doorText(page, lang));
-  return texts;
-}
+test('pressing again in ONE page walks gate, fork, wave, hallway, door, and then stays on the door', async ({ page, request }) => {
+  await openApp(page);
+  const hosts = new Set();
+  const posts = [];
+  page.on('request', (r) => {
+    const u = new URL(r.url());
+    if (u.origin !== new URL(PLATFORM).origin && u.origin !== DOOR) hosts.add(u.origin);
+    if (u.origin === DOOR && r.method() !== 'GET') posts.push({ path: u.pathname, body: r.postData() });
+  });
 
-test('a) no request ever leaves the prototype origin: three tabs, five shapes, both languages', async ({ page, baseURL }) => {
+  const seen = [];
+  for (let i = 0; i < SHAPES.length; i++) {
+    await fire(page);
+    await expect(card(page)).toHaveCount(1);
+    seen.push(await cardKind(page));
+    expect(await pressCount(page)).toBe(String(i + 1));
+    expect(await currentStep(page), `timeline highlights step ${i + 1}`).toBe(String(i + 1));
+    expect(await reached(page)).toBe(i + 1);
+    await closeDoor(page);
+    expect(await currentStep(page), 'the timeline stays after the Door closes').toBe(String(i + 1));
+    const next = i + 1 < SHAPES.length ? `Next: ${LABELS[i + 1]}` : NEXT_DOOR;
+    await expect(nextHint(page)).toHaveText(next);
+  }
+  expect(seen).toEqual(SHAPES);
+
+  // Press six: the Door stays on the door shape, and the timeline says so.
+  await fire(page);
+  await expect(card(page)).toHaveCount(1);
+  expect(await cardKind(page)).toBe('door');
+  expect(await pressCount(page)).toBe('6');
+  expect(await reached(page)).toBe(5);
+  await closeDoor(page);
+  await expect(nextHint(page)).toHaveText(NEXT_DOOR);
+
+  expect(new URL(page.url()).searchParams.has('step'), 'the page does not write a step to the URL').toBe(false);
+  expect([...hosts], 'no request went to any origin but the platform and the Door').toEqual([]);
+  expect(posts.filter((p) => p.path !== '/v1/c'), 'no POST other than the counter').toEqual([]);
+  // Playwright does not always expose a beacon's body, so only readable bodies are checked; the edge's table is the authority.
+  const counted = posts.filter((p) => p.path === '/v1/c');
+  const readable = counted.filter((p) => p.body != null).map((p) => JSON.parse(p.body));
+  for (const rec of readable) expect(Object.keys(rec).sort()).toEqual(ALLOWED_FIELDS);
+
+  const db = await recorded(request, 'dismissed', 6);
+  expect(db.agg.filter((r) => r.outcome === 'dismissed').map((r) => r.format).sort()).toEqual(['door', 'door', 'gate', 'fork', 'hallway', 'wave'].sort());
+});
+
+test('the door shape at step 5+ is a dark panel with the call button "Bel nu", a tel: link, and the Demodata chip', async ({ page, request }) => {
+  await page.clock.setFixedTime(SAT_OPEN);
+  await openApp(page);
+  for (let i = 0; i < 5; i++) {
+    await fire(page);
+    await expect(card(page)).toHaveCount(1);
+    if (i < 4) await closeDoor(page);
+  }
+  expect(await cardKind(page)).toBe('door');
+  await expect(act(page, 'primary')).toBeVisible();
+  await expect(act(page, 'primary')).toHaveAttribute('href', 'tel:08002666436');
+  await expect(act(page, 'primary')).toHaveText('Bel nu 0800 266 64 36');
+  await expect(frameOf(page).locator('.drg')).toHaveText('Demodata');
+  await expect(frameOf(page).locator('a[href^="tel:"]')).toHaveCount(1);
+  await expect(frameOf(page).locator('[data-act="primary"]')).toHaveCount(1);
+  // The Door's own "carry on" control closes it. Not a help click: nothing is sent to a service.
+  await frameOf(page).getByRole('button', { name: 'Verder naar de resultaten' }).click();
+  await expect(page.locator('iframe')).toHaveCount(0);
+  expect(await pressCount(page)).toBe('5');
+  await expect(nextHint(page)).toHaveText(NEXT_DOOR);
+  await recorded(request, 'dismissed', 5);
+});
+
+test('a press while the Door is open is not counted, and the next press moves on exactly one step', async ({ page }) => {
+  await openApp(page);
+  await fire(page);
+  await expect(card(page)).toHaveCount(1);
+  const first = await cardKind(page);
+  // The button sits under the Door for a person; a script can still press it. Both presses are the same promise.
+  await page.getByRole('button', { name: FIRE }).evaluate((b) => { b.click(); b.click(); });
+  await expect(page.getByText(ALREADY_OPEN)).toBeVisible();
+  expect(await pressCount(page)).toBe('1');
+  expect(await cardKind(page)).toBe(first);
+  await closeDoor(page);
+  await fire(page);
+  await expect(card(page)).toHaveCount(1);
+  expect(await cardKind(page)).toBe('fork');
+  expect(await pressCount(page)).toBe('2');
+  await closeDoor(page);
+});
+
+test('previews show each shape without moving the timeline, and add no row to the edge', async ({ page, request }) => {
+  await openApp(page);
+  await page.getByRole('button', { name: 'Fork', exact: true }).click();
+  await expect(card(page)).toHaveCount(1);
+  expect(await cardKind(page)).toBe('fork');
+  expect(await pressCount(page)).toBe('0');
+  expect(new URL(page.url()).searchParams.has('step'), 'a preview does not write a step').toBe(false);
+  await closeDoor(page);
+  expect(await pressCount(page)).toBe('0');
+  await expect(nextHint(page)).toHaveText('Next: Gate');
+
+  // Every preview the Door accepts appears, and each one is a real card.
+  for (const [label, kind] of [['Gate', 'gate'], ['Card', 'card'], ['Wave', 'wave'], ['Hallway', 'hallway'], ['Door', 'door'], ['Quiet line', 'quiet']]) {
+    await page.getByRole('button', { name: label, exact: true }).click();
+    await expect(card(page)).toHaveCount(1);
+    expect(await cardKind(page), label).toBe(kind);
+    await closeDoor(page);
+  }
+  expect(await pressCount(page)).toBe('0');
+  expect((await readDb(request)).agg, 'a preview never counts').toHaveLength(0);
+});
+
+test('start again goes back to 0 with a note, and the count persists across reload in sessionStorage', async ({ page }) => {
+  await openApp(page);
+  for (let i = 0; i < 2; i++) {
+    await fire(page);
+    await expect(card(page)).toHaveCount(1);
+    await closeDoor(page);
+  }
+  expect(await pressCount(page)).toBe('2');
+  expect(await sessionCount(page)).toBe('2');
+
+  await page.reload();
+  await page.waitForFunction(() => !!window.doorway);
+  await expect(page.getByRole('button', { name: FIRE })).toBeEnabled();
+  expect(await pressCount(page), 'the count survives a reload').toBe('2');
+  expect(await currentStep(page)).toBe('2');
+
+  await page.getByRole('button', { name: 'Start the timeline again' }).click();
+  expect(await pressCount(page)).toBe('0');
+  expect(await sessionCount(page)).toBe('0');
+  await expect(page.getByText('This timeline is back at 0.')).toBeVisible();
+  await expect(nextHint(page)).toContainText("Next: wherever this browser's Door has got to");
+  expect(await reached(page)).toBe(0);
+
+  await page.reload();
+  await page.waitForFunction(() => !!window.doorway);
+  expect(await pressCount(page), 'the reset is kept across reload').toBe('0');
+  await fire(page);
+  await expect(card(page)).toHaveCount(1);
+  // Start again resets the PAGE count only. The Door keeps its own memory of this browser (localStorage, on its
+  // origin): two exposures were counted before the reset, so the Door's next shape is wave. The DemoPage note says so.
+  // The hint says so too: after a reset it no longer promises the gate.
+  expect(await cardKind(page)).toBe('wave');
+  expect(await pressCount(page)).toBe('1');
+  await closeDoor(page);
+});
+
+test('the forum search fires only for test-trigger-* and the typed text never reaches the Door', async ({ page }) => {
+  const doorRequests = [];
+  page.on('request', (r) => { if (new URL(r.url()).origin === DOOR) doorRequests.push(`${r.url()} ${r.postData() ?? ''}`); });
+  await openApp(page);
+
+  const box = page.getByPlaceholder(/Zoek op het forum|Search the forum/);
+  await box.fill('modelbouw');
+  await box.press('Enter');
+  await expect(page.locator('iframe')).toHaveCount(0);
+  expect(await pressCount(page)).toBe('0');
+
+  await box.fill('test-trigger-red');
+  await box.press('Enter');
+  await expect(card(page)).toHaveCount(1);
+  expect(await cardKind(page)).toBe('gate');
+  expect(await pressCount(page)).toBe('1');
+  await closeDoor(page);
+  expect(doorRequests.length, 'the Door was reached by the trigger').toBeGreaterThan(0);
+  for (const body of doorRequests) expect(body, 'the search text never reaches the Door').not.toMatch(/test-trigger|red/);
+});
+
+test('nothing the Live tab offers pretends to be the Door: no banner arm, no realistic toggle, no reset, no walk-away, no language switch', async ({ page }) => {
+  await openApp(page);
+  const live = page.locator('main');
+  await expect(page.getByRole('button', { name: 'Reset device' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Banner/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Realistic/ })).toHaveCount(0);
+  await expect(page.getByRole('switch')).toHaveCount(0);
+  await expect(page.getByRole('group', { name: 'When the Door is open:' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Walk away and come back' })).toHaveCount(0);
+  await expect(page.getByText('Reviewed-claims preview')).toHaveCount(0);
+  await expect(page.getByText('This page cannot read or clear it.')).toBeVisible();
+  await expect(page.getByText('No switch exists.')).toBeVisible();
+  // No leftover wording about labs or review status inside the Live tab.
+  const text = await live.innerText();
+  expect(text).not.toMatch(/unreviewed/i);
+  expect(text).not.toMatch(/\blabs?\b/i);
+});
+
+test('with the loader unavailable the tab says so with the exact command, and fires nothing', async ({ page }) => {
+  await page.route(/\/dist\/latest\/doorway\.min\.js$/, (r) => r.abort());
+  await page.goto(PLATFORM + APP);
+  await expect(page.getByRole('alert')).toContainText('npm run demo:app');
+  await expect(page.getByRole('button', { name: FIRE })).toBeDisabled();
+  expect(await page.evaluate(() => typeof window.doorway)).toBe('undefined');
+  await expect(page.locator('iframe')).toHaveCount(0);
+});
+
+test('the five Door cards look different: gate, fork, wave, hallway and door differ in computed style', async ({ page }) => {
+  await openApp(page);
+  const looks = [];
+  for (let i = 0; i < SHAPES.length; i++) {
+    await fire(page);
+    await expect(card(page)).toHaveCount(1);
+    const kind = await cardKind(page);
+    // The card is a shadow-root host (packages/shared/card.js): its box is .ovl > div, its button is .cta.
+    const look = await card(page).evaluate((host) => {
+      const root = host.shadowRoot;
+      const pick = (el) => {
+        const s = getComputedStyle(el);
+        return [s.borderRadius, s.backgroundImage, s.boxShadow, s.backgroundColor, s.borderTopWidth].join(' | ');
+      };
+      const box = root?.querySelector('.ovl > div');
+      const cta = root?.querySelector('.cta');
+      return { box: box ? pick(box) : 'no box', cta: cta ? pick(cta) : 'no cta' };
+    });
+    looks.push({ kind, ...look });
+    await closeDoor(page);
+  }
+  expect(looks.map((l) => l.kind)).toEqual(SHAPES);
+  const combos = new Set(looks.map((l) => `${l.box} || ${l.cta}`));
+  expect(combos.size, JSON.stringify(looks, null, 1)).toBeGreaterThanOrEqual(4);
+});
+
+test('no request leaves for any origin but the platform and the Door, across the whole app', async ({ page }) => {
   const seen = [];
   page.on('request', (r) => seen.push(r.url()));
   page.on('websocket', (w) => seen.push(w.url()));
-
-  for (const lang of ['nl', 'en']) {
-    await setLang(page, lang);
-    await collectTexts(page, lang);
-  }
-  await tab(page, 'The Desk');
-  await tab(page, 'Review & answers');
-  await page.reload();
-  await tab(page, 'Live prototype');
-
+  await openApp(page);
+  await fire(page);
+  await closeDoor(page);
+  await page.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name: 'The Desk' }).click();
   expect(seen.length).toBeGreaterThan(0);
-  const foreign = seen.filter((u) => !/^(data|blob|about):/.test(u) && new URL(u).origin !== new URL(baseURL).origin);
+  const allowed = new Set([new URL(PLATFORM).origin, DOOR]);
+  const foreign = seen.filter((u) => !/^(data|blob|about):/.test(u) && !allowed.has(new URL(u).origin));
   expect(foreign).toEqual([]);
-});
-
-test('b) no legal, penalty, confidentiality or police wording in any Door state, in both languages (preview OFF)', async ({ page }) => {
-  for (const lang of ['nl', 'en']) {
-    await setLang(page, lang);
-    const texts = await collectTexts(page, lang);
-    expect(texts.length).toBeGreaterThan(14);
-    for (const text of texts) {
-      const lower = text.toLowerCase();
-      for (const word of FORBIDDEN) expect(lower, `"${word}" in: ${text.slice(0, 120)}`).not.toContain(word);
-    }
-  }
-});
-
-test('b) with the reviewed-claims preview ON the synthetic claims appear, marked synthetic', async ({ page }) => {
-  await setSynthetic(page, true);
-
-  await shape(page, 'Gate');
-  let text = await doorText(page, 'nl');
-  expect(text).toContain('[SYNTHETIC]');
-  expect(text).toContain('SYNTHETISCH record, beoordeeld door Demo Reviewer (synthetic)');
-  expect(text).toContain('Reviewed-claims preview (SYNTHETIC)');
-  expect(text).toContain('geen juridisch advies');
-
-  await shape(page, 'Hallway');
-  text = await doorText(page, 'nl');
-  expect(text).toContain('[SYNTHETIC — not from Offlimits]');
-  expect(text).toContain('Bevestigd door Demo Reviewer (synthetic)');
-  expect(text).toMatch(/Nu open, tot \d\d:\d\d|Nu gesloten, opent om \d\d:\d\d/);
-
-  await shape(page, 'Open door');
-  text = await doorText(page, 'nl');
-  expect(text).toMatch(/Nu open, tot \d\d:\d\d|Nu gesloten, opent om \d\d:\d\d/);
-
-  await setLang(page, 'en');
-  await shape(page, 'Gate');
-  text = await doorText(page, 'en');
-  expect(text).toContain('[SYNTHETIC]');
-  expect(text).toContain('SYNTHETIC record, reviewed by Demo Reviewer (synthetic)');
-  expect(text).toContain('not legal advice');
-
-  await setSynthetic(page, false);
-  await shape(page, 'Gate');
-  text = await doorText(page, 'en');
-  expect(text).not.toContain('SYNTHETIC');
-});
-
-test('b) by default no opening hours are shown and the gate is neutral', async ({ page }) => {
-  await shape(page, 'Hallway');
-  expect(await doorText(page, 'nl')).not.toMatch(/Nu open|Nu gesloten/);
-  await shape(page, 'Open door');
-  expect(await doorText(page, 'nl')).not.toMatch(/Nu open|Nu gesloten/);
-  await shape(page, 'Gate');
-  await expect(doorway(page)).toContainText('Dit materiaal is misbruik van een kind');
-  await expect(doorway(page)).toContainText('Wij vragen niet wie je bent.');
-});
-
-test('c) every link and window.open target is on the destination allow-list', async ({ page }) => {
-  const hrefs = new Set();
-  const collect = async () => {
-    for (const h of await page.locator('a[href]').evaluateAll((els) => els.map((e) => e.getAttribute('href')))) hrefs.add(h);
-  };
-  for (const synthetic of [false, true]) {
-    await setSynthetic(page, synthetic);
-    for (const lang of ['nl', 'en']) {
-      await setLang(page, lang);
-      for (const s of SHAPES) {
-        await shape(page, s);
-        await collect();
-      }
-      for (const name of ['Quiet', 'Banner']) {
-        await page.getByRole('button', { name, exact: true }).click();
-        await collect();
-      }
-      for (const option of T[lang].forkOptions) {
-        await shape(page, 'Fork');
-        await doorway(page).getByRole('button', { name: option }).click();
-        await collect();
-      }
-    }
-  }
-  await tab(page, 'The Desk');
-  await collect();
-
-  const external = [...hrefs].filter((h) => !h.startsWith('#'));
-  expect(external.length).toBeGreaterThan(0);
-  for (const h of external) {
-    expect(isAllowedDestination(h), h).toBe(true);
-    expect(DESTINATION_ALLOWLIST).toContain(new URL(h).hostname);
-  }
-  expect(await page.evaluate(() => window.__opened)).toEqual([]);
-});
-
-test('c) routes come from the bundle: no Helpwanted, and the under-18 path offers no link', async ({ page }) => {
-  await shape(page, 'Fork');
-  await doorway(page).getByRole('button', { name: T.nl.forkOptions[4] }).click();
-  await expect(doorway(page)).toContainText('docs/11');
-  await expect(doorway(page)).toContainText('geverifieerde route voor jongeren');
-  expect(await doorway(page).locator('a[href]').count()).toBe(0);
-
-  await shape(page, 'Hallway');
-  const hrefs = await doorway(page).locator('a[href]').evaluateAll((els) => els.map((e) => e.getAttribute('href')));
-  const bundleUrls = Object.values(routes.byLanguage).flatMap((e) => [e.default, ...e.alternatives].map((r) => r.url));
-  expect(hrefs.length).toBeGreaterThan(0);
-  for (const h of hrefs) expect(bundleUrls).toContain(h);
-});
-
-test('d) the Glass Door shows exactly the seven Counter fields, and only those are stored', async ({ page }) => {
-  expect(FIELDS).toEqual(SEVEN);
-  await shape(page, 'Gate');
-  await doorway(page).getByRole('button', { name: T.nl.glass }).click();
-  const shown = await doorway(page).locator('[data-testid="glass-fields"] [data-field]').evaluateAll((els) => els.map((e) => e.getAttribute('data-field')));
-  expect(shown).toEqual(SEVEN);
-  expect(shown).not.toContain('b');
-  await expect(doorway(page)).not.toContainText('uur van de dag');
-
-  // act through every shape (demo mode: every fire advances the Shift)
-  await fire(page);
-  await doorway(page).getByRole('button', { name: T.nl.leave }).click();
-  await fire(page);
-  await doorway(page).getByRole('button', { name: T.nl.work }).click();
-  await doorway(page).getByRole('button', { name: 'Toon de resultaten' }).click();
-  await fire(page);
-  await doorway(page).getByRole('button', { name: T.nl.skip }).first().click();
-  await doorway(page).getByRole('button', { name: T.nl.dontKeep }).click();
-  await doorway(page).getByRole('button', { name: T.nl.leave }).click();
-  await fire(page);
-  await doorway(page).getByRole('button', { name: T.nl.leave }).click();
-  await fire(page);
-  await doorway(page).getByRole('button', { name: 'Verder naar de resultaten' }).click();
-
-  await expect.poll(async () => (await readEvents(page)).length).toBe(5);
-  const events = await readEvents(page);
-  expect(events.map((e) => e.f)).toEqual(['gate', 'fork', 'wave', 'hallway', 'door']);
-  for (const e of events) {
-    expect(Object.keys(e).sort()).toEqual([...SEVEN].sort());
-    expect(e.v).toMatch(/^(legal|harm|control)-0[1-3]$/);
-    expect(BUNDLE_IDS.has(e.r) || e.r === 'xx-none', e.r).toBe(true);
-    expect(e.i).toMatch(/^inst_[a-z0-9]{6,}$/);
-  }
-  expect(events.map((e) => e.o)).toEqual(['left_page', 'continued', 'left_page', 'left_page', 'dismissed']);
-  expect(events.map((e) => e.e)).toEqual(['1', '2', '3', '4', '5+']);
-});
-
-test('e) realistic mode escalates in place instead of going quiet, and goes quiet only after the person acted', async ({ page }) => {
-  await page.getByRole('button', { name: 'Realistic', exact: true }).click();
-
-  await fire(page);
-  await expect(doorway(page)).toHaveAttribute('data-shape', 'gate');
-  await expect.poll(async () => (await readLocal(page))?.n).toBe(1);
-  const first = await readLocal(page);
-  expect(first.last).toBeGreaterThan(0);
-  expect(first.acted).toBeUndefined();
-
-  await fire(page);
-  await expect(doorway(page)).toHaveAttribute('data-shape', 'fork');
-  await expect(doorway(page)).toContainText('in-place escalatie');
-  await expect.poll(async () => (await readLocal(page))?.n).toBe(2);
-  const second = await readLocal(page);
-  expect(second.last).toBe(first.last);
-  expect(second.acted).toBeUndefined();
-
-  // the person acts (continues), then an immediate retry is the quiet pill
-  await doorway(page).getByRole('button', { name: T.nl.work }).click();
-  await doorway(page).getByRole('button', { name: 'Toon de resultaten' }).click();
-  await expect.poll(async () => (await readLocal(page))?.acted).toBeGreaterThan(0);
-  await fire(page);
-  await expect(doorway(page)).toHaveAttribute('data-shape', 'quiet');
-  expect((await readLocal(page)).last).toBe(first.last);
-});
-
-test('f) the Wave has no free text; the chosen preset lives in sessionStorage only and the wipe clears it', async ({ page }) => {
-  await shape(page, 'Wave');
-  const dw = doorway(page);
-  await expect(dw).toContainText('Gereserveerde vorm — klinische toetsing volgt; niet in de uitgeleverde reeks');
-  await expect(dw).toContainText('een vaardigheid, geen behandeling');
-  await dw.getByRole('button', { name: T.nl.skip }).first().click();
-
-  expect(await dw.locator('textarea').count()).toBe(0);
-  expect(await dw.locator('input:not([type=radio])').count()).toBe(0);
-  expect(await dw.locator('input[type=radio]').count()).toBe(4);
-
-  const preset = 'bel ik iemand die ik vertrouw';
-  await dw.getByRole('radio', { name: preset }).check();
-  await dw.getByRole('button', { name: T.nl.keep }).click();
-  await expect(dw).toContainText('Bewaard tot je dit tabblad sluit');
-
-  const stored = await page.evaluate(() => ({
-    session: Object.values({ ...sessionStorage }).join('|'),
-    local: Object.values({ ...localStorage }).join('|'),
-  }));
-  expect(stored.session).toContain(preset);
-  expect(stored.local).not.toContain(preset);
-
-  await dw.getByRole('button', { name: T.nl.glass }).click();
-  await expect(dw).toContainText(`Jouw plan (tot je dit tabblad sluit): “${preset}”`);
-  await dw.getByRole('button', { name: 'Wis wat dit apparaat onthoudt' }).click();
-  expect(await page.evaluate(() => Object.values({ ...sessionStorage }).join('|'))).not.toContain(preset);
-});
-
-test('f) Fork and Wave are tagged reserved, and the held-results note states the open decision', async ({ page }) => {
-  await shape(page, 'Fork');
-  await expect(doorway(page)).toContainText('gereserveerd, niet uitgeleverd');
-  await expect(page.getByText('Open decision (docs/11): holding results conflicts with treating the host as an adversary')).toBeVisible();
-  await shape(page, 'Wave');
-  await expect(doorway(page)).toContainText('gereserveerd, niet uitgeleverd');
-  await shape(page, 'Gate');
-  await expect(doorway(page)).not.toContainText('gereserveerd');
-});
-
-test('quick exit: the demo note is an honest open decision', async ({ page }) => {
-  await shape(page, 'Gate');
-  await doorway(page).getByRole('button', { name: 'Snel weg' }).click();
-  await expect(page.getByText('Open decision (docs/11): in the real sandboxed Door a frame cannot navigate the host page')).toBeVisible();
-  await expect(page.locator('body')).not.toContainText('removes the Doorway page from back-history');
-});
-
-test('g) stale claims are gone from the whole app, and the baseline note is on the Verdict page', async ({ page }) => {
-  const stale = ['72 tests', 'eight fields', 'eight-field', 'zero screens built', 'hour of day', 'ported, not imported'];
-  const bodies = [];
-  await tab(page, 'Review & answers');
-  await expect(page.getByTestId('baseline')).toContainText('3fbd10b');
-  await expect(page.getByTestId('baseline')).toContainText('PR #4');
-  bodies.push(await page.locator('body').innerText());
-  await tab(page, 'Live prototype');
-  await fire(page);
-  await doorway(page).getByRole('button', { name: T.nl.glass }).click();
-  await doorway(page).getByRole('button', { name: T.nl.leave }).click();
-  bodies.push(await page.locator('body').innerText());
-  await tab(page, 'The Desk');
-  bodies.push(await page.locator('body').innerText());
-
-  for (const body of bodies) {
-    const lower = body.toLowerCase();
-    for (const s of stale) expect(lower, s).not.toContain(s);
-  }
-  expect(bodies[0]).toContain('scored at 3fbd10b');
-  expect(bodies[2]).toContain('data-trigger-event="doorway:flag"');
-  expect(bodies[2]).toContain("document.dispatchEvent(new CustomEvent('doorway:flag'");
-  expect(bodies[2]).toContain('never the query');
-  expect(bodies[2]).toContain('to be checked with counsel');
-  expect(bodies[2]).not.toContain('DSA risk reports');
 });

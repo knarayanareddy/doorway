@@ -3,7 +3,11 @@
  * Sign the routes bundle with Ed25519 (review B4).
  *
  *   node scripts/sign-routes.mjs --gen-dev-key     create a DEV keypair, pin its public half
- *   node scripts/sign-routes.mjs                    sign with $DOORWAY_SIGNING_KEY_FILE
+ *   node scripts/sign-routes.mjs                    sign with $DOORWAY_SIGNING_KEY_FILE (default .keys/dev-signing.pem)
+ *   node scripts/sign-routes.mjs --file=<path>      sign another bundle (routes.demo.json) with the same key
+ *
+ * Production key: node scripts/gen-prod-key.mjs <absolute path outside the repo>, then pin, then sign.
+ * See SECURITY.md "Key rotation".
  *
  * The private key never lives in the repo. The pinned public key
  * (packages/doorway/src/pubkey.js) is what the Door verifies against. The key
@@ -17,7 +21,9 @@ import crypto from 'node:crypto';
 import { signedBytes, bytesToB64u } from '../packages/core/src/bundle.js';
 
 const ROOT = new URL('..', import.meta.url).pathname;
-const ROUTES = path.join(ROOT, 'packages/doorway/src/routes.nl.json');
+// --file=<path> signs another bundle with the same key (the demo record: routes.demo.json).
+const fileArg = process.argv.find((a) => a.startsWith('--file='));
+const ROUTES = fileArg ? path.resolve(fileArg.slice('--file='.length)) : path.join(ROOT, 'packages/doorway/src/routes.nl.json');
 const PUBKEY = path.join(ROOT, 'packages/doorway/src/pubkey.js');
 
 if (process.argv.includes('--gen-dev-key')) {

@@ -147,3 +147,36 @@ test('a daily user who has acted is still not nagged', () => {
   const windows = [3, 10, 50].map((n) => intervalFor(n));
   assert.deepEqual(windows, [72, 72, 72]);
 });
+
+// ── the demo-only `advance` option (labs.js): every pick is the next step ───
+test('advance: every pick moves one step, whatever the last exposure was and whatever the window (demo only)', () => {
+  let st = {};
+  const out = [];
+  const buckets = [];
+  for (let i = 0; i < 6; i++) {
+    const t = T0 + i * 1000; // a burst, all inside every window
+    const r = pick(st, DEFAULT_CONFIG, t, { alwaysAdvance: true });
+    out.push(r.format);
+    buckets.push(r.bucket);
+    assert.notEqual(r.format, 'quiet', 'the quiet pill is never chosen in advance mode');
+    assert.equal(r.keepClock, undefined, 'an advance is a full exposure, not an in-place retry');
+    st = markActed(advance(st, null, t), t); // the person dismissed every time
+  }
+  assert.deepEqual(out, ['gate', 'card', 'hallway', 'hallway', 'door', 'door'], 'then it stays on door');
+  assert.deepEqual(buckets, ['1', '2', '3', '4', '5+', '5+'], 'the bucket is the step actually shown');
+});
+
+test('advance: a retry inside the window is still the next step, not an in-place escalation (demo only)', () => {
+  const r = pick({ n: 1, last: T0 }, DEFAULT_CONFIG, T0 + 1 * 60e3, { alwaysAdvance: true });
+  assert.equal(r.format, 'card');
+  assert.equal(r.state === 'ESCALATING' || r.state === 'HABITUATED', false);
+});
+
+test('without the advance option, pick is unchanged: a dismissal makes the next press quiet (default path pinned)', () => {
+  const acted = markActed({ n: 1, last: T0 }, T0);
+  const later = T0 + 60e3;
+  assert.equal(pick(acted, DEFAULT_CONFIG, later).format, 'quiet');
+  assert.deepEqual(pick(acted, DEFAULT_CONFIG, later, { alwaysAdvance: false }), pick(acted, DEFAULT_CONFIG, later), 'false is the same as absent');
+  const fresh = { n: 2, last: T0 };
+  assert.deepEqual(pick(fresh, DEFAULT_CONFIG, T0 + 60e3, { alwaysAdvance: false }), pick(fresh, DEFAULT_CONFIG, T0 + 60e3));
+});

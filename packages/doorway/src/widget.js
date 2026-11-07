@@ -11,11 +11,11 @@ import { pick, advance, variantFor, markActed } from '../../core/src/shift.js';
 import { resolve, youthRoute } from '../../core/src/route.js';
 import { normaliseType } from '../../core/src/counter.js';
 import { buildCard, mount } from '../../shared/card.js';
-import { copyFor, attributionFor, footnoteFor, variantIndex, langOf, LABELS } from './copy.js';
+import { copyFor, attributionFor, footnoteFor, variantIndex, langOf, LABELS, DOOR } from './copy.js';
 import { createSender } from './send.js';
-import { glassSection, hallwaySections } from './panels.js';
+import { glassSection, hallwaySections, doorPanel } from './panels.js';
 import { configFor, labsFormats, quickExit, readWavePlan, saveWavePlan, clearWavePlan } from './labs.js';
-import { FORK, WAVE, QUICK, QUICK_HINT, BACK, LABS_TAG } from './copy-labs.js';
+import { FORK, WAVE, QUICK, QUICK_HINT, BACK } from './copy-labs.js';
 
 export { variantIndex, footnoteFor };
 
@@ -91,7 +91,7 @@ export function createDoorway({
       { type: 'action', id: 'quit', label: QUICK[L], tone: 'danger', closes: true, outcome: 'left_page', onSelect: () => quickExit(w, L) },
       { type: 'text', text: QUICK_HINT[L] },
     ] }] : []);
-    const tag = (which) => [{ placement: 'top', blocks: [{ type: 'text', text: LABS_TAG[which][L] }] }];
+    const tag = () => [];
     const help = (label, kind = 'primary') => (hasLink
       ? { label, kind, outcome: 'clicked_help', routeId: route.id, onSelect: () => openHelp(route.url) }
       : { label: BACK[L], kind, outcome: 'dismissed' });
@@ -150,6 +150,23 @@ export function createDoorway({
       });
     }
 
+    // The Door (exposure 5+): one big action, a rotating line, carry on, and the Glass Door. Same outcomes as every card.
+    if (format === 'door') {
+      const d = doorPanel({ lang: L, route: route || null, selfhelp, now: now(), n: localCount, onOpen: openHelp });
+      return buildCard({
+        ...common,
+        variant: 'door',
+        kicker: d.kicker,
+        tag: d.tag,
+        headline: d.headline,
+        body: d.body,
+        primary: d.primary,
+        secondary: { label: DOOR[L].carryOn, kind: 'secondary', outcome: 'dismissed' },
+        tertiary: { label: LABELS.report[L], kind: 'tertiary' },
+        sections: [...quit(), ...(d.chat ? [{ blocks: [d.chat] }] : []), glass()],
+      });
+    }
+
     const variants = copyFor({ format, family: decision.family, lang: L, route, legalJurisdiction, now: now() });
     const t = variants[variantIndex(variantId)] || variants[0];
     const sections = [];
@@ -173,9 +190,11 @@ export function createDoorway({
   // is never sent to the help service, and the new tab cannot reach back.
   function openHelp(url) {
     try {
-      const a = (doc || w.document).createElement('a');
-      a.href = url; a.rel = 'noreferrer noopener'; a.target = '_blank';
-      a.click();
+      // Opened in the click's own gesture, so it does not depend on this frame outliving the call (WebKit
+      // needs the opener alive for a moment after an anchor click; an instant settle removed it first).
+      // With noopener the browser returns null whether or not the pop-up opened, so a blocked pop-up cannot be
+      // detected here (the anchor click it replaces could not be either).
+      w.open(url, '_blank', 'noreferrer,noopener');
     } catch { w.location?.assign(url); }
   }
 
@@ -197,7 +216,7 @@ export function createDoorway({
     // A forced shape exists only for demonstrations (the `preview` lab): it ignores and never writes local state.
     const decision = previewForced
       ? { state: 'PREVIEW', format: previewForced, family: cfg.families[previewForced] || 'harm', bucket: '1' }
-      : pick(st, cfg, now(), { storageBlocked: blocked });
+      : pick(st, cfg, now(), { storageBlocked: blocked, alwaysAdvance: labs.includes('advance') });
     const variant = variantFor(decision.family, st.seen || []);
 
     // Shapes that invite contact prefer a person; resolve() degrades to self-help, and the
@@ -205,7 +224,7 @@ export function createDoorway({
     const need = ['hallway', 'door', 'fork', 'wave'].includes(decision.format) ? 'human' : 'any';
     const langTag = w.navigator?.language || L;
     const { route } = resolve(langTag, routes, { need, country: countryCode });
-    const selfhelp = decision.format === 'hallway' ? (resolve(langTag, routes, { need: 'selfhelp', country: countryCode }).route || null) : null;
+    const selfhelp = ['hallway', 'door'].includes(decision.format) ? (resolve(langTag, routes, { need: 'selfhelp', country: countryCode }).route || null) : null;
 
     // Count the exposure before anything can go wrong; the clock is kept for
     // in-place escalations so a retry cannot postpone the next full warning.
@@ -241,7 +260,8 @@ export function createDoorway({
       // Exactly one record per exposure: whichever outcome comes first. A person
       // who looks away and later returns is still ONE exposure, so the
       // click-through denominator equals real exposures.
-      const sent = send.event({
+      // A preview is a demonstration, never an exposure: nothing is sent for it.
+      const sent = previewForced ? Promise.resolve(false) : send.event({
         i: install,
         v: variant,
         f: decision.format,
@@ -271,7 +291,7 @@ export function createDoorway({
         // "This warning was a mistake" (and the Fork's "here for work"): counted as the person continuing,
         // plus a content-free report. The reason is always 'other': the Door never asks a visitor to say
         // who they are; categories come from the platform's admin (Desk).
-        const report = outcome === 'tertiary' || action?.report
+        const report = (outcome === 'tertiary' || action?.report) && !previewForced
           ? send.report({ i: install, p: String(routes?.version || 'unknown').toLowerCase(), t: normaliseType(type), r: 'other' })
           : null;
         exposure.finish(mapped, report);

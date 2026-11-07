@@ -50,7 +50,8 @@ test('quick exit: a click leaves the page for a neutral site, and Back does not 
   await context.route('https://www.knmi.nl/**', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<title>Weer</title>' }));
   await page.goto(PLATFORM + '/test/e2e/blank.html');
   await openLabs(page);
-  await preview(page, 'gate');
+  // A real exposure (not a preview, which is never counted): the first visit gives the gate, which has the button.
+  await page.evaluate(() => { window.doorway.trigger('search'); });
   await expect(act(page, 'primary')).toBeVisible();
   await frameOf(page).getByRole('button', { name: 'Snel weg' }).click();
   await page.waitForURL('https://www.knmi.nl/');
@@ -164,14 +165,13 @@ test('fork: six honest paths, each leads somewhere different, and nothing about 
   expect(await storageOf(page)).toEqual({ local: [], session: [] });
   await page.keyboard.press('Escape');
   await expect(page.locator('iframe')).toHaveCount(0);
-  const db = await waitForAgg(request, (d) => d.agg.length > 0);
-  // six exposures, six dismissals, and the rows differ in nothing that encodes which answer was picked
-  expect(db.agg.every((r) => r.format === 'fork')).toBe(true);
-  for (const p of posts.filter((x) => x.path === '/v1/c')) expect(Object.keys(JSON.parse(p.body)).sort()).toEqual(['e', 'f', 'i', 'o', 'r', 't', 'v']);
-  expect(posts.filter((x) => x.path === '/v1/c').map((x) => JSON.parse(x.body).o)).toEqual(Array(6).fill('dismissed'));
+  // A preview is a demonstration: six previews, and not one of them is counted or sends a counter request.
+  expect(posts.filter((x) => x.path === '/v1/c'), 'no counter request for a preview').toEqual([]);
+  const db = await readDb(request);
+  expect(db.agg).toEqual([]);
 });
 
-test('fork: under 18 offers no link (no verified youth service), and "here for work" files a content-free report', async ({ page, context, request }) => {
+test('fork: under 18 offers no link (no verified youth service), and "here for work" is not counted nor reported for a preview', async ({ page, context, request }) => {
   await context.route('https://**/*', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<title>help</title>' }));
   await openLabs(page);
   await preview(page, 'fork');
@@ -188,13 +188,12 @@ test('fork: under 18 offers no link (no verified youth service), and "here for w
   await frameOf(page).locator('.cb', { hasText: 'voor werk' }).click();
   await frameOf(page).locator('[data-act="primary"]').click();
   await expect(page.locator('iframe')).toHaveCount(0);
-  const db = await waitForAgg(request, (d) => d.agg.length >= 2 && d.reports.length > 0);
-  expect(db.agg.map((r) => r.outcome).sort()).toEqual(['continued', 'dismissed']);
-  expect(db.reports).toHaveLength(1);
-  expect(db.reports[0]).toMatchObject({ reason: 'other', trigger: 'search' });
+  const db = await readDb(request);
+  expect(db.agg, 'the preview answer is not counted').toEqual([]);
+  expect(db.reports, 'the preview report is not filed').toEqual([]);
 });
 
-test('fork: the help paths open the allow-listed service and count a help click', async ({ page, context, request }) => {
+test('fork: the help paths open the allow-listed service, and a preview help click is not counted', async ({ page, context, request }) => {
   await context.route('https://**/*', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<title>help</title>' }));
   await openLabs(page);
   await preview(page, 'fork');
@@ -205,8 +204,8 @@ test('fork: the help paths open the allow-listed service and count a help click'
   const p = await pop;
   expect(p.url()).toBe('https://offlimits.nl/?src=doorway');
   await p.close();
-  const db = await waitForAgg(request, (d) => d.agg.length > 0);
-  expect(db.agg[0]).toMatchObject({ format: 'fork', outcome: 'clicked_help', route: 'nl-offlimits' });
+  const db = await readDb(request);
+  expect(db.agg, 'a preview help click is not counted').toEqual([]);
 });
 
 test('fork: a keyboard user can reach the options and move on', async ({ page }) => {
@@ -223,6 +222,47 @@ test('fork: a keyboard user can reach the options and move on', async ({ page })
   await expect(page.locator('iframe')).toHaveCount(0);
 });
 
+// ── real exposures, counted ────────────────────────────────────────────────
+// Previews are never counted (above). These drive the REAL loader instead: escalate.html loads the Door with
+// data-labs="fork,wave" and no preview. Each Door left unanswered counts as left_page and moves the next press
+// on one step, so press k shows shape k. Nothing is forced and nothing is previewed.
+const ESCALATE_PAGE = '/mock-platform/escalate.html';
+const reachPress = async (page, k) => {
+  await page.goto(PLATFORM + ESCALATE_PAGE);
+  await page.waitForFunction(() => !!window.doorway);
+  for (let i = 1; i <= k; i++) {
+    await page.locator('#escalate-press').click();
+    await expect(frameOf(page).locator('[data-core-card]')).toHaveCount(1);
+    if (i < k) {
+      await page.goto(`${PLATFORM}${ESCALATE_PAGE}?step=${i}`);
+      await page.waitForFunction(() => !!window.doorway);
+    }
+  }
+};
+
+test('a real fork exposure, through the loader, is counted: one fork row, in bucket 2, with its outcome', async ({ page, request }) => {
+  await reachPress(page, 2);
+  expect(await kind(page), 'the second real exposure is the Fork').toBe('fork');
+  await expect(act(page, 'primary')).toBeVisible();
+  await frameOf(page).locator('.cb').first().click();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('iframe')).toHaveCount(0);
+  const db = await waitForAgg(request, (d) => d.agg.some((r) => r.format === 'fork'));
+  const forks = db.agg.filter((r) => r.format === 'fork');
+  expect(forks).toHaveLength(1);
+  expect(forks[0]).toMatchObject({ format: 'fork', bucket: '2', trigger: 'search', outcome: 'dismissed' });
+});
+
+test('a real wave exposure, through the loader, is counted in bucket 3 (the Wave is never started here)', async ({ page, request }) => {
+  await reachPress(page, 3);
+  expect(await kind(page), 'the third real exposure is the Wave').toBe('wave');
+  await expect(act(page, 'primary')).toBeFocused({ timeout: 3000 });
+  await page.keyboard.press('Escape');
+  await expect(page.locator('iframe')).toHaveCount(0);
+  const db = await waitForAgg(request, (d) => d.agg.some((r) => r.format === 'wave'));
+  expect(db.agg.filter((r) => r.format === 'wave')).toEqual([expect.objectContaining({ format: 'wave', bucket: '3', trigger: 'search', outcome: 'dismissed' })]);
+});
+
 // ── 4. the Wave ────────────────────────────────────────────────────────────
 test('wave: a guided exercise, a plan chosen from presets only, kept as a number in this tab only', async ({ page }) => {
   await openLabs(page, { waveSeconds: 10 });
@@ -230,7 +270,7 @@ test('wave: a guided exercise, a plan chosen from presets only, kept as a number
   await expect(act(page, 'primary')).toBeVisible();
   expect(await kind(page)).toBe('wave');
   const text = await dialog(page).innerText();
-  expect(text).toMatch(/Labs: gereserveerde vorm, nog niet klinisch beoordeeld/);
+  expect(text, 'no labs or review caveat inside the card').not.toMatch(/Labs:|nog niet klinisch beoordeeld/);
   expect(text).toMatch(/een vaardigheid, geen behandeling/);
   expect(await frameOf(page).locator('textarea, input[type="text"], input:not([type])').count(), 'there is no free-text input anywhere').toBe(0);
 
@@ -308,7 +348,8 @@ test('host-adversary: fork, wave and quick-exit labs change nothing the host can
 });
 
 // ── the Desk shows it ──────────────────────────────────────────────────────
-test('desk: the per-shape table shows labs shapes next to the shipped ones, with small cells hidden', async ({ page, request }) => {
+// The rows below are POSTed straight to the edge, not produced by a visitor's journey: this checks the Desk's table, not the Door.
+test('desk: the per-shape table shows labs shapes next to the shipped ones, with small cells hidden (synthetic rows POSTed straight to the edge, not a UI run)', async ({ page, request }) => {
   const ev = (f, v, o, e) => ({ i: 'inst_demo001', v, f, t: 'search', o, r: 'nl-offlimits', e });
   const send = (b) => request.post(`${DOOR}/v1/c`, { headers: { origin: DOOR }, data: b });
   for (let i = 0; i < 40; i++) await send(ev('gate', 'legal-01', i < 8 ? 'clicked_help' : 'left_page', '1'));

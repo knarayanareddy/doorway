@@ -18,7 +18,7 @@ This document exists because a coverage check against the brief found that one o
 
 ## R2 · No query text, ever.
 
-**The module receives a boolean, not a string.** The platform decides a trigger fired; Doorway is told *that* it fired and never *what* was typed.
+**The module receives a trigger kind, not a string.** The platform decides a trigger fired and passes one of `search`, `chat` or `nav` (`counter.js`, field `t`). Doorway is told *that* it fired and never *what* was typed.
 
 **Why it costs us something.** With the query we could pick a message, personalise the route, and be more helpful. Every design instinct says take the string. We do not, because a string is content, content is evidence, and evidence is subpoenable.
 
@@ -125,7 +125,7 @@ Not negotiable, not even for a screenshot.
 
 **What we do.** The bundle is canonical JSON signed with Ed25519; the public key is pinned in the Door; verification (WebCrypto) runs before any route is used. A bundle that is unsigned, mis-signed or past `validUntil` yields *no routes*: neutral help copy with no link. Independently of the signature, a route whose destination is not an exact `https` hostname on the allow-list (`packages/core/src/route.js`) is dropped. `npm run check:routes` fails CI if the committed bundle does not verify or is within two weeks of expiry.
 
-**Open.** The pinned key is a **dev key** until the release owner generates a production key offline (`scripts/sign-routes.mjs`, `04-open-verifications.md` V14).
+**Open.** The pinned key is a **dev key** until the release owner generates and pins a production key with `scripts/gen-prod-key.mjs` (see `SECURITY.md`, "Keys and key rotation", and `04-open-verifications.md` V14). `npm run check:prod-key` is part of `npm run verify` (it passes for the dev pin, which is fine for demos), and CI runs it under `DOORWAY_PRODUCTION=1` and expects it to refuse, so the refusal itself is tested. Production protection depends on building with `DOORWAY_PRODUCTION=1`: `scripts/build.mjs` refuses the dev pin only then, and nothing sets that variable for you. Confidentiality wording that no one has verified is kept out of the signed bundle, in `research/route-claims-unverified.json`.
 
 ---
 

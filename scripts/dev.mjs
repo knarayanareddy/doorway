@@ -11,6 +11,8 @@
  *   npm run demo        build (door origin = :8788) and serve
  *   npm run demo:labs   the same, with mock data seeded into the Desk and the labs shapes accepted by the edge
  *                       (open http://127.0.0.1:8789/mock-platform/labs.html)
+ *   npm run demo:app    builds the prototype app, then the same as demo:labs
+ *                       (open http://127.0.0.1:8789/app/; PROTO_DIST overrides prototype/dist)
  */
 import http from 'node:http';
 import fs from 'node:fs';
@@ -19,6 +21,7 @@ import { spawnSync } from 'node:child_process';
 import worker from '../edge/c.js';
 import { createDb, sha256hex } from '../edge/test/d1-shim.js';
 import { seedDemo } from './seed-demo.mjs';
+import { appHandler, deskAggProxy } from './serve-demo.mjs';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const DOOR_PORT = Number(process.env.DOOR_PORT || 8788);
@@ -27,7 +30,8 @@ const DOOR = `http://127.0.0.1:${DOOR_PORT}`;
 export const DESK_TOKEN = 'desk-demo-token';
 
 if (!process.env.SKIP_BUILD) {
-  const r = spawnSync('node', ['scripts/build.mjs'], { cwd: ROOT, env: { ...process.env, DOOR_ORIGIN: DOOR }, stdio: 'inherit' });
+  // DEMO_LABS=1: this local harness runs the e2e suite, which uses the demo-only labs (preview, advance). It is never shipped.
+  const r = spawnSync('node', ['scripts/build.mjs'], { cwd: ROOT, env: { ...process.env, DOOR_ORIGIN: DOOR, DEMO_LABS: '1' }, stdio: 'inherit' });
   if (r.status !== 0) process.exit(r.status);
 }
 
@@ -67,13 +71,20 @@ const env = {
   } },
 };
 
+// The test endpoints are read and wiped by the Playwright request fixture (test/e2e/helpers.js), which is not a page, and
+// they send no CORS header. Any request a browser page makes carries Sec-Fetch-Site, so those are refused: a page the
+// developer happens to open cannot read the demo aggregates or wipe them.
+const fromBrowserPage = (req) => req.headers['sec-fetch-site'] !== undefined && req.headers['sec-fetch-site'] !== 'none';
 http.createServer(async (req, res) => {
   const url = new URL(req.url, DOOR);
+  if (url.pathname === '/__test/db' || url.pathname === '/__test/reset') {
+    if (fromBrowserPage(req)) { res.writeHead(403, { 'content-type': 'text/plain' }); res.end('not for browser pages'); return; }
+  }
   if (url.pathname === '/__test/db') {
     const out = { agg: DB.raw.prepare('SELECT * FROM agg').all(), heartbeats: DB.raw.prepare('SELECT * FROM heartbeats').all(), reports: DB.raw.prepare('SELECT * FROM reports').all() };
-    res.writeHead(200, { 'content-type': 'application/json', 'access-control-allow-origin': '*' }); res.end(JSON.stringify(out)); return;
+    res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify(out)); return;
   }
-  if (url.pathname === '/__test/reset') { DB.raw.exec('DELETE FROM agg; DELETE FROM heartbeats; DELETE FROM reports; DELETE FROM rate;'); res.writeHead(204, { 'access-control-allow-origin': '*' }); res.end(); return; }
+  if (url.pathname === '/__test/reset') { DB.raw.exec('DELETE FROM agg; DELETE FROM heartbeats; DELETE FROM reports; DELETE FROM rate;'); res.writeHead(204); res.end(); return; }
   // Browsers abort in-flight requests when a page unloads (that is the point of
   // keepalive); an aborted request must never take the server down.
   if (process.env.DEV_TRACE) console.log(new Date().toISOString().slice(17,23), req.method, url.pathname, req.headers['content-length'] || '');
@@ -87,4 +98,17 @@ http.createServer(async (req, res) => {
   } catch (e) { console.error('request error', req.method, url.pathname, e.code || e.message); res.destroy(); }
 }).listen(DOOR_PORT, '127.0.0.1', () => console.log(`door/edge  ${DOOR}`));
 
-http.createServer(serveStatic(ROOT)).listen(PLATFORM_PORT, '127.0.0.1', () => console.log(`platform   http://127.0.0.1:${PLATFORM_PORT}/mock-platform/index.html`));
+// The built app is one file: PROTO_DIST/index.html if set, else prototype/dist/index.html.
+const protoFile = path.join(process.env.PROTO_DIST ? path.resolve(process.env.PROTO_DIST) : path.join(ROOT, 'prototype/dist'), 'index.html');
+const app = appHandler(protoFile);
+const desk = deskAggProxy(DOOR);
+const statics = serveStatic(ROOT);
+http.createServer((req, res) => {
+  const u = new URL(req.url, 'http://x');
+  if (u.pathname === '/__desk/agg') { desk(req, res, u); return; }
+  if (u.pathname === '/app/' || u.pathname === '/app/index.html') { app(req, res); return; }
+  statics(req, res);
+}).listen(PLATFORM_PORT, '127.0.0.1', () => {
+  console.log(`platform   http://127.0.0.1:${PLATFORM_PORT}/mock-platform/index.html`);
+  console.log(`app        http://127.0.0.1:${PLATFORM_PORT}/app/${fs.existsSync(protoFile) ? '' : '   (not built: npm run build:prototype)'}`);
+});

@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import { canonicalize, signedBytes, verifyBundle, bytesToB64u } from '../../core/src/bundle.js';
 import { PUBLIC_KEY_RAW_B64U } from '../src/pubkey.js';
+import { allRoutes, isRenderableConfidence } from '../../core/src/route.js';
 
 const shipped = JSON.parse(fs.readFileSync(new URL('../src/routes.nl.json', import.meta.url)));
 const b64u = (s) => Uint8Array.from(Buffer.from(s, 'base64url'));
@@ -56,6 +57,17 @@ test('an expired bundle is refused', async () => {
   assert.equal((await verifyBundle(bundle, raw, { now: Date.parse('2026-11-07') })).reason, 'expired');
   const missing = fresh({ validUntil: undefined });
   assert.equal((await verifyBundle(missing.bundle, missing.raw)).reason, 'no validUntil');
+});
+
+test('the signed bundle carries no confidentiality wording that has not been verified (review item 2)', () => {
+  // A claim may be signed into the bundle only as a record that the Door would render. Today there are none.
+  for (const { r, where } of allRoutes(shipped)) {
+    if (r.conf !== undefined) assert.equal(isRenderableConfidence(r), true, `${where} (${r.id}) carries conf that the Door would not render`);
+  }
+  assert.equal(shipped.byLanguage.nl.default.conf, undefined, 'nl-offlimits: the claim lives in research/route-claims-unverified.json');
+  const moved = JSON.parse(fs.readFileSync(new URL('../../../research/route-claims-unverified.json', import.meta.url), 'utf8'));
+  assert.ok(moved.claims.length >= 6, 'the unverified claims are kept, not deleted');
+  for (const c of moved.claims) assert.equal(c.conf.verifiedBy, null, `${c.route} is still unverified`);
 });
 
 test('a validly signed route outside the host allow-list is still dropped', async () => {

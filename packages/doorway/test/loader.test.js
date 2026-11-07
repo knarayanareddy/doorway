@@ -133,3 +133,8 @@ test('low severity never opens the Door', async () => {
   assert.equal(out[0].detail.shown, false);
   assert.equal(mapTrigger({ severity: 'catastrophic' }).severity, 'medium');
 });
+
+test('doorUrl forwards the advance lab only when it is on, and never as anything else', () => {
+  assert.equal(doorUrl(DOOR, { install: 'inst_abc123', labs: ['advance'] }), 'https://door.test/v1/?i=inst_abc123&x=advance');
+  assert.equal(doorUrl(DOOR, { install: 'inst_abc123', labs: [] }), 'https://door.test/v1/?i=inst_abc123');
+});

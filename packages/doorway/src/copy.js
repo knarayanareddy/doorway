@@ -23,7 +23,7 @@ export const langOf = (tag) => {
 
 export const HARM = {
   nl: [
-    { h: 'Elke foto is een kind', b: 'Elke afbeelding laat misbruik van een echt kind zien. Elke zoekopdracht maakt de vraag naar meer groter.' },
+    { h: 'Elke foto is een kind', b: 'Elke afbeelding laat misbruik van een echt kind zien. Elke zoekopdracht vergroot de vraag naar meer.' },
     { h: 'Een kind op elke foto', b: 'Achter elke afbeelding staat een kind dat misbruikt is, vaak jarenlang. Toegang creëert vraag.' },
     { h: 'Dit is kindermisbruik', b: 'Dit materiaal is een opname van misbruik. Het kind bestaat, het misbruik is echt, en het gebeurde nooit met instemming.' },
   ],
@@ -188,6 +188,56 @@ export const HALLWAY_FAQ = {
 };
 
 /**
+ * The Door shape (exposure 5+): presence, not pressure. The headline rotates with the exposure count.
+ * Nothing here says a line is open or closed: panels.js says that, and only for verified hours.
+ * Word choice follows the lint: no "anonymous" or "confidential" without a verified record.
+ */
+export const DOOR = {
+  nl: {
+    kicker: 'Is de deur nog open?',
+    titles: [
+      'Je bent hier eerder geweest. Dit is geen oordeel.',
+      'Nog steeds hier? Dan staat de deur ook nog steeds open.',
+      'Je hoeft dit niet alleen te doen.',
+    ],
+    body: 'Eén gesprek is genoeg. Het is gratis.',
+    callOpen: 'Bel nu',
+    chat: 'Of chat',
+    closed: (o) => `De lijn opent om ${o}. Begin nu met zelfhulp →`,
+    carryOn: 'Verder naar de resultaten',
+  },
+  en: {
+    kicker: 'Is it still open?',
+    titles: [
+      'You’ve been here before. This isn’t a judgement.',
+      'Still here? Then the door is still open too.',
+      'You don’t have to do this alone.',
+    ],
+    body: 'One conversation is enough. It is free.',
+    callOpen: 'Call now',
+    chat: 'Or chat',
+    closed: (o) => `The line opens at ${o}. Start self-help now →`,
+    carryOn: 'Continue to the results',
+  },
+  de: {
+    kicker: 'Ist die Tür noch offen?',
+    titles: [
+      'Du warst schon einmal hier. Das ist kein Urteil.',
+      'Immer noch hier? Dann ist die Tür auch noch offen.',
+      'Du musst das nicht allein tun.',
+    ],
+    body: 'Ein Gespräch genügt. Es ist kostenlos.',
+    callOpen: 'Jetzt anrufen',
+    chat: 'Oder chatten',
+    closed: (o) => `Die Leitung öffnet um ${o}. Beginne jetzt mit Selbsthilfe →`,
+    carryOn: 'Weiter zu den Ergebnissen',
+  },
+};
+
+/** Shown next to any hours or number that come from the DEMO routes record (routes.demo.json). Never on production data. */
+export const DEMO_TAG = { nl: 'Demodata', en: 'Demo data', de: 'Demodaten' };
+
+/**
  * The Glass Door — the person can check what the Door sends, at the moment they decide
  * whether to trust it. These strings describe DOORWAY's own data handling (which the panel
  * itself lets the person verify), not any service's confidentiality, so the claim lint
@@ -333,6 +383,12 @@ export function allStrings() {
   walk(QUIET, 'QUIET'); walk(LABELS, 'LABELS'); walk(HALLWAY, 'HALLWAY');
   walk(HALLWAY_PHRASES, 'HALLWAY_PHRASES');
   for (const k of ['privacyQ', 'nocallQ', 'nocallA', 'altLabel', 'closedTip']) walk(HALLWAY_FAQ[k], 'HALLWAY_FAQ.' + k);
+  for (const L of LANGS) {
+    for (const k of ['kicker', 'body', 'callOpen', 'chat', 'carryOn']) out.push({ path: `DOOR.${L}.${k}`, text: DOOR[L][k] });
+    DOOR[L].titles.forEach((text, i) => out.push({ path: `DOOR.${L}.titles[${i}]`, text }));
+    out.push({ path: `DOOR.${L}.closed`, text: DOOR[L].closed('09:00') });
+    out.push({ path: `DEMO_TAG.${L}`, text: DEMO_TAG[L] });
+  }
   for (const [k, v] of Object.entries(GLASS)) {
     if (typeof v === 'object' && v && !Array.isArray(v) && Object.values(v).some((x) => typeof x === 'function')) {
       for (const L of LANGS) out.push({ path: `GLASS.${k}.${L}`, text: v[L](3) });
