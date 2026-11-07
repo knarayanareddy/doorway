@@ -19,7 +19,7 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
-      # One command, defined once in package.json: spine, safety, eslint tripwire,
+      # One command, defined once in package.json: shared modules, safety, eslint tripwire,
       # unit + edge tests, signed-routes check, privacy gate, copy lint, docs check.
       - name: verify
         run: npm run verify

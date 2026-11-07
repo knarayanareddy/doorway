@@ -1,6 +1,8 @@
 # Is this a full-fledged product?
 
-**Doorway and Benchmark, assessed honestly against a real definition of "product."**
+**Doorway, assessed honestly against a real definition of "product."**
+
+*Written before the code existed. For the current state see `BUILD.md` and `docs/07-review-response.md`; some "not written" statements below are out of date.*
 
 *A "full-fledged product" is one that a stranger can adopt, operate and depend on without you in the room. Not a demo that works, not a prototype that impresses — a thing that keeps working when the team goes home.*
 
@@ -8,18 +10,18 @@
 
 ## The short answer
 
-**No. Neither is a full-fledged product. Both are complete product *specifications* with a prototype-shaped demo path.**
+**No. Doorway is not a full-fledged product. It was a complete product *specification* with a prototype-shaped demo path.**
 
 That is a specific and defensible claim, not a put-down. Here is the difference measured against something you can check.
 
-| Dimension | A full-fledged product needs | Doorway today | Benchmark today |
-|---|---|---|---|
-| **Runs** | Deployed, monitored, uptime | Not written. Blueprint specifies it, ~3,000 lines. | Not written. ~4,000 lines. |
-| **Adopts without you** | Docs a stranger can follow to success | Four install paths specified; `INSTALL.md` unwritten | One path specified; no auth story built |
-| **Answers to a customer** | SLA, support, an owner | Nobody. It is a hackathon entry. | Nobody. ACAPS has not asked for this. |
-| **Sustains itself** | Content maintenance, funding, a legal entity | Message bundles and routes need monthly editing by a human who does not exist yet | Expert recruitment has no owner and no budget |
-| **Proves itself** | Evidence that the intervention works | **No.** No published study shows a warning reduces use beyond minutes. | **No.** No panel has been run. A regression on the same fields does not beat ACAPS' own ratings. |
-| **Survives scrutiny** | Security review, DPIA, licence, governance | Privacy design is strong; DPIA, governance and licence clarity untested | Same, plus a study-protocol ethics path unbuilt |
+| Dimension | A full-fledged product needs | Doorway today |
+|---|---|---|
+| **Runs** | Deployed, monitored, uptime | Not written. Blueprint specifies it, ~3,000 lines. |
+| **Adopts without you** | Docs a stranger can follow to success | Four install paths specified; `INSTALL.md` unwritten |
+| **Answers to a customer** | SLA, support, an owner | Nobody. It is a hackathon entry. |
+| **Sustains itself** | Content maintenance, funding, a legal entity | Message bundles and routes need monthly editing by a human who does not exist yet |
+| **Proves itself** | Evidence that the intervention works | **No.** No published study shows a warning reduces use beyond minutes. |
+| **Survives scrutiny** | Security review, DPIA, licence, governance | Privacy design is strong; DPIA, governance and licence clarity untested |
 
 So: **a spec, not a product.** In the taxonomy:
 
@@ -45,7 +47,6 @@ Three of these are structural and no amount of time closes them. They are the ac
 
 2. **Voluntary adoption at the tail of platforms has never worked at scale in this field.** The one platform that changed did so because Mastercard and Visa suspended payments. There is no payment rail at a 20,000-member Dutch forum and the EU regulation that would create one is not law. Time gives you more outreach, not more leverage.
 
-3. **Benchmark's central claim is empirical and unproven.** ACAPS' own judgement scores 0.2168 and a logistic regression on the same fields scores 0.2177 out of sample — the model loses, and both gaps from the base rate are inside the noise at n=104. You cannot build your way past a missing result.
 
 ### What time does fix
 
@@ -53,10 +54,10 @@ With unlimited time and competent people, Doorway becomes a product on roughly t
 
 | Phase | Duration | What it produces | Who has to exist |
 |---|---|---|---|
-| **Build** | 6–8 weeks, 2 engineers | The module, edge, dashboard, four install paths. All ten acceptance tests green. | — |
-| **Pilot** | 6 months | 15–25 Dutch platforms live: a forum, a marketplace, a file-share, two adult sites, three Discourse communities. Real volumes. | A part-time community manager |
-| **Evaluation** | 9 months, overlapping | The stepped-wedge study: 20 platforms, randomised by cohort. First published platform-level trial of gate-versus-banner. | A research partner with ethics approval |
-| **Institutionalisation** | 18 months | Offlimits co-maintains the Dutch routes; UNICRI hosts the aggregate feed; Tech Coalition Pathways carries it to the tail | A fiscal sponsor or an NGO home |
+| **Build** | 6–8 weeks, 2 engineers | The module, edge, dashboard, four install paths. All ten acceptance tests green. |
+| **Pilot** | 6 months | 15–25 Dutch platforms live: a forum, a marketplace, a file-share, two adult sites, three Discourse communities. Real volumes. |
+| **Evaluation** | 9 months, overlapping | The stepped-wedge study: 20 platforms, randomised by cohort. First published platform-level trial of gate-versus-banner. |
+| **Institutionalisation** | 18 months | Offlimits co-maintains the Dutch routes; UNICRI hosts the aggregate feed; Tech Coalition Pathways carries it to the tail |
 
 **Call it 3 years from now to "Product" on the line above**, and 5 to "Platform." That is fast by child-protection standards and it is the honest number.
 
@@ -96,34 +97,20 @@ Offlimits takes about 2.6 contacts a day for 17.9 million people. Full-fledged D
 
 ---
 
-## What full-fledged Benchmark would need
-
-| Requirement | Why | Status |
-|---|---|---|
-| **A customer with a budget** | ACAPS has not said it wants this. A product needs a buyer, internal or external. | Absent |
-| **A recruitment design that works** | 51% expert dropout is the base rate in this literature. A real product budgets incentives, incentives policies and a recruitment funnel. | Unspecified |
-| **An ethics approval path** | Forecasting risk about real humanitarian situations, with named experts, has consent and attribution questions. | Unspecified |
-| **A resolution protocol** | Who observes the outcome, on what date, by what rule. This is the hardest operational part and time is the only fix. | Specified, untested |
-| **A home for the numbers** | The output has to land beside the statement in the workflow people already use. Otherwise it is a dashboard nobody opens. | Sketch only |
-| **And the missing result** | The panel has to beat ACAPS' 0.2168. | **Cannot be built; must be tested** |
-
----
-
 ## The honest ranking of what stands in the way
 
 Sorted by how much each one actually blocks a full-fledged product.
 
-| # | Blocker | Product | Fixable with time? | Fixable at all? |
-|---|---|---|---|---|
-| 1 | No evidence the intervention works beyond minutes | Doorway | Only by a funded study | **Yes, eventually** |
-| 2 | No adoption mechanism at the tail | Doorway | Partly — via Tech Coalition, SICs, regulation | Partly. This is a market problem. |
-| 3 | The panel may not beat a regression | Benchmark | Only by running it | **Yes, but not this weekend** |
-| 4 | No owner: no legal entity, no support desk, no funding | Both | **Yes, completely** | Yes — this is the real work |
-| 5 | Capacity of the help services | Doorway | Partly — by routing to self-help first | Partly |
-| 6 | Content maintenance never stops | Doorway | Yes — by paying someone | Yes |
-| 7 | The code does not exist yet | Both | Yes — 6–8 weeks | **Yes, trivially** |
+| # | Blocker | Fixable with time? | Fixable at all? |
+|---|---|---|---|
+| 1 | No evidence the intervention works beyond minutes | Only by a funded study | **Yes, eventually** |
+| 2 | No adoption mechanism at the tail | Partly — via Tech Coalition, SICs, regulation | Partly. This is a market problem. |
+| 3 | No owner: no legal entity, no support desk, no funding | **Yes, completely** | Yes — this is the real work |
+| 4 | Capacity of the help services | Partly — by routing to self-help first | Partly |
+| 5 | Content maintenance never stops | Yes — by paying someone | Yes |
+| 6 | The code does not exist yet | Yes — 6–8 weeks | **Yes, trivially** |
 
-Read that list in order and the conclusion is uncomfortable but useful: **the code is the seventh hardest problem.** Everything above it is organisational.
+Read that list in order and the conclusion is uncomfortable but useful: **the code is the sixth hardest problem.** Everything above it is organisational.
 
 ---
 

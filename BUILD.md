@@ -6,7 +6,7 @@ Numbers in a README drift; this file carries none. `npm run status` prints the l
 
 | Module | Where | Evidence |
 |---|---|---|
-| Shared spine (card, validation, a11y) | `packages/shared/` | `check:spine` fingerprint + `core.test.js` |
+| Shared modules (card, validation, a11y) | `packages/shared/` | `check:shared` fingerprint + `core.test.js` |
 | The Shift (one shape per exposure: gate, card, hallway, door; in-place escalation) | `packages/core/src/shift.js` | `shift.test.js`, `shapes.spec.js` |
 | The Route (language, country, honesty, destination allow-list) | `packages/core/src/route.js` | `route.test.js` |
 | The Counter (seven fields, Desk read model) | `packages/core/src/counter.js` | `counter.test.js`, `privacy.test.js` |
@@ -37,7 +37,7 @@ Numbers in a README drift; this file carries none. `npm run status` prints the l
 
 ```bash
 npm ci
-npm run verify        # the whole static + unit gate: spine, safety, eslint, tests, routes, privacy, copy, docs
+npm run verify        # the whole static + unit gate: shared modules, safety, eslint, tests, routes, privacy, copy, docs
 npm run e2e           # Chromium, Firefox and WebKit against the real Worker; needs `npx playwright install chromium firefox webkit`
 npm run e2e:chromium  # faster loop
 npm run smoke:workerd # the Worker on the real Workers runtime (workerd) with a local D1; no account needed

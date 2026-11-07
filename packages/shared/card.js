@@ -1,10 +1,9 @@
 /**
  * @core/card — the shared decision surface.
  *
- * Both products put one decision in front of one person in ninety seconds:
- * Doorway gates a search, Benchmark asks for an estimate. Same shape, same
- * accessibility requirements, same one-action rule. This is the only rendering
- * code that is byte-identical between the two repositories.
+ * Doorway puts one decision in front of one person at a time: gate, card, hallway or
+ * door. Same accessibility requirements and the same one-action rule for each shape.
+ * This is the only rendering code the Door uses.
  *
  * Descriptor building and validation are unit-tested. mount() needs a DOM and
  * is verified manually (keyboard-only pass, screen-reader pass, 320px).

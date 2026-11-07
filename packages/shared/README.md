@@ -1,39 +1,27 @@
-# @hfg8/core — the shared spine
+# packages/shared
 
-**Card · Route · Counter · Loop.**
+**Card · Validate · Loop · A11y.**
 
-Four primitives, ~430 lines, zero dependencies. Copied verbatim into both the
-Doorway and Benchmark repositories so that each one stands alone: no shared
-package registry, no sibling checkout, no build step.
-
-This code is **byte-identical in both repos on purpose.** If you find yourself
-editing it differently in one of them, the change almost certainly belongs in
-that product's own package instead.
+Small primitives with zero dependencies, used by the Door, the Desk and the tests. They are
+guarded by a fingerprint (`npm run check:shared`) so an accidental edit is caught: a change
+here reaches every shape the Door renders.
 
 ```bash
-node --test core.test.js     # 16 tests
+node --test core.test.js
 ```
 
 ---
 
-## The four primitives
+## The primitives
 
 | Module | What it is | Used by |
 |---|---|---|
-| `card.js` | The decision surface. Shadow-DOM mounted, one primary action, phone-first, descriptor-validated so a headline that will not fit 320px is refused at build time rather than discovered in a demo. | Doorway (the warning gate) · Benchmark (the estimate card) |
-| `validate.js` | Strict whitelist validation. **Unknown keys are rejected, not stripped** — a silently stripped identifier is an identifier someone believed they had removed. Plus k-anonymity suppression and a rate that cannot exist without its denominator. | Doorway (the eight-field counter) · Benchmark (export shape) |
-| `loop.js` | The return path. Tells a person what their action caused. Doorway: service-side arrival counts. Benchmark: "your dissent changed the statement." | Both |
-| `a11y.js` | Focus trap, reduced-motion detection, plain-language linting, screen-reader announcement. | Both |
+| `card.js` | The decision surface. Shadow-DOM mounted, one primary action, phone-first, descriptor-validated so a headline that will not fit 320px is refused at build time rather than discovered in a demo. | The Door (every shape) |
+| `validate.js` | Strict whitelist validation. **Unknown keys are rejected, not stripped** — a silently stripped identifier is an identifier someone believed they had removed. Plus k-anonymity suppression and a rate that cannot exist without its denominator. | The counter contract and the Desk |
+| `loop.js` | The return path. Tells a person what their action caused. Doorway: service-side arrival counts. | Reserved: not wired into the Door yet |
+| `a11y.js` | Focus trap, reduced-motion detection, plain-language linting, screen-reader announcement. | The Door |
 
 ---
-
-## Why these four and not more
-
-The two products genuinely diverge on content, routing tables, inference and
-buyer. They genuinely agree on exactly four things: **a ninety-second card, a
-deterministic route, a counter that cannot identify anyone, and a loop that
-closes back to the person.** Anything outside that list belongs in the product
-package.
 
 ## The rules this package encodes
 

@@ -65,7 +65,6 @@ A second reviewer produced a prototype (`Doorway levelled up`) with a stronger i
 ## New open items this work surfaced
 
 - **V15 — real Safari and mobile.** The suite now runs in Chromium, Firefox and WebKit, but Playwright's WebKit is not Safari. Safari's Intelligent Tracking Prevention may restrict third-party `localStorage` in ways it does not; in the worst case the Door cannot keep state, and the DEGRADED path (card, not gate) applies. Needs a pass on real Safari (macOS and iOS).
-- **Shared spine.** `packages/shared/card.js` changed (the exit button's weight). `check-spine --write` updated the fingerprint; the sister repo's copy must be updated too, or the "one spine" claim stops being true.
 - **Edge not deployed.** The Worker has run on `node:sqlite` (unit tests) and on workerd with a local D1 (`smoke:workerd`), never on Cloudflare's D1 service. A first deploy may still surface differences.
 - **Node ≥ 22.13** is now required to run the tests (`node:sqlite`).
 - **The quiet pill blocks the page for its few seconds**, because the frame is full-viewport for every format so that its size does not reveal the format. Noted in `docs/02` R9.

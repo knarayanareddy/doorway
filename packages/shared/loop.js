@@ -3,8 +3,7 @@
  *
  * A product is only retainable if the person is told what their action caused.
  * Doorway: nobody returns for a warning, but the service-side arrival count
- * closes the loop back to the platform. Benchmark: an expert who objects into
- * silence never objects twice.
+ * closes the loop back to the platform.
  */
 
 export const LOOP_KIND = Object.freeze({
