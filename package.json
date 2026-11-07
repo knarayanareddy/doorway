@@ -1,26 +1,42 @@
 {
   "name": "doorway",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Plug-and-play CSAM warning + help routing for small platforms. No personal data.",
+  "description": "Response layer for small platforms: a warning, a route to help, and an aggregate counter. No personal data. Detection is out of scope.",
   "license": "MIT",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.13"
   },
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "test": "node --test packages/shared/core.test.js 'packages/*/test/*.js'",
+    "test": "node --test packages/shared/core.test.js 'packages/doorway/test/*.test.js' 'edge/test/*.test.js'",
     "test:core": "node --test packages/shared/core.test.js",
+    "lint": "eslint --max-warnings=0 .",
     "gate:privacy": "node scripts/gate-privacy.mjs",
     "lint:copy": "node scripts/lint-copy.mjs",
-    "verify": "node scripts/check-spine.mjs && node scripts/check-safety.mjs && npm run test && npm run gate:privacy && npm run lint:copy",
+    "check:routes": "node scripts/check-routes.mjs",
+    "check:pilot": "node scripts/check-routes.mjs --pilot",
     "check:spine": "node scripts/check-spine.mjs",
-    "e2e": "node scripts/e2e-mock.mjs",
     "check": "node scripts/check-safety.mjs",
-    "vendor:verify": "shasum -a 256 -c vendor/MANIFEST.sha256"
+    "build": "node scripts/build.mjs",
+    "demo": "DOOR_ORIGIN=http://127.0.0.1:8788 node scripts/dev.mjs",
+    "sign": "node scripts/sign-routes.mjs",
+    "e2e": "npm run build:e2e && playwright test",
+    "build:e2e": "DOOR_ORIGIN=http://127.0.0.1:8788 node scripts/build.mjs > /dev/null",
+    "verify": "npm run check:spine && npm run check && npm run lint && npm test && npm run check:routes && npm run gate:privacy && npm run lint:copy && npm run check:docs",
+    "verify:all": "npm run verify && npm run e2e",
+    "vendor:verify": "shasum -a 256 -c vendor/MANIFEST.sha256",
+    "check:docs": "node scripts/check-docs.mjs",
+    "status": "node scripts/status.mjs"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.65.0",
+    "esbuild": "^0.28.2",
+    "eslint": "^9.39.5",
+    "globals": "^17.14.0"
+  }
 }

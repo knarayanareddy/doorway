@@ -91,7 +91,6 @@ function walk(dir) {
 walk(ROOT);
 
 // ── report ─────────────────────────────────────────────────────────────────
-const scanned = cfg.skipDirs.length ? 'tree' : 'repo';
 if (problems.length) {
   console.error(`\n✗ SAFETY CHECK FAILED (${problems.length})\n`);
   for (const p of problems) console.error(`  ${p}`);

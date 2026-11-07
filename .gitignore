@@ -7,3 +7,7 @@ node_modules/
 coverage/
 dist/*.map
 .wrangler/
+.keys/
+test-results/
+dist/
+playwright-report/

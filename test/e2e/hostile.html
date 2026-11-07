@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hostile host</title>
+<script>
+  // A host that wants to learn what its visitor did. Everything it can reach, it records.
+  window.__captured = { fetch: [], xhr: [], beacon: [], storageReads: [], storageWrites: [], messages: [], posted: [], domAdded: [], sbis: [], errors: [] };
+  const C = window.__captured;
+
+  const realFetch = window.fetch.bind(window);
+  window.fetch = (...a) => { C.fetch.push(String(a[0]) + ' ' + String(a[1] && a[1].body || '')); return realFetch(...a); };
+
+  const realOpen = XMLHttpRequest.prototype.open, realSend = XMLHttpRequest.prototype.send;
+  XMLHttpRequest.prototype.open = function (m, u) { this.__u = u; return realOpen.apply(this, arguments); };
+  XMLHttpRequest.prototype.send = function (b) { C.xhr.push(this.__u + ' ' + b); return realSend.apply(this, arguments); };
+
+  const realBeacon = navigator.sendBeacon.bind(navigator);
+  navigator.sendBeacon = (u, d) => { C.beacon.push(u + ' ' + d); return realBeacon(u, d); };
+
+  const gi = Storage.prototype.getItem, si = Storage.prototype.setItem;
+  Storage.prototype.getItem = function (k) { C.storageReads.push(k); return gi.call(this, k); };
+  Storage.prototype.setItem = function (k, v) { C.storageWrites.push(k + '=' + v); return si.call(this, k, v); };
+
+  window.addEventListener('message', (e) => C.messages.push({ origin: e.origin, data: e.data }), true);
+  const realPost = window.postMessage.bind(window);
+  window.postMessage = (...a) => { C.posted.push(a[0]); return realPost(...a); };
+
+  new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => C.domAdded.push(n.nodeName + (n.shadowRoot ? ' [shadow]' : ''))))).observe(document, { childList: true, subtree: true });
+
+  document.addEventListener('sbis:result', (e) => C.sbis.push(e.detail), true);
+  document.addEventListener('DOMContentLoaded', () => document.body.addEventListener('sbis:result', (e) => C.sbis.push(e.detail)));
+
+  // Reaching into the frame, every way a host could.
+  window.__probe = () => {
+    const f = document.querySelector('iframe');
+    const r = { frame: !!f };
+    if (!f) return r;
+    const tryIt = (name, fn) => { try { const v = fn(); r[name] = v === undefined ? 'undefined' : String(v).slice(0, 80); } catch (e) { r[name] = 'THROWS ' + e.name; } };
+    tryIt('contentDocument', () => f.contentDocument);
+    tryIt('contentDocument.body', () => f.contentDocument.body.innerHTML);
+    tryIt('contentWindow.document', () => f.contentWindow.document.body);
+    tryIt('contentWindow.localStorage', () => f.contentWindow.localStorage.getItem('doorway:v1'));
+    tryIt('contentWindow.fetch', () => f.contentWindow.fetch);
+    tryIt('contentWindow.location.href', () => f.contentWindow.location.href);
+    r.sandbox = f.getAttribute('sandbox');
+    return r;
+  };
+</script>
+</head>
+<body>
+  <h1>Hostile host</h1>
+  <p>Logs every channel it can reach.</p>
+  <script src="/dist/latest/doorway.min.js" data-install="inst_demo001" data-country="NL" defer></script>
+</body>
+</html>
