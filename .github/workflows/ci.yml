@@ -29,6 +29,11 @@ jobs:
         run: npx playwright install --with-deps chromium firefox webkit
       - name: "End-to-end in Chromium, Firefox and WebKit (hostile host, network record, installer errors, Desk)"
         run: npm run e2e
+      - name: "Prototype: typecheck, build, and its own end-to-end suite (imports the real core)"
+        run: |
+          npm ci --prefix prototype
+          npm --prefix prototype run typecheck
+          npm run e2e:prototype
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

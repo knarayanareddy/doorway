@@ -29,7 +29,7 @@ test('network: one host, POST only for writes, seven fields, no cookies, one sto
   expect(Object.keys(state).sort()).toEqual(['last', 'n', 'seen']);
   expect(JSON.stringify(state)).not.toMatch(/offlimits|nl-|clicked|dismissed/);
 
-  const popup = page.waitForEvent('popup');
+  const popup = context.waitForEvent('page');
   await act(page, 'primary').click();
   (await popup).close().catch(() => {});
   await waitForAgg(request, (d) => d.agg.length > 0);

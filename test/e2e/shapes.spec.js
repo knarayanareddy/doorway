@@ -136,7 +136,7 @@ test('Hallway: the self-help alternative opens the other service and the click i
   await trigger(page);
   await expect(act(page, 'primary')).toBeVisible();
   await frameOf(page).getByRole('button', { name: 'Ik durf niet te bellen' }).click();
-  const popup = page.waitForEvent('popup');
+  const popup = context.waitForEvent('page');
   await frameOf(page).getByRole('button', { name: 'Begin liever met zelfhulp' }).click();
   const p = await popup;
   expect(p.url()).toBe('https://stoppenismogelijk.eu/?src=doorway');
@@ -152,7 +152,7 @@ test('Hallway: the primary action still goes to the first-choice service', async
   await openPage(page);
   await trigger(page);
   await expect(act(page, 'primary')).toBeVisible();
-  const popup = page.waitForEvent('popup');
+  const popup = context.waitForEvent('page');
   await act(page, 'primary').click();
   const p = await popup;
   expect(p.url()).toBe('https://offlimits.nl/?src=doorway');

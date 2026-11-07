@@ -223,9 +223,9 @@ export const GLASS = {
   },
   localHeading: { nl: 'Blijft op dit apparaat', en: 'Stays on this device', de: 'Bleibt auf diesem Gerät' },
   local: {
-    nl: (n) => `Dit apparaat onthoudt alleen hoe vaak dit hier verscheen (${n}) en wanneer voor het laatst. Het wordt nergens verstuurd.`,
-    en: (n) => `This device remembers only how many times this appeared here (${n}) and when it last did. It is never sent.`,
-    de: (n) => `Dieses Gerät merkt sich nur, wie oft das hier erschien (${n}) und wann zuletzt. Es wird nie gesendet.`,
+    nl: (n) => `Dit apparaat onthoudt alleen hoe vaak dit hier verscheen (${n}), wanneer voor het laatst en welke teksten je zag. Ook of je iets deed. Het wordt nergens verstuurd.`,
+    en: (n) => `This device remembers only how many times this appeared here (${n}), when it last did and which wordings you saw. Also whether you acted. It is never sent.`,
+    de: (n) => `Dieses Gerät merkt sich nur, wie oft das hier erschien (${n}), wann zuletzt und welche Texte du sahst. Auch, ob du etwas getan hast. Es wird nie gesendet.`,
   },
   wipe: { nl: 'Wis wat dit apparaat onthoudt', en: 'Wipe what this device remembers', de: 'Lösche, was dieses Gerät sich merkt' },
   wiped: { nl: 'Gewist.', en: 'Wiped.', de: 'Gelöscht.' },

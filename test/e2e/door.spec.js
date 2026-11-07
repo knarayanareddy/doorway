@@ -25,7 +25,7 @@ test('the primary action opens the allow-listed service, detached, and is counte
   await stubHelpSites(context);
   await openPage(page);
   await trigger(page);
-  const popup = page.waitForEvent('popup');
+  const popup = context.waitForEvent('page');
   await act(page, 'primary').click();
   const p = await popup;
   expect(p.url()).toBe('https://offlimits.nl/?src=doorway');
