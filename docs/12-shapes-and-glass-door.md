@@ -21,6 +21,9 @@ Every shape uses one palette (night, paper, lamp; the preview's tokens). Shapes 
 - **Card:** soft round corners, a pause motif (two lamp bars) above the headline, pill buttons.
 - **Fork:** the choices become a two-column grid of tiles; the primary action sits below them.
 - **Wave:** centred, a large breathing countdown ring with a lamp progress line under it.
+- **Wave visuals:** while the exercise runs, the urge curve rises, peaks and falls as an inline SVG, with a dot that moves along it and an area filled to the current point.
+- **Wave breathing:** an orb scales from 0.8 to 1.14 over 8 s and its label flips between breathe in and breathe out every 4 s; reduced motion holds the orb still and redraws the curve once a second.
+- **Wave phases:** the phase label (rise, peak, fall) changes at 30 % and 56 % of the run and is the card's live-region text, not per-frame speech.
 - **Hallway:** a lamp light edge down the left side, phrases as chat bubbles with copy buttons.
 
 ## The Glass Door

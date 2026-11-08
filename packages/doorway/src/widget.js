@@ -147,7 +147,7 @@ export function createDoorway({
         tertiary: { label: LABELS.report[L], kind: 'tertiary' },
         sections: [...quit(), ...tag('wave'), { blocks: [
           { type: 'text', text: WAVE.note[L] },
-          { type: 'timer', id: 'wave', seconds: waveSecs, startLabel: WAVE.start[L](waveSecs), remaining: WAVE.remaining[L], phases: WAVE.phases[L], doneText: WAVE.done[L] },
+          { type: 'timer', id: 'wave', seconds: waveSecs, startLabel: WAVE.start[L](waveSecs), remaining: WAVE.remaining[L], phases: WAVE.phases[L], doneText: WAVE.done[L], curve: true, breath: WAVE.breath[L] },
           { type: 'heading', text: WAVE.planH[L] },
           { type: 'text', text: WAVE.planB[L] },
           { type: 'choice', id: 'plan', label: WAVE.planLead[L], selected: String(readWavePlan(sessionStore) ?? ''),

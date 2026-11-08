@@ -83,6 +83,11 @@ export const WAVE = {
     en: [{ until: 0.34, label: 'The wave rises. Breathe in.' }, { until: 0.67, label: 'The wave is at its highest. Breathe out.' }, { until: 1.01, label: 'The wave falls. Keep breathing calmly.' }],
     de: [{ until: 0.34, label: 'Die Welle steigt. Atme ein.' }, { until: 0.67, label: 'Die Welle ist am höchsten. Atme aus.' }, { until: 1.01, label: 'Die Welle sinkt. Atme ruhig weiter.' }],
   },
+  breath: {
+    nl: { in: 'Adem in', out: 'Adem uit' },
+    en: { in: 'Breathe in', out: 'Breathe out' },
+    de: { in: 'Atme ein', out: 'Atme aus' },
+  },
   done: {
     nl: 'De golf is gezakt. Dat deed je zelf. Je kunt dit zo vaak doen als je wilt.',
     en: 'The wave has fallen. You did that yourself. You can do this as often as you like.',

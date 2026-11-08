@@ -12,6 +12,32 @@
 export const VARIANTS = Object.freeze(['gate', 'blur', 'card', 'chat', 'hallway', 'door', 'fork', 'wave', 'quiet']);
 export const ACTION_KINDS = Object.freeze(['primary', 'secondary', 'dismiss', 'tertiary']);
 
+/*
+ * The Wave's curve maths (ported from the preview's Wave.tsx). Pure, so it is unit-tested without a DOM.
+ * p is progress through the exercise, 0..1. Elapsed is seconds since the start.
+ */
+export const WAVE_W = 300;
+export const WAVE_H = 90;
+export const bell = (x) => Math.exp(-Math.pow((x - 0.42) / 0.22, 2) * (x > 0.42 ? 0.8 : 1.15));
+// Pixel point on the SVG for a curve point (x in 0..1, y = bell height in 0..1).
+export const wavePixel = (x, y) => [x * WAVE_W, WAVE_H - 8 - y * (WAVE_H - 24)];
+export const wavePoints = () => Array.from({ length: 61 }, (_, i) => wavePixel(i / 60, bell(i / 60)));
+export const wavePhase = (p) => (p < 0.3 ? 'rise' : p < 0.56 ? 'peak' : 'fall');
+export const PHASE_INDEX = Object.freeze({ rise: 0, peak: 1, fall: 2 });
+// The filled area under the curve from the start to progress p, closed on the baseline.
+export const waveArea = (p) => {
+  if (p <= 0) return '';
+  const base = WAVE_H - 8;
+  const pts = [];
+  for (let i = 0; i <= 60; i++) if (i / 60 <= p) pts.push(wavePixel(i / 60, bell(i / 60)));
+  pts.push(wavePixel(p, bell(p)));
+  const [ex] = pts[pts.length - 1];
+  return 'M0,' + base + ' ' + pts.map(([x, y]) => 'L' + x.toFixed(1) + ',' + y.toFixed(1)).join(' ') + ' L' + ex.toFixed(1) + ',' + base + ' Z';
+};
+export const waveBreathIn = (elapsed) => Math.floor(elapsed / 4) % 2 === 0;
+// The orb: 0.8 to 1.14, one full in-and-out every 8 s. Reduced motion holds it at 1.
+export const waveOrbScale = (elapsed, reduced = false) => (reduced ? 1 : 0.8 + 0.34 * (0.5 - 0.5 * Math.cos((Math.PI * elapsed) / 4)));
+
 /**
  * Optional content sections, for panels that explain or rehearse something (a disclosure
  * of what is sent, a list of first sentences, an FAQ). Plain data only; every string is
@@ -103,6 +129,7 @@ export function validate(d = {}) {
         ids.add(b.id);
         if (!(Number.isInteger(b.seconds) && b.seconds >= 5 && b.seconds <= 300)) errors.push('timer seconds must be an integer from 5 to 300');
         if (typeof b.startLabel !== 'string' || !b.startLabel.trim()) errors.push('timer needs a startLabel');
+        if (b.curve && !(Array.isArray(b.phases) && b.phases.length === 3 && b.breath && typeof b.breath.in === 'string' && typeof b.breath.out === 'string')) errors.push('curve timer needs three phases and breath.in / breath.out');
       }
       if (b.type === 'list' && !Array.isArray(b.items)) errors.push('list block needs items');
       if (b.type === 'phrases' && !(Array.isArray(b.items) && b.items.length)) errors.push('phrases block needs items');
@@ -142,7 +169,9 @@ export function mount(d0, { onOutcome, doc = globalThis.document } = {}) {
   let outcome = 'timeout';
   let action = null;
   const timers = new Set();
-  const stopTimers = () => { timers.forEach(clearInterval); timers.clear(); };
+  // The Wave's animation frame, when one is running. Stopped with the timers, so a view change or close ends it.
+  let stopFrames = () => {};
+  const stopTimers = () => { timers.forEach(clearInterval); timers.clear(); stopFrames(); stopFrames = () => {}; };
 
   let closed = false;
   // Escape is listened for on the document, not inside the card: Safari does not focus a button when it is
@@ -238,18 +267,49 @@ export function mount(d0, { onOutcome, doc = globalThis.document } = {}) {
       phase.setAttribute('tabindex', '-1');
       t.hidden = true;
       phase.focus();
+      // The Wave (curve): the picture follows the clock. Motion (the moving dot, the orb) runs per animation frame;
+      // reduced motion keeps the picture still and only redraws it once a second, with the countdown.
+      const curve = !!b.curve;
+      const reduced = !!(doc.defaultView && doc.defaultView.matchMedia && doc.defaultView.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      const t0 = performance.now();
+      const elapsed = () => (reduced ? total - left : Math.min(total, (performance.now() - t0) / 1000));
+      const svg = box.querySelector('.wv-curve');
+      const dot = box.querySelector('.wv-dot');
+      const area = box.querySelector('.wv-area');
+      const disc = box.querySelector('.wv-disc');
+      const orbLabel = box.querySelector('.wv-lab');
+      const drawWave = (e = elapsed()) => {
+        const p = Math.min(1, e / total);
+        const [x, y] = wavePixel(p, bell(p));
+        dot.setAttribute('cx', x.toFixed(1));
+        dot.setAttribute('cy', y.toFixed(1));
+        area.setAttribute('d', waveArea(p));
+        disc.style.transform = 'scale(' + waveOrbScale(e, reduced).toFixed(3) + ')';
+        const breath = b.breath[waveBreathIn(e) ? 'in' : 'out'];
+        if (orbLabel.textContent !== breath) orbLabel.textContent = breath;
+        const ph = b.phases[PHASE_INDEX[wavePhase(p)]].label;
+        if (phase.textContent !== ph) { phase.textContent = ph; svg.setAttribute('aria-label', ph); }
+      };
       const paint = () => {
         const frac = (total - left) / total;
         bar.value = total - left;
         label.textContent = b.remaining ? b.remaining(left) : String(left);
+        if (curve) { drawWave(); return; }
         const ph = (b.phases || []).find((x) => frac < x.until) || (b.phases || [])[(b.phases || []).length - 1];
         if (ph) phase.textContent = ph.label;
       };
       paint();
+      if (curve && !reduced) {
+        let raf = 0;
+        const frame = () => { drawWave(); raf = requestAnimationFrame(frame); };
+        raf = requestAnimationFrame(frame);
+        stopFrames = () => cancelAnimationFrame(raf);
+      }
       const id = setInterval(() => {
         left -= 1;
         if (left > 0) { paint(); return; }
         clearInterval(id); timers.delete(id);
+        if (curve) { stopFrames(); stopFrames = () => {}; drawWave(total); disc.style.transform = 'scale(1)'; orbLabel.textContent = ''; }
         bar.value = total; label.textContent = ''; phase.textContent = '';
         done.textContent = b.doneText || '';
         if (b.onDone) answer(b.onDone(), t);
@@ -314,6 +374,18 @@ function legacyCopy(doc, text) {
 }
 
 let uid = 0;
+// The Wave's live picture: the urge curve (faint full line, filled area to progress, a dot), the breathing orb
+// (a disc whose scale is set from the clock) and its label, which sits under the orb, not on it, so it keeps contrast.
+function waveMarkup(b) {
+  const pts = wavePoints().map(([x, y]) => x.toFixed(1) + ',' + y.toFixed(1)).join(' ');
+  const [dx, dy] = wavePixel(0, bell(0));
+  return '<svg class="wv-curve" viewBox="0 0 ' + WAVE_W + ' ' + WAVE_H + '" role="img" aria-label="' + esc(b.phases[0].label) + '" focusable="false">' +
+    '<polyline class="wv-line" points="' + pts + '" fill="none" stroke="rgba(247,242,232,0.25)" stroke-width="2" stroke-linecap="round"/>' +
+    '<path class="wv-area" d="" fill="rgba(232,163,61,0.28)"/>' +
+    '<circle class="wv-dot" cx="' + dx.toFixed(1) + '" cy="' + dy.toFixed(1) + '" r="5.5" fill="#e8a33d" stroke="#0e1a24" stroke-width="2"/></svg>' +
+    '<div class="wv-orb" aria-hidden="true"><div class="wv-disc"></div></div>' +
+    '<div class="wv-lab" aria-hidden="true">' + esc(b.breath.in) + '</div>';
+}
 function renderBlock(b) {
   switch (b.type) {
     case 'text': return '<p class="bt">' + esc(b.text) + '</p>';
@@ -325,9 +397,13 @@ function renderBlock(b) {
     case 'choice': return '<div class="ch">' + (b.label ? '<p class="bt">' + esc(b.label) + '</p>' : '') + '<div class="co">' +
       b.options.map((o) => '<button class="cb" data-choice="' + esc(b.id) + '" data-opt="' + esc(o.id) + '" aria-pressed="' + (b.selected === o.id ? 'true' : 'false') + '">' + esc(o.label) + '</button>').join('') +
       '</div><span class="astat" role="status" aria-live="polite"></span></div>';
-    case 'timer': return '<div class="tm"><button class="sa" data-timer="' + esc(b.id) + '">' + esc(b.startLabel) + '</button>' +
+    case 'timer': return '<div class="tm' + (b.curve ? ' wv' : '') + '"><button class="sa" data-timer="' + esc(b.id) + '">' + esc(b.startLabel) + '</button>' +
+      (b.curve ? waveMarkup(b) : '') +
       '<progress class="tpg" max="' + b.seconds + '" value="0" aria-hidden="true"></progress>' +
-      '<div class="tl" aria-hidden="true"></div><div class="tp" role="status" aria-live="polite"></div><div class="td" role="status" aria-live="polite"></div></div>';
+      (b.curve
+        ? '<div class="tl" role="status" aria-live="polite"></div>'
+        : '<div class="tl" aria-hidden="true"></div>') +
+      '<div class="tp" role="status" aria-live="polite"></div><div class="td" role="status" aria-live="polite"></div></div>';
     case 'action': return '<div class="ar"><button class="sa' + (b.tone === 'danger' ? ' danger' : '') + '" data-sect="' + esc(b.id) + '">' + esc(b.label) + '</button><span class="astat" role="status" aria-live="polite"></span></div>';
     default: return '';
   }
@@ -462,6 +538,12 @@ export const CSS = [
   ':host([data-core-card="wave"]) .tm{display:flex;flex-direction:column;align-items:center;margin:4px 0 8px}',
   ':host([data-core-card="wave"]) .tl{order:-1;flex:none;width:min(176px,38vh);height:min(176px,38vh);border-radius:50%;border:6px solid #e8a33d;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:300;color:#f7f2e8;font-variant-numeric:tabular-nums;margin:6px 0 12px;animation:wv-breathe 8s ease-in-out infinite;min-height:0}',
   ':host([data-core-card="wave"]) .tpg{width:100%}',
+  // The Wave's curve and breathing orb (a timer block with curve: true). Its countdown is plain text, not the ring.
+  ':host([data-core-card="wave"]) .tm.wv .tl{order:0;flex:none;width:auto;height:auto;border:0;border-radius:0;animation:none;margin:6px 0 0;font-size:14px;min-height:18px}',
+  '.wv-curve{display:block;width:100%;max-width:300px;height:auto;margin:8px auto 0;overflow:visible}',
+  '.wv-orb{position:relative;width:112px;height:112px;margin:6px auto 0;display:grid;place-items:center}',
+  '.wv-disc{width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,#f7cf86,#e8a33d);box-shadow:0 0 36px rgba(232,163,61,.45)}',
+  '.wv-lab{font-size:13px;font-weight:600;color:#f7f2e8;margin-top:4px;min-height:18px}',
   // HALLWAY: a door ajar. A lamp light edge down the left side; the phrases are chat bubbles with their copy buttons.
   ':host([data-core-card="hallway"]) .ovl>div{border-radius:16px;padding-left:34px;position:relative}',
   ':host([data-core-card="hallway"]) .ovl>div::before{content:"";position:absolute;left:12px;top:24px;bottom:24px;width:4px;border-radius:2px;background:linear-gradient(#e8a33d,rgba(232,163,61,0))}',

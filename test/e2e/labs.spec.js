@@ -315,6 +315,58 @@ test('wave: the timer has no animation to switch off, and works with reduced mot
   await expect(page.locator('iframe')).toHaveCount(0);
 });
 
+test('wave: the curve rises, peaks and falls, the phase changes, and the breathing label flips', async ({ page }) => {
+  await openLabs(page, { waveSeconds: 15 });
+  await preview(page, 'wave');
+  await expect(act(page, 'primary')).toBeVisible();
+  await frameOf(page).getByRole('button', { name: /^Begin/ }).click();
+  const dot = frameOf(page).locator('.wv-dot');
+  const phase = frameOf(page).locator('.tp');
+  const breath = frameOf(page).locator('.wv-lab');
+  const read = async () => ({
+    cx: Number(await dot.getAttribute('cx')),
+    cy: Number(await dot.getAttribute('cy')),
+    phase: (await phase.textContent()).trim(),
+    breath: (await breath.textContent()).trim(),
+  });
+  // Sample when the run has reached each share of its length: about 20%, 50% and 90%.
+  const at = async (share) => {
+    await expect.poll(async () => (await read()).cx, { timeout: 14_000 }).toBeGreaterThanOrEqual(share * 300);
+    return read();
+  };
+  const start = await at(0.02);
+  // Four seconds per breath (fifteen-second run): the label flips inside the first half, before the middle sample.
+  const seen = new Set();
+  await expect.poll(async () => { seen.add((await read()).breath); return seen.size; }, { timeout: 8_000 }).toBeGreaterThanOrEqual(2);
+  const mid = await at(0.5);
+  const late = await at(0.9);
+  // SVG y grows downwards: the dot goes up (smaller cy) to the peak and comes down again by the end.
+  expect(mid.cy, 'the dot is higher at the peak than at the start').toBeLessThan(start.cy);
+  expect(late.cy, 'and lower again by the end').toBeGreaterThan(mid.cy);
+  expect(start.cx).toBeLessThan(mid.cx);
+  expect(mid.cx).toBeLessThan(late.cx);
+  expect(start.phase, 'rise at the start').not.toBe(mid.phase);
+  expect(mid.phase, 'peak in the middle').not.toBe(late.phase);
+  expect(start.phase).not.toBe(late.phase);
+  await expect(frameOf(page).getByText('De golf is gezakt.', { exact: false })).toBeVisible({ timeout: 14_000 });
+});
+
+test('wave: with reduced motion the orb keeps its size, and the curve is drawn once a second', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openLabs(page, { waveSeconds: 10 });
+  await preview(page, 'wave');
+  await expect(act(page, 'primary')).toBeVisible();
+  await frameOf(page).getByRole('button', { name: /^Begin/ }).click();
+  const disc = frameOf(page).locator('.wv-disc');
+  const countdown = frameOf(page).locator('.tl');
+  const seen = new Set();
+  const first = (await countdown.textContent()).trim();
+  // Wait for the countdown to tick (an event, not a fixed sleep), sampling the orb all the while.
+  await expect.poll(async () => { seen.add(await disc.evaluate((e) => e.style.transform)); return (await countdown.textContent()).trim(); }, { timeout: 4_000 }).not.toBe(first);
+  expect(await countdown.textContent()).toMatch(/Nog [0-9]+ seconden/);
+  expect([...seen], 'no scale change while reduced motion is on').toEqual(['scale(1)']);
+});
+
 // ── 5. the youth route ─────────────────────────────────────────────────────
 test('youth route: the shipped bundle has no youth service, so the under-18 path has no link', async ({ page }) => {
   await openLabs(page);
