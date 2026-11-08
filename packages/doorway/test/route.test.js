@@ -105,10 +105,17 @@ test('a German speaker in Germany gets the German service, not a UK number', () 
   assert.notEqual(r.route.id, 'uk-stopitnow', 'this was the 6 Nov misroute');
 });
 
-test('country never overrides language', () => {
-  // A Turkish speaker in the Netherlands must not be sent to a Dutch-only line.
-  const r = resolve('tr-TR', table, { need: 'human', country: 'NL' });
-  assert.notEqual(r.route.id, 'nl-offlimits');
+test('country overrides language only through an explicit country table, and never to another country\'s line', () => {
+  // Owner decision for the Netherlands pilot: an install that declares NL sends every non-Dutch browser to the Dutch
+  // services (their pages are in Dutch; ReDirection stays an alternative). That is the byCountry.NL table. It is the
+  // only country that does this, so a declared country WITHOUT such a table still cannot override language:
+  assert.notEqual(resolve('tr-TR', table, { need: 'human', country: 'FR' }).route?.id, 'nl-offlimits');
+  assert.notEqual(resolve('tr-TR', table, { need: 'human', country: 'GB' }).route?.id, 'nl-offlimits');
+  // ...and the NL table never hands a visitor another country's helpline.
+  for (const lang of ['en-GB', 'de-DE', 'tr-TR', 'fr-FR']) {
+    const id = resolve(lang, table, { need: 'human', country: 'NL' }).route.id;
+    assert.ok(['nl-offlimits', 'nl-stoppen', 'fi-redirection'].includes(id), `${lang} got ${id}`);
+  }
 });
 
 test('a country with no local service degrades to self-help, not to a wrong number', () => {
@@ -183,4 +190,28 @@ test('every country we have a service for resolves to it under need:any', () => 
     const r = resolve(lang[country], table, { need: 'any', country });
     assert.equal(r.route.id, id, `${country} must resolve to ${id}, got ${r.route.id}`);
   }
+});
+
+// An install that declares country NL sends English and German browsers to the Dutch services. The pages are in Dutch:
+// the owner's judgement call for the Netherlands pilot. Without a declared country nothing changes (tests above).
+test('country NL: an English browser gets the Dutch self-help (Stoppen is mogelijk), not the Finnish one', () => {
+  const r = resolve('en-GB', table, { country: 'NL' });
+  assert.equal(r.route.id, 'nl-stoppen');
+  assert.ok(isAllowedDestination(r.route.url));
+});
+
+test('country NL: a human line is still a human line (Offlimits), and a German browser follows the same table', () => {
+  assert.equal(resolve('en-GB', table, { country: 'NL', need: 'human' }).route.id, 'nl-offlimits');
+  assert.equal(resolve('de-DE', table, { country: 'NL' }).route.id, 'nl-stoppen');
+  assert.equal(resolve('fr-FR', table, { country: 'NL' }).route.id, 'nl-stoppen');
+});
+
+test('country NL: a Dutch browser is unchanged, and ReDirection stays reachable as an alternative', () => {
+  assert.equal(resolve('nl-NL', table, { country: 'NL' }).route.id, 'nl-offlimits');
+  const alts = table.byCountry.NL.en.alternatives.map((a) => a.id);
+  assert.deepEqual(alts, ['nl-offlimits', 'fi-redirection']);
+});
+
+test('no country declared: an English browser still gets ReDirection', () => {
+  assert.equal(resolve('en-GB', table).route.id, 'fi-redirection');
 });

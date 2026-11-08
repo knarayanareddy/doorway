@@ -6,6 +6,9 @@ Entries are taken from the git history (`git log`) and from `docs/07-review-resp
 
 ## [Unreleased]
 
+### Netherlands installs
+- An install that declares `data-country="NL"` sends English, German and other non-Dutch browsers to the Dutch services: Stoppen is mogelijk first, Offlimits for a person, ReDirection as an alternative (`byCountry.NL` in the signed routes). The pages are in Dutch. This reverses the earlier rule that a country never overrides language, for NL only; the route test says so.
+
 ### Branch `fix/review-3` (this branch, not yet merged)
 
 Changes from the review of `wip/one-app`. Not in any merged commit, and the results below are as reported by the author of each change; check the CI run for this branch before relying on them.

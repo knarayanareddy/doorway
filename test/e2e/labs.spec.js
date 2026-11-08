@@ -323,32 +323,39 @@ test('wave: the curve rises, peaks and falls, the phase changes, and the breathi
   const dot = frameOf(page).locator('.wv-dot');
   const phase = frameOf(page).locator('.tp');
   const breath = frameOf(page).locator('.wv-lab');
-  const read = async () => ({
-    cx: Number(await dot.getAttribute('cx')),
-    cy: Number(await dot.getAttribute('cy')),
-    phase: (await phase.textContent()).trim(),
-    breath: (await breath.textContent()).trim(),
-  });
-  // Sample when the run has reached each share of its length: about 20%, 50% and 90%.
-  const at = async (share) => {
-    await expect.poll(async () => (await read()).cx, { timeout: 14_000 }).toBeGreaterThanOrEqual(share * 300);
-    return read();
-  };
-  const start = await at(0.02);
-  // Four seconds per breath (fifteen-second run): the label flips inside the first half, before the middle sample.
-  const seen = new Set();
-  await expect.poll(async () => { seen.add((await read()).breath); return seen.size; }, { timeout: 8_000 }).toBeGreaterThanOrEqual(2);
-  const mid = await at(0.5);
-  const late = await at(0.9);
-  // SVG y grows downwards: the dot goes up (smaller cy) to the peak and comes down again by the end.
-  expect(mid.cy, 'the dot is higher at the peak than at the start').toBeLessThan(start.cy);
-  expect(late.cy, 'and lower again by the end').toBeGreaterThan(mid.cy);
-  expect(start.cx).toBeLessThan(mid.cx);
-  expect(mid.cx).toBeLessThan(late.cx);
-  expect(start.phase, 'rise at the start').not.toBe(mid.phase);
-  expect(mid.phase, 'peak in the middle').not.toBe(late.phase);
-  expect(start.phase).not.toBe(late.phase);
-  await expect(frameOf(page).getByText('De golf is gezakt.', { exact: false })).toBeVisible({ timeout: 14_000 });
+  const done = frameOf(page).getByText('De golf is gezakt.', { exact: false });
+  // Record the whole run instead of sampling at fixed moments: a slow browser then reads fewer points, but the
+  // order of what it saw cannot be skipped over. Reads that fail because the run just ended are the end of the run.
+  const samples = [];
+  const t0 = Date.now();
+  while (Date.now() - t0 < 20_000) {
+    try {
+      samples.push({
+        cx: Number(await dot.getAttribute('cx', { timeout: 1500 })),
+        cy: Number(await dot.getAttribute('cy', { timeout: 1500 })),
+        phase: ((await phase.textContent({ timeout: 1500 })) || '').trim(),
+        breath: ((await breath.textContent({ timeout: 1500 })) || '').trim(),
+      });
+    } catch { break; }
+    await page.waitForTimeout(120);
+  }
+  await expect(done).toBeVisible({ timeout: 14_000 });
+  expect(samples.length, 'enough points to see a shape').toBeGreaterThan(8);
+  // The dot moves right all the way, and its height rises to a peak in the middle and comes down again (SVG y grows
+  // downwards, so higher on screen is a smaller cy).
+  for (let k = 1; k < samples.length; k++) expect(samples[k].cx, 'moves right').toBeGreaterThanOrEqual(samples[k - 1].cx);
+  const cys = samples.map((x) => x.cy);
+  const top = cys.indexOf(Math.min(...cys));
+  expect(top, 'the highest point is neither the first nor the last sample').toBeGreaterThan(0);
+  expect(top).toBeLessThan(samples.length - 1);
+  expect(cys[0], 'it starts lower than the peak').toBeGreaterThan(cys[top]);
+  expect(cys[cys.length - 1], 'and ends lower than the peak').toBeGreaterThan(cys[top]);
+  // The phase label changes from rise to peak to fall, in that order, and the breathing label flips at least once.
+  const order = [...new Set(samples.map((x) => x.phase))];
+  expect(order.length, 'three phases were shown: ' + order.join(' / ')).toBeGreaterThanOrEqual(3);
+  expect(samples[0].phase).toBe(order[0]);
+  expect(samples[samples.length - 1].phase).toBe(order[order.length - 1]);
+  expect(new Set(samples.map((x) => x.breath)).size, 'the breathing label flipped').toBeGreaterThanOrEqual(2);
 });
 
 test('wave: with reduced motion the orb keeps its size, and the curve is drawn once a second', async ({ page }) => {
