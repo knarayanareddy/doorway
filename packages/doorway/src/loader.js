@@ -52,6 +52,9 @@ export function createLoader({
   doc = document, win = window, doorOrigin, install, country, legalJurisdiction, labs: labsRaw, waveSeconds: waveRaw,
   timeoutMs = DEFAULT_TIMEOUT_MS, log = (m) => console.error(m), fetchImpl = win.fetch?.bind(win),
 } = {}) {
+  let doorOriginUrl;
+  try { doorOriginUrl = new URL(doorOrigin); } catch { throw new Error(`Doorway: doorOrigin is not a valid URL: ${doorOrigin}`); }
+  const doorOriginStr = doorOriginUrl.origin;
   let current = null;
   const labs = parseLabs(Array.isArray(labsRaw) ? labsRaw.join(',') : labsRaw);
 
@@ -90,7 +93,7 @@ export function createLoader({
     };
 
     function onMessage(e) {
-      if (e.origin !== new URL(doorOrigin).origin || e.source !== iframe.contentWindow) return;
+      if (e.origin !== doorOriginStr || e.source !== iframe.contentWindow) return;
       const d = e.data;
       if (!d || typeof d !== 'object' || Object.keys(d).length !== 1) return;
       if (d.ready === true) { clearTimeout(timer); iframe.style.visibility = 'visible'; iframe.focus(); }
@@ -100,7 +103,7 @@ export function createLoader({
     iframe.addEventListener('load', () => {
       // A Door that failed to start (error page, blocked frame) has another origin;
       // the browser refuses the message and the timeout below reports the fix.
-      try { iframe.contentWindow?.postMessage({ trigger: true, type: t }, new URL(doorOrigin).origin); } catch { /* handled by the start timeout */ }
+      try { iframe.contentWindow?.postMessage({ trigger: true, type: t }, doorOriginStr); } catch { /* handled by the start timeout */ }
     });
     win.addEventListener('message', onMessage);
     doc.body.appendChild(iframe);
@@ -108,7 +111,7 @@ export function createLoader({
     timer = setTimeout(async () => {
       log(INSTALL_HINTS.blocked);
       try {
-        const r = await fetchImpl?.(new URL(`/v1/status?i=${encodeURIComponent(install)}`, doorOrigin), { credentials: 'omit', referrerPolicy: 'no-referrer' });
+        const r = await fetchImpl?.(new URL(`/v1/status?i=${encodeURIComponent(install)}`, doorOriginStr), { credentials: 'omit', referrerPolicy: 'no-referrer' });
         const s = await r?.json();
         if (s && s.ok === false && INSTALL_HINTS[s.reason]) log(INSTALL_HINTS[s.reason]);
       } catch { /* diagnostics only */ }

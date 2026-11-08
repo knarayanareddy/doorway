@@ -16,11 +16,12 @@
  * where only the release owner can reach it.
  */
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { signedBytes, bytesToB64u } from '../packages/core/src/bundle.js';
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // --file=<path> signs another bundle with the same key (the demo record: routes.demo.json).
 const fileArg = process.argv.find((a) => a.startsWith('--file='));
 const ROUTES = fileArg ? path.resolve(fileArg.slice('--file='.length)) : path.join(ROOT, 'packages/doorway/src/routes.nl.json');

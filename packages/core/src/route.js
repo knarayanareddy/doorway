@@ -45,7 +45,7 @@ export function resolve(langTag, table, opts = {}) {
 
   for (const entry of chain) {
     const candidates = [entry.default, ...(entry.alternatives || [])].filter(Boolean);
-    const eligible = candidates.filter((c) => satisfies(c, need) && servesCountry(c, country));
+    const eligible = candidates.filter((c) => satisfies(c, need) && servesCountry(c, country) && (!c.url || isAllowedDestination(c.url)));
     if (eligible.length) {
       // Specificity beats position. A service that explicitly lists your country
       // outranks one with no `countries` field at all — otherwise a global
@@ -70,7 +70,7 @@ export function resolve(langTag, table, opts = {}) {
   //   2. a human route in your language that does not claim to serve you, used
   //      only when there is no self-help option at all — and SAY that
   //   3. nothing: better to render no route than a wrong number
-  const all = chain.flatMap((e) => [e.default, ...(e.alternatives || [])]).filter(Boolean);
+  const all = chain.flatMap((e) => [e.default, ...(e.alternatives || [])]).filter(Boolean).filter((c) => !c.url || isAllowedDestination(c.url));
 
   // A human route that genuinely serves this country is never skipped over in
   // favour of self-help. This is the FI/en case: ReDirection is self-help and
@@ -83,7 +83,17 @@ export function resolve(langTag, table, opts = {}) {
 
   const selfHelp = all.find((c) => c.channel === 'selfhelp' || c.channel === 'chat');
   if (selfHelp) {
-    return { route: selfHelp, lang, country, reason: 'no local human service — self-help offered instead' };
+    // R13: if a human route in the visitor's language exists but was filtered by country,
+    // surface that fact so the Hallway can explain.
+    const humanExistsForLang = chain.flatMap((e) => [e.default, ...(e.alternatives || [])]).filter(Boolean).some((c) => isHuman(c));
+    const degraded = humanExistsForLang && need === 'human';
+    return {
+      route: selfHelp,
+      lang,
+      country,
+      reason: 'no local human service — self-help offered instead',
+      ...(degraded ? { outOfCountry: true, degradedFromHuman: true } : {}),
+    };
   }
 
   const misfit = all.find((c) => satisfies(c, need));
@@ -220,6 +230,13 @@ export function allRoutes(bundle) {
     if (entry.default) out.push({ r: entry.default, where: `${lang}/default` });
     (entry.alternatives || []).forEach((r, i) => out.push({ r, where: `${lang}/alt${i}` }));
   }
+  for (const [country, byLang] of Object.entries(bundle?.byCountry || {})) {
+    for (const [lang, entry] of Object.entries(byLang || {})) {
+      if (!entry) continue;
+      if (entry.default) out.push({ r: entry.default, where: `byCountry:${country}/${lang}/default` });
+      (entry.alternatives || []).forEach((r, i) => out.push({ r, where: `byCountry:${country}/${lang}/alt${i}` }));
+    }
+  }
   return out;
 }
 
@@ -232,7 +249,22 @@ export function dropDisallowed(bundle) {
     if (!all.length) continue;
     byLanguage[lang] = { default: all[0], alternatives: all.slice(1) };
   }
-  return { ...bundle, byLanguage };
+  const result = { ...bundle, byLanguage };
+  if (bundle?.byCountry) {
+    const byCountry = {};
+    for (const [country, byLang] of Object.entries(bundle.byCountry)) {
+      const filteredLang = {};
+      for (const [lang, entry] of Object.entries(byLang || {})) {
+        if (!entry) continue;
+        const all = [entry.default, ...(entry.alternatives || [])].filter(keep);
+        if (!all.length) continue;
+        filteredLang[lang] = { default: all[0], alternatives: all.slice(1) };
+      }
+      if (Object.keys(filteredLang).length) byCountry[country] = filteredLang;
+    }
+    result.byCountry = byCountry;
+  }
+  return result;
 }
 
 /**

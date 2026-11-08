@@ -16,6 +16,7 @@
  */
 import http from 'node:http';
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import worker from '../edge/c.js';
@@ -23,7 +24,7 @@ import { createDb, sha256hex } from '../edge/test/d1-shim.js';
 import { seedDemo } from './seed-demo.mjs';
 import { appHandler, deskAggProxy } from './serve-demo.mjs';
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DOOR_PORT = Number(process.env.DOOR_PORT || 8788);
 const PLATFORM_PORT = Number(process.env.PLATFORM_PORT || 8789);
 const DOOR = `http://127.0.0.1:${DOOR_PORT}`;
@@ -56,7 +57,7 @@ function serveStatic(root) {
     let p = path.normalize(decodeURIComponent(u.pathname));
     if (p.endsWith('/')) p += 'index.html';
     const file = path.join(root, p);
-    if (!file.startsWith(root) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end('not found'); return; }
+    if ((file !== root && !file.startsWith(root + path.sep)) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end('not found'); return; }
     res.writeHead(200, { 'content-type': TYPES[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' });
     fs.createReadStream(file).pipe(res);
   };

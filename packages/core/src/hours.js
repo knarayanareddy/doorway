@@ -21,8 +21,18 @@ export function parseHours(spec) {
     if (b < a) return null;
     const open = Number(m[3]) * 60 + Number(m[4]);
     const close = Number(m[5]) * 60 + Number(m[6]);
-    if (!(open < close) || close > 24 * 60) return null;
-    for (let d = a; d <= b; d++) week[d] = { open, close };
+    if (open === close || close > 24 * 60 || open > 24 * 60) return null;
+    const overnight = close <= open;
+    if (overnight && (24 * 60 - open + close) > 12 * 60) return null;
+    for (let d = a; d <= b; d++) {
+      if (overnight) {
+        week[d] = { open, close: 24 * 60 };
+        const next = (d + 1) % 7;
+        if (!week[next] || week[next].open > close) week[next] = { open: 0, close };
+      } else {
+        week[d] = { open, close };
+      }
+    }
   }
   return week;
 }
@@ -42,10 +52,10 @@ export function openStatus(spec, now = new Date(), tz = 'Europe/Amsterdam') {
   const cur = (Number(parts.find((p) => p.type === 'hour').value) % 24) * 60 + Number(parts.find((p) => p.type === 'minute').value);
   const today = week[day];
   if (today && cur >= today.open && cur < today.close) return { open: true, closesAt: hhmm(today.close) };
-  if (today && cur < today.open) return { open: false, opensAt: hhmm(today.open) };
+  if (today && cur < today.open) return { open: false, opensAt: hhmm(today.open), opensDay: DAYS[day], tomorrow: true };
   for (let i = 1; i <= 7; i++) {
     const next = week[(day + i) % 7];
-    if (next) return { open: false, opensAt: hhmm(next.open), tomorrow: i === 1 };
+    if (next) return { open: false, opensAt: hhmm(next.open), opensDay: DAYS[(day + i) % 7], tomorrow: i === 1 };
   }
   return { open: false };
 }

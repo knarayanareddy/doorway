@@ -112,7 +112,7 @@ export function pick(state = {}, cfg = DEFAULT_CONFIG, now = Date.now(), opts = 
   //     inline card (never a modal), and the clock is NOT reset (keepClock).
   const window = intervalFor(n, cfg);
   // `alwaysAdvance` (demo only, the `advance` lab): skip the window entirely, so every pick is the next step.
-  if (!opts.alwaysAdvance && hours < window) {
+  if (!opts.alwaysAdvance) {
     const acted = Number.isFinite(state.acted) ? state.acted : 0;
     if (acted && (now - acted) / 3.6e6 < QUIET_HOURS) {
       return {
@@ -124,16 +124,18 @@ export function pick(state = {}, cfg = DEFAULT_CONFIG, now = Date.now(), opts = 
         reason: `person already acted ${Math.round((now - acted) / 6e4)} min ago; quiet for ${QUIET_HOURS}h`,
       };
     }
-    const upNext = n + 1;
-    const shape = shapeFor(upNext, cfg);
-    return {
-      state: 'ESCALATING',
-      format: inlineShape(shape),
-      family: cfg.families[shape],
-      bucket: bucketOf(upNext),
-      keepClock: true,
-      reason: `retry inside the ${window}h window — escalate in place, clock not reset`,
-    };
+    if (hours < window) {
+      const upNext = n + 1;
+      const shape = shapeFor(upNext, cfg);
+      return {
+        state: 'ESCALATING',
+        format: inlineShape(shape),
+        family: cfg.families[shape],
+        bucket: bucketOf(upNext),
+        keepClock: true,
+        reason: `retry inside the ${window}h window — escalate in place, clock not reset`,
+      };
+    }
   }
 
   const next = n + 1;

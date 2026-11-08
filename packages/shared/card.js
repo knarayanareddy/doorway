@@ -191,8 +191,17 @@ export function mount(d0, { onOutcome, doc = globalThis.document } = {}) {
     const act = t.dataset.act;
     if (act === 'primary' || act === 'secondary' || act === 'tertiary') {
       const a = d[act];
-      finish(act, a);
-      if (a && a.onSelect) a.onSelect();
+      const isAnchor = t.tagName === 'A' && t.hasAttribute('href');
+      if (isAnchor) {
+        e.preventDefault();
+        const href = t.getAttribute('href');
+        finish(act, a);
+        if (a && a.onSelect) a.onSelect();
+        try { const w = doc.defaultView || globalThis; if (href) w.location.assign(href); } catch { /* fallback: default already prevented */ }
+      } else {
+        finish(act, a);
+        if (a && a.onSelect) a.onSelect();
+      }
     } else if (act === 'dismiss') {
       finish('dismiss');
     } else if (t.dataset.disc) {

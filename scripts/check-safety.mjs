@@ -18,9 +18,10 @@
  * Exits 1 on any violation, so CI green means the claim is true.
  */
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const cfg = JSON.parse(fs.readFileSync(path.join(ROOT, 'safety.config.json'), 'utf8'));
 
 const problems = [];

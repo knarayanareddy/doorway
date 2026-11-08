@@ -17,6 +17,7 @@ import crypto from 'node:crypto';
  */
 export const DEV_KEY_FINGERPRINT = Object.freeze([
   '723fcb794590fad6bf7763f73288d5da616dc6cf7424e50af0be9b5cb879c5c3',
+  'eeffa57532144adefee0fff45da63930593d634c09405859c1b70ec8c023e74e',
 ]);
 
 /** SHA-256 (hex) of a raw base64url Ed25519 public key. */

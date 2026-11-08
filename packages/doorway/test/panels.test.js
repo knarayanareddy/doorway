@@ -112,7 +112,9 @@ test('hours: parsing is strict, and unknown never means closed', () => {
   assert.equal(parseHours('Mo-Fr 09:00-22:00')[5], null);
   for (const bad of ['', 'always', 'Fr-Mo 09:00-10:00', 'Mo 10:00-09:00', 'Mo 09:00-25:00', undefined]) assert.equal(parseHours(bad), null, String(bad));
   assert.equal(openStatus('nonsense', new Date(NOW)), null);
-  assert.deepEqual(openStatus('Mo-Fr 09:00-22:00', new Date('2026-11-07T10:00:00Z')), { open: false, opensAt: '09:00', tomorrow: false });
+  assert.deepEqual(openStatus('Mo-Fr 09:00-22:00', new Date('2026-11-07T10:00:00Z')), { open: false, opensAt: '09:00', opensDay: 'Mo', tomorrow: false });
+  assert.ok(parseHours('Mo-Su 22:00-06:00'), 'overnight span is now supported');
+  assert.equal(openStatus('Mo-Su 22:00-06:00', new Date('2026-11-07T22:30:00Z'))?.open, true);
 });
 
 test('hours: evaluated in the service\'s timezone, across the DST change', () => {

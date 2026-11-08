@@ -5,4 +5,4 @@
 export * as card from './card.js';
 export * as a11y from './a11y.js';
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.2.0';

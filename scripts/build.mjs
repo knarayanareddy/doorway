@@ -14,6 +14,7 @@
  * a look-alike Door.
  */
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { build } from 'esbuild';
@@ -24,7 +25,7 @@ import { evaluateProdKey } from './lib/prod-guard.mjs';
 // A production build (DOORWAY_PRODUCTION=1) must not pin the public dev key.
 { const g = evaluateProdKey({ publicKey: PUBLIC_KEY_RAW_B64U, env: process.env }); if (!g.ok) { console.error(g.note); process.exit(1); } }
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DOOR_ORIGIN = (process.env.DOOR_ORIGIN || 'https://door.doorway.example').replace(/\/$/, '');
 if (!/^https?:\/\/[^/]+$/.test(DOOR_ORIGIN)) throw new Error(`DOOR_ORIGIN must be an origin, got ${DOOR_ORIGIN}`);
 // DIST_DIR lets two builds run side by side (the hosted demo's two roles share one checkout in tests). It must be

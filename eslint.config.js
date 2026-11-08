@@ -44,7 +44,7 @@ const VISITOR_SYNTAX = [
 ];
 
 export default [
-  { ignores: ['node_modules/**', 'dist/**', 'dist-hosted/**', 'organiser/**', 'vendor/**', 'research/**', 'prototype/**', 'playwright-report/**', 'test-results/**', '.keys/**'] },
+  { ignores: ['node_modules/**', 'dist/**', 'dist-hosted/**', 'organiser/**', 'vendor/**', 'research/**', 'prototype/**', 'playwright-report/**', 'test-results/**', '.keys/**', 'edge/.wrangler/**', 'prototype/node_modules/**'] },
   js.configs.recommended,
   {
     files: ['**/*.js', '**/*.mjs'],

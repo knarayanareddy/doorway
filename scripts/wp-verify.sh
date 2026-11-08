@@ -1,12 +1,13 @@
-#!/bin/zsh
+#!/usr/bin/env bash
 # Run the generated WordPress plugin inside a real WordPress (SQLite, no MySQL) and drive it
 # with the Playwright suite in all three browsers. Needs php and curl; downloads WordPress
 # and the SQLite integration plugin on first use. Nothing leaves this machine except those downloads.
 #
 #   scripts/wp-verify.sh            (from the repo root)
 set -eu
-ROOT=${0:A:h:h}
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WP_DIR=${WP_DIR:-${TMPDIR:-/tmp}/doorway-wp}
+VERSION="$(node -p "JSON.parse(require('fs').readFileSync('package.json','utf8')).version")"
 PORT=8790
 mkdir -p "$WP_DIR" && cd "$WP_DIR"
 [ -d wordpress ] || curl -sL https://wordpress.org/latest.tar.gz | tar xz
@@ -29,7 +30,7 @@ DOOR_ORIGIN=http://127.0.0.1:8788 CDN_BASE=http://127.0.0.1:$PORT/doorway-cdn no
 php -l dist/wordpress/doorway/doorway.php
 rm -rf "$WP_DIR/wordpress/wp-content/plugins/doorway" "$WP_DIR/wordpress/doorway-cdn"
 cp -r dist/wordpress/doorway "$WP_DIR/wordpress/wp-content/plugins/doorway"
-mkdir -p "$WP_DIR/wordpress/doorway-cdn/v0.2.0" && cp dist/v0.2.0/doorway.min.js "$WP_DIR/wordpress/doorway-cdn/v0.2.0/"
+mkdir -p "$WP_DIR/wordpress/doorway-cdn/v$VERSION" && cp "dist/v$VERSION/doorway.min.js" "$WP_DIR/wordpress/doorway-cdn/v$VERSION/"
 wp plugin activate doorway
 wp option update doorway_install inst_wp0001
 wp option update doorway_country NL
