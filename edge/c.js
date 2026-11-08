@@ -444,6 +444,13 @@ async function verify(request, env) {
         try {
           const u = new URL(loc, `https://${install.domain}/`);
           if (u.hostname !== install.domain) found = false;
+          else {
+            const follow = await fetch(u.toString(), { redirect: 'manual', headers: { accept: 'text/html' } });
+            if (follow.status >= 200 && follow.status < 300) {
+              const html = (await follow.text()).slice(0, 262_144);
+              found = hasVerifyMeta(html, install.verify_token);
+            }
+          }
         } catch { found = false; }
       }
     } else {

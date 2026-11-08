@@ -108,13 +108,16 @@ test('hallway: every sentence respects the plain-language rule in every language
 
 // ── hours.js ───────────────────────────────────────────────────────────────
 test('hours: parsing is strict, and unknown never means closed', () => {
-  assert.equal(parseHours('Mo-Fr 09:00-22:00')[2].open, 540);
-  assert.equal(parseHours('Mo-Fr 09:00-22:00')[5], null);
+  assert.equal(parseHours('Mo-Fr 09:00-22:00')[2][0].open, 540);
+  assert.equal(parseHours('Mo-Fr 09:00-22:00')[5].length, 0);
   for (const bad of ['', 'always', 'Fr-Mo 09:00-10:00', 'Mo 10:00-09:00', 'Mo 09:00-25:00', undefined]) assert.equal(parseHours(bad), null, String(bad));
   assert.equal(openStatus('nonsense', new Date(NOW)), null);
   assert.deepEqual(openStatus('Mo-Fr 09:00-22:00', new Date('2026-11-07T10:00:00Z')), { open: false, opensAt: '09:00', opensDay: 'Mo', tomorrow: false });
   assert.ok(parseHours('Mo-Su 22:00-06:00'), 'overnight span is now supported');
   assert.equal(openStatus('Mo-Su 22:00-06:00', new Date('2026-11-07T22:30:00Z'))?.open, true);
+  // N2 regression: overnight every-day must be open at 02:00 on intermediate days
+  assert.equal(openStatus('Mo-Su 22:00-06:00', new Date('2026-11-05T01:00:00Z'))?.open, true, 'Wed 02:00 Amsterdam is inside Tue 22-06');
+  assert.equal(openStatus('Mo-Su 22:00-06:00', new Date('2026-11-04T01:00:00Z'))?.open, true, 'Tue 02:00 Amsterdam is inside Mon 22-06');
 });
 
 test('hours: evaluated in the service\'s timezone, across the DST change', () => {

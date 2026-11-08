@@ -242,7 +242,7 @@ export function allRoutes(bundle) {
 
 /** The bundle with every route whose destination is not allow-listed removed. */
 export function dropDisallowed(bundle) {
-  const keep = (r) => r && isAllowedDestination(r.url);
+  const keep = (r) => !r?.url || isAllowedDestination(r.url);
   const byLanguage = {};
   for (const [lang, entry] of Object.entries(bundle?.byLanguage || {})) {
     const all = [entry.default, ...(entry.alternatives || [])].filter(keep);
