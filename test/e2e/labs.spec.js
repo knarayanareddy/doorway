@@ -75,6 +75,10 @@ test('quick exit: Enter on the focused button works (it is a real activation); E
   expect(page.url()).toContain('labs.html');
   await preview(page, 'gate');
   await expect(act(page, 'primary')).toBeVisible();
+  // The card focuses its primary action ~30 ms after it opens. Wait for that to land and settle, as the other keyboard
+  // tests do, so the focus this test sets is not moved back to the help button before Enter.
+  await expect(act(page, 'primary')).toBeFocused({ timeout: 3000 });
+  await page.waitForTimeout(250);
   const quit = frameOf(page).getByRole('button', { name: 'Snel weg' });
   await quit.focus();
   await page.keyboard.press('Enter');
