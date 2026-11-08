@@ -76,11 +76,12 @@ CI does not retry failed browser tests; a flaky test is fixed or quarantined by 
 npx wrangler d1 create doorway-agg
 npx wrangler d1 execute doorway-agg --file=edge/schema.sql --remote
 # set DOOR_ORIGIN in edge/wrangler.toml to the Worker's real origin, then:
+npm run check:deploy   # required: fails while DOOR_ORIGIN is empty or the .example placeholder
 DOOR_ORIGIN=https://door.example.org CDN_BASE=https://cdn.example.org npm run build
 cd edge && npx wrangler deploy
 ```
 
-Until `DOOR_ORIGIN` names a real origin, the Worker refuses every write (and `/v1/status`) with `503 {"error":"door origin not configured"}`. `edge/wrangler.toml` ships a `.example` placeholder, so a deploy that forgot to set it writes nothing.
+Until `DOOR_ORIGIN` names a real origin, the Worker refuses every write (and `/v1/status`) with `503 {"error":"door origin not configured"}`. `edge/wrangler.toml` ships a `.example` placeholder, so a deploy that forgot to set it writes nothing. `wrangler deploy` itself accepts the placeholder without complaint, which is why `npm run check:deploy` must run first.
 
 Create an install with a verify token and a Desk token (store only the SHA-256 of the Desk token):
 
@@ -93,7 +94,9 @@ VALUES ('inst_xxxxxx', 'platform.example', '<random>', '<sha256 hex of the desk 
 
 The platform then adds `<meta name="doorway-verify" content="<random>">` (or a DNS TXT at `_doorway.<domain>`) and calls `POST /v1/verify {"i":"inst_xxxxxx"}`.
 
-Limits on the read side: `GET /v1/agg` answers 429 after 10 failed Bearer attempts in a minute for an install (even with the right token, for the rest of that minute) and after 60 successful reads; `GET /v1/status` answers 429 after 120 requests a minute per id. Ids that do not exist share one bucket. Trade-off: `/v1/status` still answers `unknown-install` and `unverified` differently, because the installer's console hint depends on it (INSTALL.md section 6), so a client can tell registered ids from unregistered ones; the rate limit is what bounds that.
+Limits on the read side: `GET /v1/agg` checks the Bearer token first. A correct token is never refused by the failure counter; it is subject only to 60 successful reads a minute. A wrong or missing token gets 401, and after 10 such failures in a minute for an install (or the shared bucket for unknown ids) every further wrong or missing token gets 429 until the minute ends. So guessing is throttled, and a flood of bad requests cannot lock the Desk out. `GET /v1/status` answers 429 after 120 requests a minute per id. Ids that do not exist share one bucket. Trade-off: `/v1/status` still answers `unknown-install` and `unverified` differently, because the installer's console hint depends on it (INSTALL.md section 6), so a client can tell registered ids from unregistered ones; the rate limit is what bounds that.
+
+Event writes (`POST /v1/c`, `/v1/heartbeat`) are limited per install per minute (`rate_per_min`, default 120) and per install per day (`daily_cap`). Install ids are public, so anyone who knows an id can spend that install's budget and the real Door's events for that minute or day are refused (counted as drops in the Desk). This is deliberate: the edge keeps no IP addresses, so it cannot tell attackers from visitors. If it happens, raise `rate_per_min` and `daily_cap` for that install; the Desk's "Events the Door could not send" figure shows when this is the case.
 
 ## The acceptance tests that matter
 

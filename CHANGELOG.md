@@ -6,7 +6,21 @@ Entries are taken from the git history (`git log`) and from `docs/07-review-resp
 
 ## [Unreleased]
 
-Branch `wip/one-app`, pull request #6 into `main`. Verification as reported for PR #6 (these results are not re-checked in this entry):
+### Netherlands installs
+- An install that declares `data-country="NL"` sends English, German and other non-Dutch browsers to the Dutch services: Stoppen is mogelijk first, Offlimits for a person, ReDirection as an alternative (`byCountry.NL` in the signed routes). The pages are in Dutch. This reverses the earlier rule that a country never overrides language, for NL only; the route test says so.
+
+### Branch `fix/review-3` (this branch, not yet merged)
+
+Changes from the review of `wip/one-app`. Not in any merged commit, and the results below are as reported by the author of each change; check the CI run for this branch before relying on them.
+
+- Quick exit (lab) reports failure honestly: when the browser refuses the top-level navigation, the card says so and offers the same fixed neutral site as a button, and a dismissal is reported as a dismissal. A success never shows the fallback (`packages/doorway/src/widget.js`, `packages/doorway/test/quick-exit.test.js`).
+- The Desk's failed-token counter no longer locks the moderator out: a correct token is checked first and is never refused by the failure counter. Only wrong or missing tokens count, and past the limit they get 429 (`edge/c.js`, `edge/test/edge.test.js`).
+- Deploy config check: `npm run check:deploy` refuses a deploy while `edge/wrangler.toml` still has the `.example` placeholder `DOOR_ORIGIN` (`scripts/check-deploy-config.mjs`). It is a separate command, not part of `npm run verify`.
+- The prototype's TypeScript (`prototype/src`) is linted with typescript-eslint (`npm run lint:prototype`, and the CI step), with the cookie, beacon and eval rules.
+- Dead code removed from the prototype: the unused preview request and quick-exit state in `prototype/src/lib/store.tsx` and its consumer in `DemoPage.tsx`. The Live and Desk tabs are unchanged.
+- CI: the `docker` job checks that the platform serves `/dist/latest/doorway.min.js` with `access-control-allow-origin: *` and names the Door origin.
+
+### Branch `wip/one-app`, pull request #6 into `main`. Verification as reported for PR #6 (these results are not re-checked in this entry):
 
 - GitHub Actions: the `docker`, `wordpress`, `hosted` and `fingerprint-log` jobs passed.
 - GitHub Actions: the `verify` job failed once on a flaky labs quick-exit test in Chromium (the page ended on `about:blank`). That failure is under investigation and is not known to be fixed. The commit it ran on is not recorded here.

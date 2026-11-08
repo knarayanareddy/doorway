@@ -75,6 +75,10 @@ test('quick exit: Enter on the focused button works (it is a real activation); E
   expect(page.url()).toContain('labs.html');
   await preview(page, 'gate');
   await expect(act(page, 'primary')).toBeVisible();
+  // The card focuses its primary action ~30 ms after it opens. Wait for that to land and settle, as the other keyboard
+  // tests do, so the focus this test sets is not moved back to the help button before Enter.
+  await expect(act(page, 'primary')).toBeFocused({ timeout: 3000 });
+  await page.waitForTimeout(250);
   const quit = frameOf(page).getByRole('button', { name: 'Snel weg' });
   await quit.focus();
   await page.keyboard.press('Enter');
@@ -309,6 +313,65 @@ test('wave: the timer has no animation to switch off, and works with reduced mot
   await expect(frameOf(page).getByText('Nog', { exact: false }).first()).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.locator('iframe')).toHaveCount(0);
+});
+
+test('wave: the curve rises, peaks and falls, the phase changes, and the breathing label flips', async ({ page }) => {
+  await openLabs(page, { waveSeconds: 15 });
+  await preview(page, 'wave');
+  await expect(act(page, 'primary')).toBeVisible();
+  await frameOf(page).getByRole('button', { name: /^Begin/ }).click();
+  const dot = frameOf(page).locator('.wv-dot');
+  const phase = frameOf(page).locator('.tp');
+  const breath = frameOf(page).locator('.wv-lab');
+  const done = frameOf(page).getByText('De golf is gezakt.', { exact: false });
+  // Record the whole run instead of sampling at fixed moments: a slow browser then reads fewer points, but the
+  // order of what it saw cannot be skipped over. Reads that fail because the run just ended are the end of the run.
+  const samples = [];
+  const t0 = Date.now();
+  while (Date.now() - t0 < 20_000) {
+    try {
+      samples.push({
+        cx: Number(await dot.getAttribute('cx', { timeout: 1500 })),
+        cy: Number(await dot.getAttribute('cy', { timeout: 1500 })),
+        phase: ((await phase.textContent({ timeout: 1500 })) || '').trim(),
+        breath: ((await breath.textContent({ timeout: 1500 })) || '').trim(),
+      });
+    } catch { break; }
+    await page.waitForTimeout(120);
+  }
+  await expect(done).toBeVisible({ timeout: 14_000 });
+  expect(samples.length, 'enough points to see a shape').toBeGreaterThan(8);
+  // The dot moves right all the way, and its height rises to a peak in the middle and comes down again (SVG y grows
+  // downwards, so higher on screen is a smaller cy).
+  for (let k = 1; k < samples.length; k++) expect(samples[k].cx, 'moves right').toBeGreaterThanOrEqual(samples[k - 1].cx);
+  const cys = samples.map((x) => x.cy);
+  const top = cys.indexOf(Math.min(...cys));
+  expect(top, 'the highest point is neither the first nor the last sample').toBeGreaterThan(0);
+  expect(top).toBeLessThan(samples.length - 1);
+  expect(cys[0], 'it starts lower than the peak').toBeGreaterThan(cys[top]);
+  expect(cys[cys.length - 1], 'and ends lower than the peak').toBeGreaterThan(cys[top]);
+  // The phase label changes from rise to peak to fall, in that order, and the breathing label flips at least once.
+  const order = [...new Set(samples.map((x) => x.phase))];
+  expect(order.length, 'three phases were shown: ' + order.join(' / ')).toBeGreaterThanOrEqual(3);
+  expect(samples[0].phase).toBe(order[0]);
+  expect(samples[samples.length - 1].phase).toBe(order[order.length - 1]);
+  expect(new Set(samples.map((x) => x.breath)).size, 'the breathing label flipped').toBeGreaterThanOrEqual(2);
+});
+
+test('wave: with reduced motion the orb keeps its size, and the curve is drawn once a second', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openLabs(page, { waveSeconds: 10 });
+  await preview(page, 'wave');
+  await expect(act(page, 'primary')).toBeVisible();
+  await frameOf(page).getByRole('button', { name: /^Begin/ }).click();
+  const disc = frameOf(page).locator('.wv-disc');
+  const countdown = frameOf(page).locator('.tl');
+  const seen = new Set();
+  const first = (await countdown.textContent()).trim();
+  // Wait for the countdown to tick (an event, not a fixed sleep), sampling the orb all the while.
+  await expect.poll(async () => { seen.add(await disc.evaluate((e) => e.style.transform)); return (await countdown.textContent()).trim(); }, { timeout: 4_000 }).not.toBe(first);
+  expect(await countdown.textContent()).toMatch(/Nog [0-9]+ seconden/);
+  expect([...seen], 'no scale change while reduced motion is on').toEqual(['scale(1)']);
 });
 
 // ── 5. the youth route ─────────────────────────────────────────────────────

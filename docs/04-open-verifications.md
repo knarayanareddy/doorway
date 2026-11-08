@@ -32,7 +32,7 @@
 
 ### V2 · Whether the prevention line serves English
 
-**The claim.** The routes table sends non-Dutch browsers to ReDirection and Stop It Now UK rather than to Offlimits in English.
+**The claim.** Without a declared country, the routes table sends non-Dutch browsers to ReDirection and Stop It Now UK rather than to Offlimits in English. An install that declares country NL does the opposite by the owner's decision: English, German and other-language browsers go to Stoppen is mogelijk (self-help) and Offlimits (a person), with ReDirection kept as an alternative. Both Dutch pages are in Dutch, and whether Offlimits takes contacts in English is still unverified, which is the question below.
 
 **Why it matters.** If Offlimits does serve English, Dutch forums route their English-speaking members away from the nearest and best service for no reason.
 

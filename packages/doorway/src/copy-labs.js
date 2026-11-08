@@ -15,6 +15,14 @@ export const QUICK_HINT = {
   de: 'Verlässt diese Seite sofort und öffnet eine neutrale Website.',
 };
 
+// Shown in the card when the browser refuses the quick exit (no navigation happened, so nothing is reported as left).
+export const QUICK_FAILED = {
+  nl: 'Het wegsturen lukt niet. Open het weerbericht in een nieuw tabblad.',
+  en: 'Quick exit could not send you away. Open the weather report in a new tab.',
+  de: 'Das Wegschicken hat nicht geklappt. Öffne den Wetterbericht in einem neuen Tab.',
+};
+export const QUICK_OPEN = { nl: 'Open het weerbericht', en: 'Open the weather report', de: 'Wetterbericht öffnen' };
+
 export const BACK = { nl: 'Terug naar het forum', en: 'Back to the forum', de: 'Zurück zum Forum' };
 
 export const FORK = {
@@ -75,6 +83,11 @@ export const WAVE = {
     en: [{ until: 0.34, label: 'The wave rises. Breathe in.' }, { until: 0.67, label: 'The wave is at its highest. Breathe out.' }, { until: 1.01, label: 'The wave falls. Keep breathing calmly.' }],
     de: [{ until: 0.34, label: 'Die Welle steigt. Atme ein.' }, { until: 0.67, label: 'Die Welle ist am höchsten. Atme aus.' }, { until: 1.01, label: 'Die Welle sinkt. Atme ruhig weiter.' }],
   },
+  breath: {
+    nl: { in: 'Adem in', out: 'Adem uit' },
+    en: { in: 'Breathe in', out: 'Breathe out' },
+    de: { in: 'Atme ein', out: 'Atme aus' },
+  },
   done: {
     nl: 'De golf is gezakt. Dat deed je zelf. Je kunt dit zo vaak doen als je wilt.',
     en: 'The wave has fallen. You did that yourself. You can do this as often as you like.',
@@ -109,7 +122,7 @@ export function labsStrings() {
     else if (Array.isArray(v)) v.forEach((x, i) => walk(x, `${path}[${i}]`));
     else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) walk(x, `${path}.${k}`);
   };
-  walk(LABS_TAG, 'LABS_TAG'); walk(QUICK, 'QUICK'); walk(QUICK_HINT, 'QUICK_HINT'); walk(BACK, 'BACK');
+  walk(LABS_TAG, 'LABS_TAG'); walk(QUICK, 'QUICK'); walk(QUICK_HINT, 'QUICK_HINT'); walk(QUICK_FAILED, 'QUICK_FAILED'); walk(QUICK_OPEN, 'QUICK_OPEN'); walk(BACK, 'BACK');
   walk(FORK, 'FORK'); walk(WAVE, 'WAVE');
   return out;
 }

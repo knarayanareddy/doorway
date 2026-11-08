@@ -73,6 +73,7 @@ The platform origin serves the built app (`prototype/dist/index.html`, from `npm
 | `DESK_TOKEN` | door | the demo Desk's bearer token; defaults to `desk-demo-token`, which is public on purpose |
 | `I_UNDERSTAND_THIS_IS_A_PUBLIC_DEMO` | door, platform | set to `1` to start on a plain-http, non-localhost origin with the public `DESK_TOKEN`; without it the process refuses to start. https origins are not checked by this rule, so set a private `DESK_TOKEN` for any demo that should not be public |
 | `SEED` | door | `0` skips the synthetic data |
+| `DOOR_INTERNAL_URL` | platform | where the platform process reaches the Door for the Desk proxy, for example `http://127.0.0.1:3001` when both run in one sandbox. Optional; defaults to `DOOR_ORIGIN`. A sandbox cannot reach its own public URL, so without it the Desk answers 502 there |
 | `PROTO_DIST` | platform | where the built app is. The image sets `/app/prototype/dist`; a sandbox leaves it unset (default `prototype/dist`). If `index.html` is missing the platform logs one `app not built` line and `/app/` answers 404 |
 
 ## Steps (not yet run)

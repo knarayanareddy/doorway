@@ -125,7 +125,12 @@ test('Hallway: first sentences can be copied; no claim about the service appears
   await copy.click();
   await expect(frameOf(page).getByRole('button', { name: 'Gekopieerd' })).toBeVisible();
   if (browserName === 'chromium') {
-    expect(await page.evaluate(() => navigator.clipboard.readText().catch(() => 'unreadable'))).toMatch(/Ik weet niet waar ik moet beginnen\.|unreadable/);
+    // The button says 'Gekopieerd' as soon as it is clicked; the clipboard write completes a moment later (found in CI:
+    // a single read returned ''). Poll until the clipboard has the sentence. 'unreadable' still stands for a refused read.
+    await expect.poll(
+      () => page.evaluate(() => navigator.clipboard.readText().catch(() => 'unreadable')),
+      { timeout: 5000, message: 'the copied sentence reaches the clipboard' },
+    ).toMatch(/Ik weet niet waar ik moet beginnen\.|unreadable/);
   }
 });
 

@@ -55,7 +55,7 @@
      "fr",
      "es"
     ],
-    "url": "https://www.redirection.fi/?src=doorway",
+    "url": "https://www.suojellaanlapsia.fi/en/redirection?src=doorway",
     "countries": [],
     "reviewBy": "2027-02-06",
     "verifiedAt": null,
@@ -148,7 +148,7 @@
       "en",
       "fi"
      ],
-     "url": "https://www.redirection.fi/?src=doorway",
+     "url": "https://www.suojellaanlapsia.fi/en/redirection?src=doorway",
      "countries": [],
      "reviewBy": "2027-02-06",
      "verifiedAt": null,
@@ -182,5 +182,127 @@
   "fi-redirection"
  ],
  "validUntil": "2027-02-06T00:00:00Z",
- "sig": "bbQ7CDaveQxWZIIF7_QZd4vO2CyC5RfLdmYQVoaj8QnSmgj_VzhIWa2NVxQnMM1jZGIMOw_hbe2wPhwLzE1ABw"
+ "byCountry": {
+  "NL": {
+   "en": {
+    "default": {
+     "id": "nl-stoppen",
+     "name": "Stoppen is mogelijk",
+     "channel": "selfhelp",
+     "capacity": "selfhelp",
+     "languages": [
+      "nl"
+     ],
+     "url": "https://stoppenismogelijk.eu/?src=doorway",
+     "countries": [
+      "NL",
+      "BE"
+     ],
+     "reviewBy": "2027-02-06",
+     "verifiedAt": null,
+     "agreement": null
+    },
+    "alternatives": [
+     {
+      "id": "nl-offlimits",
+      "name": "Offlimits preventielijn (voorheen Stop it Now)",
+      "channel": "chat",
+      "capacity": "human",
+      "languages": [
+       "nl"
+      ],
+      "hours": "Mo-Fr 09:00-22:00; Sa-Su 09:30-18:00",
+      "phone": "0800 266 64 36",
+      "url": "https://offlimits.nl/?src=doorway",
+      "countries": [
+       "NL",
+       "BE"
+      ],
+      "reviewBy": "2027-02-06",
+      "verifiedAt": null,
+      "agreement": null
+     },
+     {
+      "id": "fi-redirection",
+      "name": "ReDirection (Protect Children)",
+      "channel": "selfhelp",
+      "capacity": "selfhelp",
+      "languages": [
+       "en",
+       "fi",
+       "sv",
+       "de",
+       "fr",
+       "es"
+      ],
+      "url": "https://www.suojellaanlapsia.fi/en/redirection?src=doorway",
+      "countries": [],
+      "reviewBy": "2027-02-06",
+      "verifiedAt": null,
+      "agreement": null
+     }
+    ]
+   },
+   "de": {
+    "default": {
+     "id": "nl-stoppen",
+     "name": "Stoppen is mogelijk",
+     "channel": "selfhelp",
+     "capacity": "selfhelp",
+     "languages": [
+      "nl"
+     ],
+     "url": "https://stoppenismogelijk.eu/?src=doorway",
+     "countries": [
+      "NL",
+      "BE"
+     ],
+     "reviewBy": "2027-02-06",
+     "verifiedAt": null,
+     "agreement": null
+    },
+    "alternatives": [
+     {
+      "id": "nl-offlimits",
+      "name": "Offlimits preventielijn (voorheen Stop it Now)",
+      "channel": "chat",
+      "capacity": "human",
+      "languages": [
+       "nl"
+      ],
+      "hours": "Mo-Fr 09:00-22:00; Sa-Su 09:30-18:00",
+      "phone": "0800 266 64 36",
+      "url": "https://offlimits.nl/?src=doorway",
+      "countries": [
+       "NL",
+       "BE"
+      ],
+      "reviewBy": "2027-02-06",
+      "verifiedAt": null,
+      "agreement": null
+     },
+     {
+      "id": "fi-redirection",
+      "name": "ReDirection (Protect Children)",
+      "channel": "selfhelp",
+      "capacity": "selfhelp",
+      "languages": [
+       "en",
+       "fi",
+       "sv",
+       "de",
+       "fr",
+       "es"
+      ],
+      "url": "https://www.suojellaanlapsia.fi/en/redirection?src=doorway",
+      "countries": [],
+      "reviewBy": "2027-02-06",
+      "verifiedAt": null,
+      "agreement": null
+     }
+    ]
+   }
+  }
+ },
+ "sig": "cQg7y-D0cgrLudN0n-rC9Wiuj4-FdZHZxClFXTN_TSs3SeQkFlCswv-Deq8usyw2mybxTP326MVdgtKRbAncAg"
 }

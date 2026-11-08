@@ -22,6 +22,8 @@
  *   SEED             0 to skip the synthetic data                     (default seeded)
  *   DIST_DIR         where this process builds its bundles            (default ./dist; give each process its own
  *                    directory if two run from one checkout)
+ *   DOOR_INTERNAL_URL  where the platform process reaches the Door for the Desk proxy, e.g. http://127.0.0.1:3001
+ *                    (optional; default DOOR_ORIGIN. A sandbox often cannot reach its own public URL)
  *   PROTO_DIST       directory holding the built app (default ./prototype/dist); platform role serves its index.html at /app/
  *
  * Platform role also answers GET /__desk/agg: a same-origin pass-through to the Door's /v1/agg (query and
@@ -69,7 +71,15 @@ export function readConfig(env = process.env) {
   // null unless DIST_DIR is given: the handlers then use <root>/dist, and a test can hand them a temporary root.
   const distDir = env.DIST_DIR ? path.resolve(env.DIST_DIR) : null;
   const protoDist = env.PROTO_DIST ? path.resolve(env.PROTO_DIST) : null;
-  return { problems, role, doorOrigin, platformOrigin, port, distDir, protoDist, labsFormats: env.LABS_FORMATS ?? 'fork,wave', deskToken, seed: env.SEED !== '0' };
+  let doorInternal = null;
+  if (env.DOOR_INTERNAL_URL) {
+    try {
+      const u = new URL(env.DOOR_INTERNAL_URL.trim().replace(/\/$/, ''));
+      if (!/^https?:$/.test(u.protocol) || u.pathname !== '/' || u.search || u.hash || u.username || u.password) throw new Error();
+      doorInternal = u.origin;
+    } catch { problems.push(`DOOR_INTERNAL_URL must be an origin like http://127.0.0.1:3001, with no path (got "${env.DOOR_INTERNAL_URL}")`); }
+  }
+  return { problems, role, doorOrigin, doorInternal, platformOrigin, port, distDir, protoDist, labsFormats: env.LABS_FORMATS ?? 'fork,wave', deskToken, seed: env.SEED !== '0' };
 }
 
 const PUBLIC_DEMO_TOKEN = 'desk-demo-token';
@@ -130,7 +140,7 @@ export function platformHandler(cfg, root = ROOT) {
   const distDir = cfg.distDir || path.join(root, 'dist');
   const allowed = [path.join(root, 'mock-platform'), path.join(distDir, 'latest')];
   const app = appHandler(appFile(cfg, root));
-  const desk = deskAggProxy(cfg.doorOrigin);
+  const desk = deskAggProxy(cfg.doorInternal || cfg.doorOrigin);
   return (req, res) => {
     const u = new URL(req.url, cfg.platformOrigin);
     if (u.pathname === '/health') { res.writeHead(200, { 'content-type': 'text/plain', ...security }); res.end('ok'); return; }

@@ -10,12 +10,13 @@
  *
  * Coverage: the visitor-path rules apply to shipped code (packages/doorway/src,
  * packages/core/src, packages/shared, edge/c.js). Tests and tooling get the rules
- * that still make sense for them, with named per-file exceptions below. prototype/
- * is NOT linted by this config (it is ignored here, and no TypeScript parser is installed). Only its e2e specs are
- * linted, by `npm run lint:prototype`. Its TypeScript is type-checked by `npm --prefix prototype run typecheck` instead.
+ * that still make sense for them, with named per-file exceptions below. prototype/src (TypeScript) is linted by the
+ * typescript-eslint block below (cookie, beacon and eval rules); its e2e specs by the JavaScript blocks. Its TypeScript
+ * is also type-checked by `npm --prefix prototype run typecheck`.
  */
 import js from '@eslint/js';
 import globals from 'globals';
+import tseslint from 'typescript-eslint';
 
 const NETWORK = ['XMLHttpRequest', 'Image', 'WebSocket', 'EventSource', 'Audio', 'Worker', 'SharedWorker', 'BroadcastChannel', 'RTCPeerConnection', 'WebTransport'];
 const STORAGE = ['sessionStorage', 'indexedDB', 'caches', 'openDatabase', 'cookieStore'];
@@ -44,12 +45,33 @@ const VISITOR_SYNTAX = [
 ];
 
 export default [
-  { ignores: ['node_modules/**', 'dist/**', 'dist-hosted/**', 'organiser/**', 'vendor/**', 'research/**', 'prototype/**', 'playwright-report/**', 'test-results/**', '.keys/**'] },
+  { ignores: ['node_modules/**', 'dist/**', 'dist-hosted/**', 'organiser/**', 'vendor/**', 'research/**', 'prototype/dist/**', 'prototype/node_modules/**', 'playwright-report/**', 'test-results/**', '.keys/**'] },
   js.configs.recommended,
   {
     files: ['**/*.js', '**/*.mjs'],
     languageOptions: { ecmaVersion: 'latest', sourceType: 'module', globals: { ...globals.browser, ...globals.node, __DOOR_ORIGIN__: 'readonly', __DEMO_LABS__: 'readonly' } },
     rules: { 'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrors: 'none' }] },
+  },
+  {
+    // The prototype's TypeScript (the React app). Not visitor code, so no visitor-path syntax rules, but the
+    // cookie, beacon and eval rules still apply.
+    files: ['prototype/src/**/*.{ts,tsx}'],
+    languageOptions: { parser: tseslint.parser, ecmaVersion: 'latest', sourceType: 'module', globals: globals.browser },
+    plugins: { '@typescript-eslint': tseslint.plugin },
+    rules: {
+      // The base rule cannot see type-only uses; the TypeScript-aware one replaces it.
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrors: 'none' }],
+      // TypeScript resolves names itself (tsc --noEmit runs in `npm --prefix prototype run typecheck`).
+      'no-undef': 'off',
+      'no-eval': 'error',
+      'no-implied-eval': 'error',
+      'no-new-func': 'error',
+      'no-restricted-properties': ['error',
+        { object: 'document', property: 'cookie', message: 'No cookies. Ever.' },
+        BEACON,
+      ],
+    },
   },
   {
     // Everything that ships to a visitor's browser, plus the edge.

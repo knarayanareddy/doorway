@@ -199,12 +199,18 @@ test('the demo routes file is signed with the pinned key, marks only the nl rout
   const pub = Uint8Array.from(Buffer.from(PUBLIC_KEY_RAW_B64U, 'base64url'));
   const v = await verifyBundle(DEMO, pub, { now: OPEN });
   assert.equal(v.ok, true, v.reason);
+  // The demo record is the Offlimits line, wherever the bundle lists it: the Dutch table and the NL country table.
+  const tables = { ...Object.fromEntries(Object.entries(DEMO.byLanguage).map(([k, v]) => [`lang/${k}`, v])), ...Object.fromEntries(Object.entries(DEMO.byCountry || {}).flatMap(([c, langs]) => Object.entries(langs).map(([k, v]) => [`${c}/${k}`, v]))) };
   const marked = [];
-  for (const [L, entry] of Object.entries(DEMO.byLanguage)) for (const r of [entry.default, ...(entry.alternatives || [])]) if (r.demo) marked.push(`${L}/${r.id}`);
-  assert.deepEqual(marked, ['nl/nl-offlimits']);
+  for (const [where, entry] of Object.entries(tables)) for (const r of [entry.default, ...(entry.alternatives || [])]) if (r.demo) marked.push(`${where}/${r.id}`);
+  assert.deepEqual(marked, ['lang/nl/nl-offlimits', 'NL/en/nl-offlimits', 'NL/de/nl-offlimits']);
+  assert.ok(marked.every((m) => m.endsWith('/nl-offlimits')), 'only the Offlimits line carries demo data');
   // Undo exactly the demo changes and the rest must be byte-for-byte the shipped bundle.
   const undo = JSON.parse(JSON.stringify(DEMO));
-  delete undo.sig; delete undo.byLanguage.nl.default.demo; undo.byLanguage.nl.default.verifiedAt = null; undo.version = PROD.version;
+  delete undo.sig; undo.version = PROD.version;
+  const unmark = (r) => { if (r && r.demo) { delete r.demo; r.verifiedAt = null; } };
+  for (const entry of Object.values(undo.byLanguage)) for (const r of [entry.default, ...(entry.alternatives || [])]) unmark(r);
+  for (const langs of Object.values(undo.byCountry || {})) for (const entry of Object.values(langs)) for (const r of [entry.default, ...(entry.alternatives || [])]) unmark(r);
   const shipped = JSON.parse(JSON.stringify(PROD));
   delete shipped.sig;
   assert.deepEqual(undo, shipped);

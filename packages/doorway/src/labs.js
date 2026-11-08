@@ -63,9 +63,9 @@ export function waveSeconds(value) {
  * Note: Escape does not count as user activation, so only a click or Enter on the button can leave.
  */
 export const QUICK_EXIT = Object.freeze({ nl: 'https://www.knmi.nl/', en: 'https://www.metoffice.gov.uk/', de: 'https://www.dwd.de/' });
+export const quickExitUrl = (lang) => QUICK_EXIT[lang] || QUICK_EXIT.en;
 export function quickExit(win, lang) {
-  const url = QUICK_EXIT[lang] || QUICK_EXIT.en;
-  try { win.top.location.replace(url); return true; } catch { return false; }
+  try { win.top.location.replace(quickExitUrl(lang)); return true; } catch { return false; }
 }
 
 /**
