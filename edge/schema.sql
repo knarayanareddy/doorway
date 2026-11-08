@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS installs (
   verified_at   TEXT,                      -- set by POST /v1/verify (meta tag or DNS TXT)
   verify_token  TEXT,                      -- the platform places this on its site
   desk_token_hash TEXT,                    -- sha-256 hex of the Desk bearer token
-  daily_cap     INTEGER NOT NULL DEFAULT 5000,   -- accepted events per day, from declared traffic
+  daily_cap     INTEGER NOT NULL DEFAULT 5000,   -- accepted events per day, from declared traffic; 0 = disabled (rejects all, status: disabled)
   rate_per_min  INTEGER NOT NULL DEFAULT 120,    -- attempts per minute
   version       TEXT,
   created_at    TEXT DEFAULT CURRENT_TIMESTAMP

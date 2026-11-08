@@ -4,9 +4,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { ESLint } from 'eslint';
 
-const ROOT = new URL('../', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const eslint = new ESLint({ cwd: ROOT });
 const errors = async (code, file) => (await eslint.lintText(code, { filePath: ROOT + file })).flatMap((r) => r.messages).filter((m) => m.severity === 2);
 

@@ -9,3 +9,7 @@ One entry per deliberate change to packages/shared/. Written by `node scripts/ch
 ## 2026-11-07
 - Files: card.js
 - Reason: Closing actions run onSelect before finish, so a quick-exit navigation is not cancelled by the frame being removed
+
+## 2026-11-08
+- Files: card.js, index.js
+- Reason: Fix R7 tel anchor detachment and R18 VERSION 0.2.0 drift

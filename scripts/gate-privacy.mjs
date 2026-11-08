@@ -13,11 +13,12 @@
  *   4. No term list: no file in the shipped surface looks like a trigger/keyword list (R4).
  */
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import * as espree from 'espree';
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SCAN = ['packages/shared', 'packages/core/src', 'packages/doorway/src', 'edge'].map((d) => path.join(ROOT, d));
 const problems = [];
 const rel = (p) => path.relative(ROOT, p);

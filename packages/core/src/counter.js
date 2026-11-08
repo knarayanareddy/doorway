@@ -150,7 +150,7 @@ export function flagAnomalies(days) {
 /** Heartbeat: install, client version, count of events the Door could not send. Counts only. */
 export const HEARTBEAT = Object.freeze({
   i: ALLOWED.i,
-  v: (v) => typeof v === 'string' && /^\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(v),
+  v: (v) => typeof v === 'string' && /^\d{1,3}\.\d{1,3}\.\d{1,3}(?:-[0-9A-Za-z.-]+)?$/.test(v),
   d: (v) => Number.isInteger(v) && v >= 1 && v <= 1000000,
 });
 

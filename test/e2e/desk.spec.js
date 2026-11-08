@@ -54,7 +54,7 @@ test('desk panels: breakdowns, outcome bar, ladder and caveat render from the sa
   await page.fill('#inst', 'inst_demo001');
   await page.fill('#tok', 'desk-demo-token');
   await page.click('#login button');
-  await expect(page.locator('#level')).toHaveText('Level 3 of 3 measured');
+  await expect(page.locator('#level')).toHaveText('Level 2 of 3 measured');
 
   // outcome bar: three visible outcomes, drawn and named
   await expect(page.locator('#bar span')).toHaveCount(3);

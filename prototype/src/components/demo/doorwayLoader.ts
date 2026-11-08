@@ -41,8 +41,9 @@ export function loadDoorway(): Promise<boolean> {
     s.dataset.legalJurisdiction = INSTALL.legalJurisdiction;
     s.dataset.labs = INSTALL.labs;
     s.dataset.waveSeconds = INSTALL.waveSeconds;
-    s.onload = () => resolve(!!window.doorway);
-    s.onerror = () => resolve(false);
+    const t = setTimeout(() => { s.remove(); resolve(false); }, 10000);
+    s.onload = () => { clearTimeout(t); resolve(!!window.doorway); };
+    s.onerror = () => { clearTimeout(t); resolve(false); };
     document.body.appendChild(s);
   });
   return pending;

@@ -12,7 +12,7 @@ const DOW = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
 
 export function parseHours(spec) {
   if (typeof spec !== 'string' || !spec.trim()) return null;
-  const week = Array.from({ length: 7 }, () => null);
+  const week = Array.from({ length: 7 }, () => []);
   for (const part of spec.split(';')) {
     const m = /^\s*(Mo|Tu|We|Th|Fr|Sa|Su)(?:-(Mo|Tu|We|Th|Fr|Sa|Su))?\s+(\d{2}):(\d{2})-(\d{2}):(\d{2})\s*$/.exec(part);
     if (!m) return null;
@@ -21,9 +21,20 @@ export function parseHours(spec) {
     if (b < a) return null;
     const open = Number(m[3]) * 60 + Number(m[4]);
     const close = Number(m[5]) * 60 + Number(m[6]);
-    if (!(open < close) || close > 24 * 60) return null;
-    for (let d = a; d <= b; d++) week[d] = { open, close };
+    if (open === close || close > 24 * 60 || open > 24 * 60) return null;
+    const overnight = close <= open;
+    if (overnight && (24 * 60 - open + close) > 12 * 60) return null;
+    for (let d = a; d <= b; d++) {
+      if (overnight) {
+        week[d].push({ open, close: 24 * 60 });
+        week[(d + 1) % 7].push({ open: 0, close });
+      } else {
+        week[d].push({ open, close });
+      }
+    }
   }
+  // Sort intervals per day and return null for empty days as empty array (caller checks length)
+  for (let d = 0; d < 7; d++) week[d].sort((a, b) => a.open - b.open);
   return week;
 }
 
@@ -41,11 +52,18 @@ export function openStatus(spec, now = new Date(), tz = 'Europe/Amsterdam') {
   if (day === undefined) return null;
   const cur = (Number(parts.find((p) => p.type === 'hour').value) % 24) * 60 + Number(parts.find((p) => p.type === 'minute').value);
   const today = week[day];
-  if (today && cur >= today.open && cur < today.close) return { open: true, closesAt: hhmm(today.close) };
-  if (today && cur < today.open) return { open: false, opensAt: hhmm(today.open) };
+  if (today.length) {
+    for (const iv of today) {
+      if (cur >= iv.open && cur < iv.close) return { open: true, closesAt: hhmm(iv.close) };
+    }
+    // Not open now — check if there's a later opening today (hide day name, same as before)
+    for (const iv of today) {
+      if (cur < iv.open) return { open: false, opensAt: hhmm(iv.open), opensDay: DAYS[day], tomorrow: true };
+    }
+  }
   for (let i = 1; i <= 7; i++) {
     const next = week[(day + i) % 7];
-    if (next) return { open: false, opensAt: hhmm(next.open), tomorrow: i === 1 };
+    if (next.length) return { open: false, opensAt: hhmm(next[0].open), opensDay: DAYS[(day + i) % 7], tomorrow: i === 1 };
   }
   return { open: false };
 }

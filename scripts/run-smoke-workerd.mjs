@@ -8,9 +8,10 @@ import { spawn, spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const EDGE = path.join(ROOT, 'edge');
 const PORT = process.env.SMOKE_PORT || '8787';
 const BASE = `http://127.0.0.1:${PORT}`;

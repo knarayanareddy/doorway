@@ -82,18 +82,42 @@ cd edge && npx wrangler deploy
 
 Until `DOOR_ORIGIN` names a real origin, the Worker refuses every write (and `/v1/status`) with `503 {"error":"door origin not configured"}`. `edge/wrangler.toml` ships a `.example` placeholder, so a deploy that forgot to set it writes nothing.
 
-Create an install with a verify token and a Desk token (store only the SHA-256 of the Desk token):
+Create an install (generates ids, tokens and the SQL for you):
+
+```bash
+node scripts/provision-install.mjs --domain platform.example --traffic 5000
+# with --remote it runs the wrangler command after a confirm
+```
+
+It prints a verify token, a Desk token (shown once), the SHA-256 hash the edge stores, the SQL and the meta tag to place. See `node scripts/provision-install.mjs --help`. The manual SQL form is:
 
 ```sql
 INSERT INTO installs (id, domain, verify_token, desk_token_hash, daily_cap)
 VALUES ('inst_xxxxxx', 'platform.example', '<random>', '<sha256 hex of the desk token>', 5000);
 ```
 
-**The Desk token must be at least 32 random characters.** The edge stores only the hash, so it cannot check length later. Generate one with `openssl rand -hex 24` (48 characters), and hash it without a trailing newline: `printf '%s' "$DESK_TOKEN" | shasum -a 256 | cut -d' ' -f1`. The demo harnesses use the public token `desk-demo-token` on purpose; never reuse it for a real install.
+**The Desk token must be at least 32 random characters.** The provisioning script generates one; if you create one by hand, use `openssl rand -hex 24` (48 characters), and hash it without a trailing newline: `printf '%s' "$DESK_TOKEN" | shasum -a 256 | cut -d' ' -f1`. The edge stores only the hash, so it cannot check length later. The demo harnesses use the public token `desk-demo-token` on purpose; never reuse it for a real install. A `daily_cap` of 0 means disabled (all events rejected; `/v1/status` returns `disabled`).
 
-The platform then adds `<meta name="doorway-verify" content="<random>">` (or a DNS TXT at `_doorway.<domain>`) and calls `POST /v1/verify {"i":"inst_xxxxxx"}`.
+The platform then adds `<meta name="doorway-verify" content="<random>">` (order-free, exact content match) or a DNS TXT at `_doorway.<domain>` with the exact token, and calls `POST /v1/verify {"i":"inst_xxxxxx"}`.
 
-Limits on the read side: `GET /v1/agg` answers 429 after 10 failed Bearer attempts in a minute for an install (even with the right token, for the rest of that minute) and after 60 successful reads; `GET /v1/status` answers 429 after 120 requests a minute per id. Ids that do not exist share one bucket. Trade-off: `/v1/status` still answers `unknown-install` and `unverified` differently, because the installer's console hint depends on it (INSTALL.md section 6), so a client can tell registered ids from unregistered ones; the rate limit is what bounds that.
+Limits on the read side: `GET /v1/agg` answers 429 after 10 failed Bearer attempts in a minute (a valid token still passes, so an attacker knowing the id cannot lock out the admin) and after 100 failed attempts a day, and after 60 successful reads; `GET /v1/status` answers 429 after 120 requests a minute per id. Ids that do not exist share one bucket. Trade-off: `/v1/status` still answers `unknown-install` and `unverified` differently, because the installer's console hint depends on it (INSTALL.md section 6), so a client can tell registered ids from unregistered ones; the rate limit is what bounds that.
+
+## Bundle rotation
+
+The embedded bundle `validUntil` is 2027-02-06 (`check:routes` warns two weeks before). To rotate:
+
+```bash
+# 1. Edit routes if needed, then re-sign with the production key (or dev key for local)
+DOORWAY_SIGNING_KEY_FILE=/secure/path/doorway-routes.pem npm run sign
+DOORWAY_SIGNING_KEY_FILE=/secure/path/doorway-routes.pem node scripts/sign-routes.mjs --file=packages/doorway/src/routes.demo.json
+# 2. Bump version if releasing: edit packages/doorway/src/version.js + package.json, then
+DOOR_ORIGIN=https://door.example.org CDN_BASE=https://cdn.example.org npm run build
+# 3. Deploy edge and CDN: wrangler deploy + upload dist/v<version>/
+# 4. Update SRI tags in CMS packages (dist/wordpress, dist/discourse) — build does this
+# 5. Verify: curl /v1/status and check Desk still loads; watch heartbeat droppedEvents
+```
+
+Set a calendar reminder at `validUntil − 30 d`.
 
 ## The acceptance tests that matter
 

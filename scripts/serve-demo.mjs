@@ -34,10 +34,11 @@
  */
 import http from 'node:http';
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml' };
 
 export function readConfig(env = process.env) {
@@ -203,7 +204,7 @@ export function build(cfg) {
   if (r.status !== 0) throw new Error('build failed');
 }
 
-if (process.argv[1] === new URL(import.meta.url).pathname) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const cfg = readConfig();
   if (cfg.problems.length) { console.error('serve-demo: configuration problems:\n  - ' + cfg.problems.join('\n  - ')); process.exit(2); }
   // The loader bakes the Door's origin in at build time. Building at start-up means one image serves any deployment.

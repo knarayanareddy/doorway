@@ -183,7 +183,7 @@ export const HALLWAY_FAQ = {
   },
   altLabel: { nl: 'Begin liever met zelfhulp', en: 'Start with self-help instead', de: 'Beginne lieber mit Selbsthilfe' },
   openUntil: { nl: (t) => `Nu open, tot ${t}`, en: (t) => `Open now, until ${t}`, de: (t) => `Jetzt geöffnet, bis ${t}` },
-  closedOpens: { nl: (t) => `Nu gesloten, opent om ${t}`, en: (t) => `Closed now, opens at ${t}`, de: (t) => `Jetzt geschlossen, öffnet um ${t}` },
+  closedOpens: { nl: (t, day) => day ? `Nu gesloten, opent ${day} om ${t}` : `Nu gesloten, opent om ${t}`, en: (t, day) => day ? `Closed now, opens ${day} at ${t}` : `Closed now, opens at ${t}`, de: (t, day) => day ? `Jetzt geschlossen, öffnet ${day} um ${t}` : `Jetzt geschlossen, öffnet um ${t}` },
   closedTip: { nl: 'De lijn is dicht. Je kunt nu met zelfhulp beginnen.', en: 'The line is closed. You can start with self-help now.', de: 'Die Leitung ist geschlossen. Du kannst jetzt mit Selbsthilfe beginnen.' },
 };
 

@@ -60,8 +60,10 @@ function ladder(j) {
   const k = j.summary.k;
   const byFormat = Array.isArray(j.byFormat) ? j.byFormat : [];
   const installed = j.summary.exposures !== null && j.summary.exposures > 0;
-  const gate = byFormat.some((f) => (f.format === 'gate' || f.format === 'card') && f.exposures !== null && f.exposures > 0);
-  const shift = byFormat.length >= 3;
+  const gate = byFormat.some((f) => (f.format === 'gate' || f.format === 'card') && typeof f.exposures === 'number' && f.exposures > 0);
+  const LABS_FORMATS = ['fork', 'wave'];
+  const visibleShapes = new Set(byFormat.filter((f) => !LABS_FORMATS.includes(f.format) && typeof f.exposures === 'number' && f.exposures > 0).map((f) => f.format));
+  const shift = visibleShapes.size >= 3;
   const measured = [
     { name: 'Installed', done: installed, todo: 'not yet, or fewer than ' + k + ' exposures in this period' },
     { name: 'Gate on', done: gate, todo: 'not yet, or the gate and card counts are hidden under ' + k },
@@ -97,7 +99,8 @@ async function load() {
   $('err').textContent = '';
   let res, j;
   try {
-    res = await fetch(`/v1/agg?i=${encodeURIComponent(session.i)}&days=${session.days}`, { headers: { authorization: `Bearer ${session.t}` }, credentials: 'omit', cache: 'no-store' });
+    const daysParam = Math.min(90, Math.max(1, Number(session.days) || 30));
+    res = await fetch(`/v1/agg?i=${encodeURIComponent(session.i)}&days=${daysParam}`, { headers: { authorization: `Bearer ${session.t}` }, credentials: 'omit', cache: 'no-store' });
     if (res.ok) j = await res.json();
   } catch { $('err').textContent = NO_NETWORK; $('out').hidden = true; return; }
   if (!res.ok) { $('err').textContent = failure(res, 'Could not load numbers.'); $('out').hidden = true; return; }

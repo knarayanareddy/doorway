@@ -70,6 +70,7 @@ export function createDoorway({
 
   let active = null;      // { handle, finished }
   let leaveListenersOn = false;
+  let leaveHandlers = null;
 
   /**
    * @param {object} ctx
@@ -202,10 +203,20 @@ export function createDoorway({
     if (leaveListenersOn) return;
     leaveListenersOn = true;
     const onLeave = () => { if (active && !active.finished) active.finish('left_page'); };
+    const onVis = () => { if (w.document.visibilityState === 'hidden') onLeave(); };
     w.addEventListener?.('pagehide', onLeave);
-    w.document?.addEventListener?.('visibilitychange', () => {
-      if (w.document.visibilityState === 'hidden') onLeave();
-    });
+    w.document?.addEventListener?.('visibilitychange', onVis);
+    leaveHandlers = { onLeave, onVis };
+  }
+  function stopLeaveWatch() {
+    if (!leaveListenersOn) return;
+    leaveListenersOn = false;
+    const h = leaveHandlers;
+    if (h) {
+      w.removeEventListener?.('pagehide', h.onLeave);
+      w.document?.removeEventListener?.('visibilitychange', h.onVis);
+    }
+    leaveHandlers = null;
   }
 
   function trigger({ type = 'search' } = {}) {
@@ -253,6 +264,7 @@ export function createDoorway({
       if (exposure.finished) return;
       exposure.finished = true;
       exposure.stopRefocus?.();
+      stopLeaveWatch();
       if (ACTED.has(outcome) && !exposure.wiped && !previewForced) {
         const cur = readState();
         if (!cur.__blocked) writeState(markActed(cur, now()));
@@ -327,9 +339,10 @@ export function createDoorway({
   /** Report how many events were lost, as a number only, then reset it. */
   async function flushDrops() {
     const st = readState();
-    if (st.drops > 0 && await send.heartbeat(install, st.drops)) {
+    const sent = st.drops;
+    if (sent > 0 && await send.heartbeat(install, sent)) {
       const cur = readState();
-      if (!cur.__blocked) writeState({ ...cur, drops: 0 });
+      if (!cur.__blocked) writeState({ ...cur, drops: Math.max(0, (cur.drops || 0) - sent) });
     }
   }
 

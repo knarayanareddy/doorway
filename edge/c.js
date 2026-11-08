@@ -147,6 +147,7 @@ async function minuteRead(env, k) {
  */
 const UNKNOWN_BUCKET = 'unknown-install';
 const DESK_FAILS_PER_MIN = 10;
+const DESK_FAILS_PER_DAY = 100;
 const DESK_READS_PER_MIN = 60;
 const STATUS_PER_MIN = 120;
 const minuteOf = (t) => t.toISOString().slice(0, 16);
@@ -158,7 +159,10 @@ const tooMany = (extra = {}) => json({ error: 'too many attempts' }, 429, { 'ret
  * requests can therefore never both take the last slot, whatever their interleaving. A new day's row starts at 1.
  */
 async function reserveDaily(env, install) {
-  if (!(install.daily_cap > 0)) return false;
+  // 0 means disabled (R9), nullish means uncapped in older rows — treat as no cap.
+  if (install.daily_cap === 0) return false;
+  if (install.daily_cap == null) return true;
+  if (!(install.daily_cap > 0)) return true;
   const day = dayOf(now());
   const row = await env.DB.prepare(
     `INSERT INTO rate (k, kind, stamp, n) VALUES (?, 'd', ?, 1)
@@ -259,6 +263,7 @@ async function status(url, env) {
   if ((await minuteBump(env, `s:${install ? id : UNKNOWN_BUCKET}:${minute}`, minute)) > STATUS_PER_MIN) return tooMany(cors);
   // 'unknown-install' and 'unverified' differ on purpose: the Door's loader prints a different fix for each (INSTALL.md section 6).
   if (!install) return json({ ok: false, reason: 'unknown-install' }, 200, cors);
+  if (install.daily_cap === 0) return json({ ok: false, reason: 'disabled' }, 200, cors);
   if (!install.verified_at) return json({ ok: false, reason: 'unverified' }, 200, cors);
   return json({ ok: true }, 200, cors);
 }
@@ -317,14 +322,32 @@ async function deskPage(request, env, path, type) {
 async function agg(request, url, env) {
   const id = url.searchParams.get('i') || '';
   const minute = minuteOf(now());
-  // Ten failed Bearer attempts in a minute lock the install (or the shared unknown bucket) out for the rest
-  // of that minute, checked BEFORE the token, so a correct token cannot be used to keep guessing.
+  const day = dayOf(now());
   const known = await getInstall(env, id);
   const failKey = `f:${known ? known.id : UNKNOWN_BUCKET}:${minute}`;
-  if ((await minuteRead(env, failKey)) >= DESK_FAILS_PER_MIN) return tooMany();
+  const failDayKey = `f:${known ? known.id : UNKNOWN_BUCKET}:${day}`;
+  // Check daily cap first (persisted across minutes) and minute cap.
+  if ((await minuteRead(env, failDayKey)) >= DESK_FAILS_PER_DAY) return tooMany();
+  if ((await minuteRead(env, failKey)) >= DESK_FAILS_PER_MIN) {
+    // Allow a valid token to bypass the per-minute lockout so an attacker knowing the id cannot DoS the admin.
+    const maybe = await authedInstall(request, env, id);
+    if (maybe) {
+      // authorised — fall through to the normal path (still counts as a read)
+    } else {
+      return tooMany();
+    }
+  }
   const install = await authedInstall(request, env, id);
   if (!install) {
     await minuteBump(env, failKey, minute);
+    // Daily bucket counts failed attempts per day; prune old days lazily.
+    {
+      const row = await env.DB.prepare(`INSERT INTO rate (k, kind, stamp, n) VALUES (?, 'd', ?, 1) ON CONFLICT(k) DO UPDATE SET n = n + 1 RETURNING n`).bind(failDayKey, day).first();
+      if (row && row.n === 1) {
+        const old = dayOf(new Date(Date.now() - 8 * 86_400_000));
+        await env.DB.prepare(`DELETE FROM rate WHERE kind = 'd' AND stamp < ?`).bind(old).run();
+      }
+    }
     return json({ error: 'unauthorised' }, 401);
   }
   if ((await minuteBump(env, `r:${install.id}:${minute}`, minute)) > DESK_READS_PER_MIN) return tooMany();
@@ -360,9 +383,12 @@ async function agg(request, url, env) {
     `SELECT day, format, outcome, SUM(count) AS count FROM agg WHERE install = ? AND day >= ? GROUP BY day, format, outcome`
   ).bind(id, since).all()).results || [];
   // One column per breakdown. The column names are fixed here, never taken from the request.
-  const dimRows = async (col) => ((await env.DB.prepare(
-    `SELECT day, "${col}" AS key, outcome, SUM(count) AS count FROM agg WHERE install = ? AND day >= ? GROUP BY day, "${col}", outcome`
-  ).bind(id, since).all()).results || []).filter((r) => !flaggedSet.has(r.day));
+  const dimRows = async (col) => {
+    if (!['trigger','route','bucket','variant'].includes(col)) throw new Error(`invalid column: ${col}`);
+    return ((await env.DB.prepare(
+      `SELECT day, "${col}" AS key, outcome, SUM(count) AS count FROM agg WHERE install = ? AND day >= ? GROUP BY day, "${col}", outcome`
+    ).bind(id, since).all()).results || []).filter((r) => !flaggedSet.has(r.day));
+  };
   const hb = await env.DB.prepare(`SELECT COALESCE(SUM(dropped),0) AS n FROM heartbeats WHERE install = ? AND day >= ?`).bind(id, since).first();
   const reports = (await env.DB.prepare(
     `SELECT reason, SUM(count) AS count FROM reports WHERE install = ? AND day >= ? GROUP BY reason`
@@ -383,6 +409,22 @@ async function agg(request, url, env) {
   });
 }
 
+
+/** Order-free, quote-style-free check that a <meta name="doorway-verify" content="TOKEN"> exists. */
+function hasVerifyMeta(html, token) {
+  const tags = html.match(/<meta\s[^>]*>/gi) || [];
+  for (const tag of tags) {
+    const attrs = {};
+    for (const m of tag.matchAll(/(\w[\w-]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'`>]+))/gi)) {
+      const name = m[1].toLowerCase();
+      const value = m[2] ?? m[3] ?? m[4] ?? '';
+      attrs[name] = value;
+    }
+    if ((attrs.name || '').toLowerCase() === 'doorway-verify' && attrs.content === token) return true;
+  }
+  return false;
+}
+
 async function verify(request, env) {
   const { body, err } = await readJson(request);
   if (err) return err;
@@ -393,18 +435,34 @@ async function verify(request, env) {
   if (install.verified_at) return json({ ok: true, verified_at: install.verified_at });
   if (await overMinuteLimit(env, { id: 'verify-' + id, rate_per_min: 5 })) return json({ error: 'rate' }, 429, { 'retry-after': '60' });
 
-  const token = install.verify_token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   let found = false;
   try {
-    const page = await fetch(`https://${install.domain}/`, { redirect: 'follow', headers: { accept: 'text/html' } });
-    const html = (await page.text()).slice(0, 262_144);
-    found = new RegExp(`<meta[^>]+name=["']doorway-verify["'][^>]+content=["']${token}["']`, 'i').test(html);
+    const page = await fetch(`https://${install.domain}/`, { redirect: 'manual', headers: { accept: 'text/html' } });
+    if (page.status >= 300 && page.status < 400) {
+      const loc = page.headers.get('location');
+      if (loc) {
+        try {
+          const u = new URL(loc, `https://${install.domain}/`);
+          if (u.hostname !== install.domain) found = false;
+          else {
+            const follow = await fetch(u.toString(), { redirect: 'manual', headers: { accept: 'text/html' } });
+            if (follow.status >= 200 && follow.status < 300) {
+              const html = (await follow.text()).slice(0, 262_144);
+              found = hasVerifyMeta(html, install.verify_token);
+            }
+          }
+        } catch { found = false; }
+      }
+    } else {
+      const html = (await page.text()).slice(0, 262_144);
+      found = hasVerifyMeta(html, install.verify_token);
+    }
   } catch { /* fall through to DNS */ }
   if (!found) {
     try {
       const dns = await fetch(`https://cloudflare-dns.com/dns-query?name=_doorway.${install.domain}&type=TXT`, { headers: { accept: 'application/dns-json' } });
       const j = await dns.json();
-      found = (j.Answer || []).some((a) => String(a.data || '').replace(/"/g, '').includes(install.verify_token));
+      found = (j.Answer || []).some((a) => String(a.data || '').replace(/"/g, '').trim() === install.verify_token);
     } catch { /* not found */ }
   }
   if (!found) return json({ ok: false, reason: 'token-not-found' }, 200);

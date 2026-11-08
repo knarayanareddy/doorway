@@ -57,7 +57,8 @@ export function hallwaySections({ lang, route, selfhelp, now = Date.now(), onAlt
   if (route && isRenderableHours(route, now)) {
     const st = openStatus(route.hours, new Date(now));
     if (st) {
-      const blocks = [{ type: 'text', text: st.open ? HALLWAY_FAQ.openUntil[L](st.closesAt) : HALLWAY_FAQ.closedOpens[L](st.opensAt) }];
+      const openDay = !st.tomorrow && st.opensDay ? st.opensDay : null;
+      const blocks = [{ type: 'text', text: st.open ? HALLWAY_FAQ.openUntil[L](st.closesAt) : HALLWAY_FAQ.closedOpens[L](st.opensAt, openDay) }];
       if (!st.open && selfhelp && selfhelp.id !== route.id) blocks.push({ type: 'text', text: HALLWAY_FAQ.closedTip[L] });
       if (route.demo === true) blocks.unshift({ type: 'text', text: DEMO_TAG[L] });
       sections.push({ blocks });
@@ -141,7 +142,7 @@ export function doorPanel({ lang, route, selfhelp = null, now = Date.now(), n = 
       ...base,
       tag: demo,
       primary: {
-        label: self && hours.opensAt ? t.closed(hours.opensAt) : LABELS.primary[L],
+        label: self && hours.opensAt ? t.closed(hours.opensAt + (hours.opensDay && !hours.tomorrow ? ` ${hours.opensDay}` : '')) : LABELS.primary[L],
         kind: 'primary', outcome: 'clicked_help', routeId: target.id, onSelect: () => onOpen(target.url),
       },
     };

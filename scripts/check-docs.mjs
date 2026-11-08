@@ -10,9 +10,10 @@
  *   5. no doc says "eight fields" — the contract is seven
  */
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const problems = [];
 const md = [];
 for (const f of ['README.md', 'BUILD.md', 'INSTALL.md', 'CONTRIBUTING.md', 'VENDORED.md']) if (fs.existsSync(path.join(ROOT, f))) md.push(f);
