@@ -56,7 +56,7 @@
      "fr",
      "es"
     ],
-    "url": "https://www.redirection.fi/?src=doorway",
+    "url": "https://www.suojellaanlapsia.fi/en/redirection?src=doorway",
     "countries": [],
     "reviewBy": "2027-02-06",
     "verifiedAt": null,
@@ -149,7 +149,7 @@
       "en",
       "fi"
      ],
-     "url": "https://www.redirection.fi/?src=doorway",
+     "url": "https://www.suojellaanlapsia.fi/en/redirection?src=doorway",
      "countries": [],
      "reviewBy": "2027-02-06",
      "verifiedAt": null,
@@ -183,5 +183,5 @@
   "fi-redirection"
  ],
  "validUntil": "2027-02-06T00:00:00Z",
- "sig": "K4G0lt5sI2iMh3ZEfZFkusmR-0sEqIOXF8O95kUd68bJYMGLmSNrfsjUtup72_gXrwSPGBS1r70chjuWPDSfBg"
+ "sig": "-Tr3nR4iDF8YqQVInyRzEHnUActX9dIMFYmHuYZex4RH6ZQd2LzWTtswG0wSFeRb-SBE6H3BTuoaRYPfT_YTDA"
 }

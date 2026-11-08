@@ -12,12 +12,13 @@
     "packages/*"
   ],
   "scripts": {
-    "test": "node --test packages/shared/core.test.js 'packages/doorway/test/*.test.js' 'edge/test/*.test.js' 'scripts/check-*.test.mjs' 'scripts/test/*.test.mjs'",
+    "test": "node --test packages/shared/core.test.js packages/shared/wave.test.js 'packages/doorway/test/*.test.js' 'edge/test/*.test.js' 'scripts/check-*.test.mjs' 'scripts/test/*.test.mjs'",
     "test:core": "node --test packages/shared/core.test.js",
     "lint": "eslint --max-warnings=0 .",
     "gate:privacy": "node scripts/gate-privacy.mjs",
     "lint:copy": "node scripts/lint-copy.mjs",
     "check:routes": "node scripts/check-routes.mjs",
+    "check:links": "node scripts/check-route-links.mjs",
     "check:prod-key": "node scripts/check-prod-key.mjs",
     "check:deploy": "node scripts/check-deploy-config.mjs",
     "scan:secrets": "node scripts/scan-secrets.mjs",

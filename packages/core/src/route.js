@@ -174,7 +174,7 @@ export function isRenderableConfidence(route, now = Date.now()) {
 export const DESTINATION_ALLOWLIST = Object.freeze([
   'offlimits.nl',
   'stoppenismogelijk.eu',
-  'www.redirection.fi',
+  'www.suojellaanlapsia.fi',
   'www.stopitnow.org.uk',
   'www.stopitnow.org',
   'www.stopitnow.org.au',

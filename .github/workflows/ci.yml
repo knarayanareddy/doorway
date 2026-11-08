@@ -76,6 +76,18 @@ jobs:
           FINGERPRINT_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: node scripts/check-fingerprint-log.mjs
 
+  # Every help link in the signed routes bundle must load. Needs the internet; a service being briefly down fails this
+  # job on purpose, because a dead "See help" button is the one failure a visitor cannot recover from.
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: "Every route link loads"
+        run: node scripts/check-route-links.mjs
+
   # The hosted demo: two origins, a real browser, in all three engines. Separate from verify so it runs in parallel.
   hosted:
     runs-on: ubuntu-latest
